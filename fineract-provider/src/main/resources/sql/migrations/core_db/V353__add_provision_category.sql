@@ -1,10 +1,6 @@
---author : Fanny
+-- author : Fanny
 
 -- adding m_provision_category
-
-DELETE FROM m_provisioning_criteria_definition WHERE category_id = 5;
-
-DELETE FROM m_provision_category WHERE id = 5;
 
 INSERT INTO m_provision_category (id, category_name, description)
 VALUES (5, 'LOSS', 'Principal and/or Interest overdue by y days');
