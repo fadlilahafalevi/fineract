@@ -85,7 +85,7 @@ openjpa {
 rat {
   xmlOutput = false
   htmlOutput = false
-  plainOutput = true
+  plainOutput = false
   verbose = false
 //  inputDir = './..'
   reportDir = new File(buildDir,'reports/rat')
