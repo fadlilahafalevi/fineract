@@ -105,6 +105,15 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
         final StopWatch task = new StopWatch();
         task.start();
 
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        
+        final String reqHead = request.getHeader("Access-Control-Request-Headers");
+
+        if (null != reqHead && !reqHead.isEmpty()) {
+            response.setHeader("Access-Control-Allow-Headers", reqHead);
+        }
+        
         try {
 
             if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
