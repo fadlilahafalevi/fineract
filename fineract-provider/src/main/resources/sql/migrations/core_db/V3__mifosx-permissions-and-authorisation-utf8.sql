@@ -296,7 +296,7 @@ INSERT INTO `m_permission`
 ('transaction_savings', 'CALCULATEINTEREST_SAVINGSACCOUNT_CHECKER', 'SAVINGSACCOUNT', 'CALCULATEINTEREST', '0');
 
 -- == accounting related permissions
-INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES
+INSERT INTO `m_permission`(`grouping`, `code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES
 ('accounting', 'CREATE_GLACCOUNT', 'GLACCOUNT', 'CREATE', 1),
 ('accounting', 'UPDATE_GLACCOUNT', 'GLACCOUNT', 'UPDATE', 1),
 ('accounting', 'DELETE_GLACCOUNT', 'GLACCOUNT', 'DELETE', 1),
@@ -307,7 +307,7 @@ INSERT INTO `m_permission` (`grouping`, `code`, `entity_name`, `action_name`, `c
 ('accounting', 'REVERSE_JOURNALENTRY', 'JOURNALENTRY', 'REVERSE', 1);
 
 
-INSERT INTO `m_role` (`id`, `name`, `description`)
+INSERT INTO `m_role`(`id`, `name`, `description`)
 VALUES
 (1,'Super user','This role provides all application permissions.');
 
@@ -317,32 +317,32 @@ select 1, id
 from m_permission
 where code = 'ALL_FUNCTIONS';
 
-INSERT INTO `m_appuser` (`id`, `office_id`, `username`, `firstname`, `lastname`, `password`, `email`,
+INSERT INTO `m_appuser`(`id`, `office_id`, `username`, `firstname`, `lastname`, `password`, `email`,
 `firsttime_login_remaining`, `nonexpired`, `nonlocked`, `nonexpired_credentials`, `enabled`)
 VALUES
 (1,1,'mifos','App','Administrator','5787039480429368bf94732aacc771cd0a3ea02bcf504ffe1185ab94213bc63a','demomfi@mifos.org','\0','','','','');
 
 
-INSERT INTO `m_appuser_role` (`appuser_id`, `role_id`) VALUES (1,1);
+INSERT INTO `m_appuser_role`(`appuser_id`, `role_id`) VALUES (1,1);
 
 
 -- Add in permissions for any special datatables added in base reference data
 -- This needs to always happen at end of the script
 
 /* add a create, read, update and delete permission for each registered datatable */
-insert into m_permission(grouping, `code`, entity_name, action_name)
+insert into m_permission(`grouping`, `code`, `entity_name`, `action_name`)
 select 'datatable', concat('CREATE_', r.registered_table_name), r.registered_table_name, 'CREATE'
 from x_registered_table r;
 
-insert into m_permission(grouping, `code`, entity_name, action_name)
+insert into m_permission(`grouping`, `code`, `entity_name`, `action_name`)
 select 'datatable', concat('READ_', r.registered_table_name), r.registered_table_name, 'READ'
 from x_registered_table r;
 
-insert into m_permission(grouping, `code`, entity_name, action_name)
+insert into m_permission(`grouping`, `code`, `entity_name`, `action_name`)
 select 'datatable', concat('UPDATE_', r.registered_table_name), r.registered_table_name, 'UPDATE'
 from x_registered_table r;
 
-insert into m_permission(grouping, `code`, entity_name, action_name)
+insert into m_permission(`grouping`, `code`, `entity_name`, `action_name`)
 select 'datatable', concat('DELETE_', r.registered_table_name), r.registered_table_name, 'DELETE'
 from x_registered_table r;
 
