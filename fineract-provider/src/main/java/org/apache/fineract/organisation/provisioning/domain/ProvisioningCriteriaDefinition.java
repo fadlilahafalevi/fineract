@@ -52,8 +52,8 @@ public class ProvisioningCriteriaDefinition extends AbstractPersistableCustom<Lo
     private BigDecimal provisioningPercentage;
 
     @ManyToOne
-    @JoinColumn(name = "liability_account", nullable = false)
-    private GLAccount liabilityAccount;
+    @JoinColumn(name = "asset_account", nullable = false)
+    private GLAccount assetAccount;
 
     @ManyToOne
     @JoinColumn(name = "expense_account", nullable = false)
@@ -64,34 +64,37 @@ public class ProvisioningCriteriaDefinition extends AbstractPersistableCustom<Lo
     }
     
     private ProvisioningCriteriaDefinition(ProvisioningCriteria criteria, ProvisioningCategory provisioningCategory, Long minimumAge,
-            Long maximumAge, BigDecimal provisioningPercentage, GLAccount liabilityAccount, GLAccount expenseAccount) {
+            Long maximumAge, BigDecimal provisioningPercentage, GLAccount assetAccount, GLAccount expenseAccount) {
         this.criteria = criteria;
         this.provisioningCategory = provisioningCategory;
         this.minimumAge = minimumAge;
         this.maximumAge = maximumAge;
         this.provisioningPercentage = provisioningPercentage;
-        this.liabilityAccount = liabilityAccount;
+        this.assetAccount = assetAccount;
         this.expenseAccount = expenseAccount;
     }
 
     public static ProvisioningCriteriaDefinition newPrivisioningCriteria(ProvisioningCriteria criteria,
             ProvisioningCategory provisioningCategory, Long minimumAge, Long maximumAge, BigDecimal provisioningPercentage,
-            GLAccount liabilityAccount, GLAccount expenseAccount) {
+            GLAccount assetAccount, GLAccount expenseAccount) {
 
         return new ProvisioningCriteriaDefinition(criteria, provisioningCategory, minimumAge, maximumAge, provisioningPercentage,
-                liabilityAccount, expenseAccount);
+        		assetAccount, expenseAccount);
     }
     
-    public void update(Long minAge, Long maxAge, BigDecimal percentage, GLAccount lia, GLAccount exp) {
+    public void update(Long minAge, Long maxAge, BigDecimal percentage, GLAccount asset, GLAccount exp) {
         this.minimumAge = minAge ;
         this.maximumAge = maxAge ;
         this.provisioningPercentage = percentage ;
-        this.liabilityAccount = lia ;
+        this.assetAccount = asset ;
         this.expenseAccount = exp ;
     }
     
     
     public boolean isOverlapping(ProvisioningCriteriaDefinition def) {
         return this.minimumAge <= def.maximumAge && def.minimumAge <= this.maximumAge;
+    }
+    public boolean isGap(ProvisioningCriteriaDefinition def) {
+		return this.minimumAge <= def.maximumAge && this.maximumAge + 1 != def.minimumAge;
     }
 }

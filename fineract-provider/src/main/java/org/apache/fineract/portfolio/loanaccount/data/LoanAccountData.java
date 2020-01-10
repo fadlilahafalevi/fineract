@@ -228,6 +228,11 @@ public class LoanAccountData {
     private String linkAccountId;
     private Long groupId;
     private LocalDate expectedDisbursementDate;
+    
+    private String categoryByLoan;
+    private String categoryByCif;
+    private String categoryNameByLoan;
+    private String categoryNameByCif;
 
     public static LoanAccountData importInstanceIndividual(EnumOptionData loanTypeEnumOption,Long clientId,Long productId,
             Long loanOfficerId,LocalDate submittedOnDate,
@@ -1875,4 +1880,67 @@ public class LoanAccountData {
         return this.status.value();
     }
 
+
+	/**
+	 * @return the categoryByLoan
+	 */
+	public String getCategoryByLoan() {
+		return categoryByLoan;
+	}
+
+
+	/**
+	 * @param categoryByLoan the categoryByLoan to set
+	 */
+	public void setCategoryByLoan(String categoryByLoan) {
+		this.categoryByLoan = categoryByLoan;
+	}
+
+
+	/**
+	 * @return the categoryByCif
+	 */
+	public String getCategoryByCif() {
+		return categoryByCif;
+	}
+
+
+	/**
+	 * @param categoryByCif the categoryByCif to set
+	 */
+	public void setCategoryByCif(String categoryByCif) {
+		this.categoryByCif = categoryByCif;
+	}
+
+
+	/**
+	 * @return the categoryNameByLoan
+	 */
+	public String getCategoryNameByLoan() {
+		return categoryNameByLoan;
+	}
+
+
+	/**
+	 * @param categoryNameByLoan the categoryNameByLoan to set
+	 */
+	public void setCategoryNameByLoan(String categoryNameByLoan) {
+		this.categoryNameByLoan = categoryNameByLoan;
+	}
+
+
+	/**
+	 * @return the categoryNameByCif
+	 */
+	public String getCategoryNameByCif() {
+		return categoryNameByCif;
+	}
+
+
+	/**
+	 * @param categoryNameByCif the categoryNameByCif to set
+	 */
+	public void setCategoryNameByCif(String categoryNameByCif) {
+		this.categoryNameByCif = categoryNameByCif;
+	}
 }

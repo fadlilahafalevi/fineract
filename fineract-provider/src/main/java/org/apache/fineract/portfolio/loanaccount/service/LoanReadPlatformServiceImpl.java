@@ -641,7 +641,12 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " l.is_topup as isTopup, "
                     + " topup.closure_loan_id as closureLoanId, "
                     + " topuploan.account_no as closureLoanAccountNo, "
-                    + " topup.topup_amount as topupAmount "
+                    + " topup.topup_amount as topupAmount, "
+					+ " pcd1.asset_account as ppapAssetAccount, " 
+					+ " pcd1.category_id as categoryByLoan, "
+					+ " pc1.category_name as categoryNameByLoan, " 
+					+ " pcd2.category_id as categoryByCif, "
+					+ " pc2.category_name as  categoryNameByCif " 
                     + " from m_loan l" //
                     + " join m_product_loan lp on lp.id = l.product_id" //
                     + " left join m_loan_recalculation_details lir on lir.loan_id = l.id "
@@ -662,7 +667,13 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " left join ref_loan_transaction_processing_strategy lps on lps.id = l.loan_transaction_strategy_id"
                     + " left join m_product_loan_variable_installment_config lpvi on lpvi.loan_product_id = l.product_id"
                     + " left join m_loan_topup as topup on l.id = topup.loan_id"
-                    + " left join m_loan as topuploan on topuploan.id = topup.closure_loan_id";
+                    + " left join m_loan as topuploan on topuploan.id = topup.closure_loan_id"
+		            + " left join m_loanproduct_provisioning_mapping lpm on lpm.product_id = l.product_id "
+					+ " left join m_loan_collectibility lc on lc.loan_id = l.id "
+					+ " left join m_provisioning_criteria_definition pcd1 on pcd1.criteria_id = lpm.criteria_id and pcd1.category_id = lc.collectibility_account "
+					+ " left join m_provisioning_criteria_definition pcd2 on pcd2.criteria_id = lpm.criteria_id and pcd2.category_id = lc.collectibility_cif "
+					+ " left join m_provision_category pc1 on pc1.id = pcd1.category_id "
+					+ " left join m_provision_category pc2 on pc2.id = pcd2.category_id ";
 
         }
 
@@ -961,8 +972,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Long closureLoanId = rs.getLong("closureLoanId");
             final String closureLoanAccountNo = rs.getString("closureLoanAccountNo");
             final BigDecimal topupAmount = rs.getBigDecimal("topupAmount");
-
-            return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientAccountNo, clientName,
+			
+			LoanAccountData loanAccountData = LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientAccountNo, clientName,
                     clientOfficeId, groupData, loanType, loanProductId, loanProductName, loanProductDescription,
                     isLoanProductLinkedToFloatingRate, fundId, fundName, loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
                     currencyData, proposedPrincipal, principal, approvedPrincipal, totalOverpaid, inArrearsTolerance, termFrequency,
@@ -976,6 +987,18 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     graceOnArrearsAgeing, isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
                     interestRecalculationData, createStandingInstructionAtDisbursement, isvariableInstallmentsAllowed, minimumGap,
                     maximumGap, loanSubStatus, canUseForTopup, isTopup, closureLoanId, closureLoanAccountNo, topupAmount, isEqualAmortization);
+
+            final String categoryByLoan = rs.getString("categoryByLoan");
+			final String categoryNameByLoan = rs.getString("categoryNameByLoan");
+			final String categoryByCif = rs.getString("categoryByCif");
+			final String categoryNameByCif = rs.getString("categoryNameByCif");
+			
+			loanAccountData.setCategoryByLoan(categoryByLoan);
+			loanAccountData.setCategoryByCif(categoryByCif);
+			loanAccountData.setCategoryNameByLoan(categoryNameByLoan);
+			loanAccountData.setCategoryNameByCif(categoryNameByCif);
+			
+            return loanAccountData;
         }
     }
 

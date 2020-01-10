@@ -27,6 +27,7 @@ import java.util.Set;
 
 import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.accounting.glaccount.domain.GLAccountRepository;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.provisioning.constants.ProvisioningCriteriaConstants;
@@ -90,6 +91,8 @@ public class ProvisioningCriteriaAssembler {
             for (int j = i + 1; j < def.size(); j++) {
                 if (def.get(i).isOverlapping(def.get(j))) {
                     throw new ProvisioningCriteriaOverlappingDefinitionException() ;
+                } else if (def.get(i).isGap(def.get(j))) {
+                	throw new PlatformApiDataValidationException("error.msg.gap", "Gap", null);
                 }
             }
         }
@@ -135,13 +138,13 @@ public class ProvisioningCriteriaAssembler {
         Long maximumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MAXIMUM_AGE_PARAM, jsonObject);
         BigDecimal provisioningpercentage = this.fromApiJsonHelper.extractBigDecimalNamed(ProvisioningCriteriaConstants.JSON_PROVISIONING_PERCENTAGE_PARAM,
                 jsonObject, locale);
-        Long liabilityAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_LIABILITY_ACCOUNT_PARAM, jsonObject);
+        Long assetAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM, jsonObject);
         Long expenseAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_EXPENSE_ACCOUNT_PARAM, jsonObject);
 
         ProvisioningCategory provisioningCategory = provisioningCategoryRepository.findOne(categoryId);
-        GLAccount liabilityAccount = glAccountRepository.findOne(liabilityAccountId);
+        GLAccount assetAccount = glAccountRepository.findOne(assetAccountId);
         GLAccount expenseAccount = glAccountRepository.findOne(expenseAccountId);
         return ProvisioningCriteriaDefinition.newPrivisioningCriteria(criteria, provisioningCategory, minimumAge, maximumAge,
-                provisioningpercentage, liabilityAccount, expenseAccount);
+                provisioningpercentage, assetAccount, expenseAccount);
     }
 }

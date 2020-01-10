@@ -60,7 +60,7 @@ public class ProvisioningCriteriaDefinitionJsonDeserializer implements Provision
 	private final static Set<String> provisioningcriteriaSupportedParams = new HashSet<>(
 			Arrays.asList(JSON_CATEOGRYID_PARAM, JSON_CATEOGRYNAME_PARAM, JSON_MINIMUM_AGE_PARAM,
 					JSON_MAXIMUM_AGE_PARAM, JSON_MINIMUM_AGE_PARAM, JSON_PROVISIONING_PERCENTAGE_PARAM,
-					JSON_EXPENSE_ACCOUNT_PARAM, JSON_LIABILITY_ACCOUNT_PARAM));
+					JSON_EXPENSE_ACCOUNT_PARAM, JSON_LIABILITY_ACCOUNT_PARAM, JSON_ASSET_ACCOUNT_PARAM));
 
     @Autowired
     public ProvisioningCriteriaDefinitionJsonDeserializer(final FromJsonHelper fromApiJsonHelper) {
@@ -133,10 +133,10 @@ public class ProvisioningCriteriaDefinitionJsonDeserializer implements Provision
                         .parameterAtIndexArray(ProvisioningCriteriaConstants.JSON_PROVISIONING_PERCENTAGE_PARAM, i + 1).value(provisioningpercentage)
                         .notNull().zeroOrPositiveAmount();
 
-                Long liabilityAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_LIABILITY_ACCOUNT_PARAM,
+                Long assetAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM,
                         jsonObject);
-                baseDataValidator.reset().parameter(ProvisioningCriteriaConstants.JSON_LIABILITY_ACCOUNT_PARAM)
-                        .parameterAtIndexArray(ProvisioningCriteriaConstants.JSON_LIABILITY_ACCOUNT_PARAM, i + 1).value(liabilityAccountId)
+                baseDataValidator.reset().parameter(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM)
+                        .parameterAtIndexArray(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM, i + 1).value(assetAccountId)
                         .notNull().longGreaterThanZero() ;
 
                 Long expenseAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_EXPENSE_ACCOUNT_PARAM,
@@ -220,10 +220,10 @@ public class ProvisioningCriteriaDefinitionJsonDeserializer implements Provision
                         .parameterAtIndexArray(ProvisioningCriteriaConstants.JSON_PROVISIONING_PERCENTAGE_PARAM, i + 1).value(provisioningpercentage)
                         .notNull().zeroOrPositiveAmount();
 
-                Long liabilityAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_LIABILITY_ACCOUNT_PARAM,
+                Long assetAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM,
                         jsonObject);
-                baseDataValidator.reset().parameter(ProvisioningCriteriaConstants.JSON_PROVISIONING_DEFINITIONS_PARAM)
-                        .parameterAtIndexArray(ProvisioningCriteriaConstants.JSON_LIABILITY_ACCOUNT_PARAM, i + 1).value(liabilityAccountId)
+                baseDataValidator.reset().parameter(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM)
+                        .parameterAtIndexArray(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM, i + 1).value(assetAccountId)
                         .notNull().longGreaterThanZero() ;
 
                 Long expenseAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_EXPENSE_ACCOUNT_PARAM,
