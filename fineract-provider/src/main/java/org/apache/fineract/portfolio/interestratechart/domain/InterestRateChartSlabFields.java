@@ -227,9 +227,8 @@ public class InterestRateChartSlabFields {
     }
 
     public static boolean isNotProperAmountStart(final InterestRateChartSlabFields interestRateChartSlabFields) {
-        return interestRateChartSlabFields.amountRangeFrom != null
-                && (interestRateChartSlabFields.amountRangeFrom.compareTo(BigDecimal.ONE) != 0 && interestRateChartSlabFields.amountRangeFrom
-                        .compareTo(BigDecimal.ZERO) != 0);
+    	return interestRateChartSlabFields.amountRangeFrom != null
+                && interestRateChartSlabFields.amountRangeFrom.compareTo(BigDecimal.ZERO) == 0;
     }
 
     private boolean isNotProperAmountStart(final BigDecimal amount) {
