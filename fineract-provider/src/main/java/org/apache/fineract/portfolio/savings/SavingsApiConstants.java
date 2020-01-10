@@ -136,6 +136,7 @@ public class    SavingsApiConstants {
     public static final String savingsAmountOnHold = "savingsAmountOnHold";
     public static final String withHoldTaxParamName = "withHoldTax";
     public static final String taxGroupIdParamName = "taxGroupId";
+    public static final String interestCompoundingTypeParamName = "interestCompoundingType";
 
     // transaction parameters
     public static final String transactionDateParamName = "transactionDate";

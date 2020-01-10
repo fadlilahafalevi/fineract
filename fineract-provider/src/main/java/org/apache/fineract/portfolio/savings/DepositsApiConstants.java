@@ -256,6 +256,7 @@ public class DepositsApiConstants {
         fixedDepositRequestData.addAll(DEPOSIT_PRODUCT_REQUEST_DATA_PARAMETERS);
         fixedDepositRequestData.addAll(PRECLOSURE_REQUEST_DATA_PARAMETERS);
         fixedDepositRequestData.addAll(DEPOSIT_TERM_REQUEST_DATA_PARAMETERS);
+        fixedDepositRequestData.add(SavingsApiConstants.interestCompoundingTypeParamName);
         return fixedDepositRequestData;
     }
 

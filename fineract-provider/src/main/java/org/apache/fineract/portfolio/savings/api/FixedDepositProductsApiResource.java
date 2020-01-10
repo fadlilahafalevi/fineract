@@ -250,7 +250,11 @@ public class FixedDepositProductsApiResource {
         if (currencyOptions.size() == 1) {
             currency = new ArrayList<>(currencyOptions).get(0);
         }
-
+        
+        //Afad - Create new interest Compounding Type
+        final Collection<EnumOptionData> interestCompoundingTypeOptions = this.savingsDropdownReadPlatformService.
+        		retrieveInterestCompoundingTypeOptions();
+        
         final Collection<EnumOptionData> interestCompoundingPeriodTypeOptions = this.savingsDropdownReadPlatformService
                 .retrieveCompoundingInterestPeriodTypeOptions();
 
@@ -302,6 +306,7 @@ public class FixedDepositProductsApiResource {
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
                     preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, taxGroupOptions);
+            fixedDepositProductToReturn.setInterestCompoundingType(savingsProduct.getInterestCompoundingType());
         } else {
             fixedDepositProductToReturn = FixedDepositProductData.template(currency, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
@@ -310,6 +315,7 @@ public class FixedDepositProductsApiResource {
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
                     preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, taxGroupOptions);
         }
+        fixedDepositProductToReturn.setInterestCompoundingTypeOptions(interestCompoundingTypeOptions);
 
         return fixedDepositProductToReturn;
     }

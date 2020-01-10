@@ -83,6 +83,7 @@ import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
@@ -206,6 +207,10 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
 
     @Column(name = "days_to_escheat")
 	private Long daysToEscheat;
+    
+    //Afad 20200110
+  	@Column(name = "interest_compounding_type_enum", nullable = false)
+  	protected Integer interestCompoundingTypeEnum;
 
     public static SavingsProduct createNew(final String name, final String shortName, final String description,
             final MonetaryCurrency currency, final BigDecimal interestRate,
@@ -600,6 +605,12 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
         	this.daysToDormancy = null;
         	this.daysToEscheat = null;
         }
+        
+        if (command.isChangeInIntegerParameterNamed(SavingsApiConstants.interestCompoundingTypeParamName, this.interestCompoundingTypeEnum)) {
+			final Integer newValue = command.integerValueOfParameterNamed(SavingsApiConstants.interestCompoundingTypeParamName);
+			actualChanges.put(SavingsApiConstants.interestCompoundingTypeParamName, newValue);
+			this.interestCompoundingTypeEnum = newValue;
+		}
 
         validateLockinDetails();
         esnureOverdraftLimitsSetForOverdraftAccounts();
@@ -749,6 +760,14 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
 
 	public Long getDaysToEscheat() {
 		return this.daysToEscheat;
+	}
+
+	public Integer getInterestCompoundingTypeEnum() {
+		return interestCompoundingTypeEnum;
+	}
+
+	public void setInterestCompoundingTypeEnum(Integer interestCompoundingTypeEnum) {
+		this.interestCompoundingTypeEnum = interestCompoundingTypeEnum;
 	}
 
 }

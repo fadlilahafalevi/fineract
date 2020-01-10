@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
+import org.apache.fineract.portfolio.savings.CompoundingType;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
@@ -108,4 +109,16 @@ public class SavingsDropdownReadPlatformServiceImpl implements SavingsDropdownRe
 
         return allowedOptions;
     }
+    
+    
+    //Afad - Create new interest Compounding Type
+    @Override
+	public Collection<EnumOptionData> retrieveInterestCompoundingTypeOptions() {
+		final List<EnumOptionData> allowedOptions = Arrays.asList( //
+                CompoundingType.compoundingType(CompoundingType.COMPOUNDING), //
+                CompoundingType.compoundingType(CompoundingType.NON_COMPOUNDING) //
+                );
+		
+		return allowedOptions;
+	}
 }
