@@ -110,9 +110,9 @@ public class AccountNumberGenerator {
             }
 
             // FINERACT-590
-            // Because account_no is limited to 20 chars, we can only use the first 10 chars of prefix - trim if necessary
+            // Because account_no is limited to 40 chars, we can only use the first 25 chars of prefix - trim if necessary
             if (prefix != null) {
-                prefix = prefix.substring(0, Math.min(prefix.length(), 10));
+                prefix = prefix.substring(0, Math.min(prefix.length(), 25));
             }
 
             accountNumber = StringUtils.overlay(accountNumber, prefix, 0, 0);
