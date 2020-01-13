@@ -20,7 +20,7 @@ package org.apache.fineract.accounting.provisioning.data;
 
 import java.math.BigDecimal;
 
-public class LoanProductProvisioningEntryData {
+public class LoanAccountProvisioningEntryData {
 
     private final Long historyId;
 
@@ -30,21 +30,31 @@ public class LoanProductProvisioningEntryData {
     
     private final String currencyCode;
 
-    private final Long productId;
+    private final Long loanId;
 
     private final String productName ;
     
     private final Long categoryId;
+    
+    private final Long categoryIdByCif;
 
     private final String categoryName ;
     
     private final Long overdueInDays;
 
     private final BigDecimal percentage;
+    
+    private final BigDecimal percentageByCif;
 
     private final BigDecimal balance;
 
-    private final BigDecimal amountreserved ;
+    private final BigDecimal amountReserved ;
+    
+    private final BigDecimal oldAmountReserved ;
+    
+    private final BigDecimal amountReservedByCif ;
+    
+    private final BigDecimal oldAmountReservedByCif ;
     
     private final Long assetAccount;
 
@@ -60,20 +70,26 @@ public class LoanProductProvisioningEntryData {
     
     private final Long criteriaId ;
     
-    public LoanProductProvisioningEntryData(final Long historyId, final Long officeId, final String currencyCode, final Long productId,
-            final Long categoryId, final Long overdueInDays, final BigDecimal percentage, final BigDecimal balance, Long assetAccount,
-            Long expenseAccount, final Long criteriaId) {
+    private BigDecimal principal;
+    
+    private final String loanAccountNumber;
+    
+    public LoanAccountProvisioningEntryData(final Long historyId, final Long officeId, final String currencyCode, final Long loanId,
+            final Long categoryId, final Long categoryIdByCif, final Long overdueInDays, final BigDecimal percentage, final BigDecimal percentageByCif, final BigDecimal balance, Long assetAccount,
+            Long expenseAccount, final Long criteriaId, final String loanAccountNumber) {
         this.historyId = historyId;
         this.officeId = officeId;
         this.currencyCode = currencyCode;
-        this.productId = productId;
+        this.loanId = loanId;
         this.categoryId = categoryId;
+        this.categoryIdByCif = categoryIdByCif;
         this.overdueInDays = overdueInDays;
         this.percentage = percentage;
+        this.percentageByCif = percentageByCif;
         this.balance = balance;
         this.assetAccount = assetAccount;
         this.expenseAccount = expenseAccount;
-        this.amountreserved = null ;
+        this.amountReserved = null ;
         this.officeName = null ;
         this.productName = null ;
         this.categoryName = null ;
@@ -82,30 +98,41 @@ public class LoanProductProvisioningEntryData {
         this.expenseAccountCode = null ;
         this.expenseAccountName = null ;
         this.criteriaId = criteriaId ;
+        this.amountReservedByCif = null;
+        this.oldAmountReserved = null;
+        this.oldAmountReservedByCif = null;
+        this.loanAccountNumber = loanAccountNumber;
     }
 
-    public LoanProductProvisioningEntryData(final Long historyId, final Long officeId, final String officeName, final String currencyCode, final Long productId,
-            final String productName, final Long categoryId, final String categoryName, final Long overdueInDays, final BigDecimal amountReserved, 
-            Long assetAccount, String assetAccountglCode, String assetAccountName, Long expenseAccount, String expenseAccountglCode, String expenseAccountName, final Long criteriaId) {
+    public LoanAccountProvisioningEntryData(final Long historyId, final Long officeId, final String officeName, final String currencyCode, final Long loanId,
+            final String productName, final Long categoryId, final Long categoryIdByCif, final String categoryName, final Long overdueInDays, final BigDecimal amountReserved, final BigDecimal oldAmountReserved, final BigDecimal amountReservedByCif, final BigDecimal oldAmountReservedByCif, 
+            Long assetAccount, String assetAccountglCode, String assetAccountName, Long expenseAccount, String expenseAccountglCode, String expenseAccountName, final Long criteriaId, final BigDecimal manualPercentage, final Long criteriaManual,
+            final String loanAccountNumber) {
         this.historyId = historyId;
         this.officeId = officeId;
         this.currencyCode = currencyCode;
-        this.productId = productId;
+        this.loanId = loanId;
         this.categoryId = categoryId;
+        this.categoryIdByCif = categoryIdByCif;
         this.categoryName = categoryName ;
         this.overdueInDays = overdueInDays;
         this.percentage = null;
+        this.percentageByCif = null;
         this.balance = null;
         this.assetAccount = assetAccount;
         this.expenseAccount = expenseAccount;
         this.officeName = officeName ;
         this.productName = productName ;
-        this.amountreserved = amountReserved ;
+        this.amountReserved = amountReserved ;
         this.assetAccountCode = assetAccountglCode ;
         this.assetAccountName = assetAccountName ;
         this.expenseAccountCode = expenseAccountglCode ;
         this.expenseAccountName = expenseAccountName ;
         this.criteriaId = criteriaId ;
+        this.amountReservedByCif = amountReservedByCif;
+        this.oldAmountReserved = oldAmountReserved;
+        this.oldAmountReservedByCif = oldAmountReservedByCif;
+        this.loanAccountNumber = loanAccountNumber;
     }
     public Long getHistoryId() {
         return this.historyId;
@@ -115,8 +142,8 @@ public class LoanProductProvisioningEntryData {
         return this.officeId;
     }
 
-    public Long getProductId() {
-        return this.productId;
+    public Long getLoanId() {
+        return this.loanId;
     }
 
     public Long getCategoryId() {
@@ -146,9 +173,35 @@ public class LoanProductProvisioningEntryData {
     public String getCurrencyCode() {
         return this.currencyCode;
     }
-    
+
     public Long getCriteriaId() {
         return this.criteriaId ;
     }
 
+	public BigDecimal getOldAmountReserved() {
+		return oldAmountReserved;
+	}
+
+	public BigDecimal getAmountReservedByCif() {
+		return amountReservedByCif;
+	}
+
+	public BigDecimal getOldAmountReservedByCif() {
+		return oldAmountReservedByCif;
+	}
+
+	public Long getCategoryIdByCif() {
+		return categoryIdByCif;
+	}
+
+	public BigDecimal getPercentageByCif() {
+		return percentageByCif;
+	}
+	public BigDecimal getPrincipal() {
+		return principal;
+	}
+
+	public void setPrincipal(BigDecimal principal) {
+		this.principal = principal;
+	}
 }

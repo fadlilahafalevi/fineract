@@ -631,6 +631,7 @@ public class LoansApiResource {
         loanAccount.setCategoryByLoan(loanBasicDetails.getCategoryByLoan());
         loanAccount.setCategoryNameByCif(loanBasicDetails.getCategoryNameByCif());
         loanAccount.setCategoryNameByLoan(loanBasicDetails.getCategoryNameByLoan());
+        loanAccount.setReservedAmount(loanBasicDetails.getReservedAmount());
         
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);

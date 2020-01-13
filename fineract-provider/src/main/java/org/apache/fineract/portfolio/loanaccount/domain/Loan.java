@@ -161,34 +161,34 @@ public class Loan extends AbstractPersistableCustom<Long> {
     @Column(name = "external_id")
     private String externalId;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "client_id", nullable = true)
     private Client client;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "group_id", nullable = true)
     private Group group;
 
     @Column(name = "loan_type_enum", nullable = false)
     private Integer loanType;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch=FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = false)
     private LoanProduct loanProduct;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(optional = true, fetch=FetchType.EAGER)
     @JoinColumn(name = "fund_id", nullable = true)
     private Fund fund;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch=FetchType.EAGER)
     @JoinColumn(name = "loan_officer_id", nullable = true)
     private Staff loanOfficer;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name = "loanpurpose_cv_id", nullable = true)
     private CodeValue loanPurpose;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch=FetchType.EAGER)
     @JoinColumn(name = "loan_transaction_strategy_id", nullable = true)
     private LoanTransactionProcessingStrategy transactionProcessingStrategy;
 

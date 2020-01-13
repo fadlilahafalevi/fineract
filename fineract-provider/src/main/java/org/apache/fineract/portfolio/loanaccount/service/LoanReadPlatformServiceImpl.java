@@ -646,7 +646,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 					+ " pcd1.category_id as categoryByLoan, "
 					+ " pc1.category_name as categoryNameByLoan, " 
 					+ " pcd2.category_id as categoryByCif, "
-					+ " pc2.category_name as  categoryNameByCif " 
+					+ " pc2.category_name as  categoryNameByCif, " 
+					+ " lape.reserved_amount_by_cif as reservedAmount "
                     + " from m_loan l" //
                     + " join m_product_loan lp on lp.id = l.product_id" //
                     + " left join m_loan_recalculation_details lir on lir.loan_id = l.id "
@@ -673,7 +674,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 					+ " left join m_provisioning_criteria_definition pcd1 on pcd1.criteria_id = lpm.criteria_id and pcd1.category_id = lc.collectibility_account "
 					+ " left join m_provisioning_criteria_definition pcd2 on pcd2.criteria_id = lpm.criteria_id and pcd2.category_id = lc.collectibility_cif "
 					+ " left join m_provision_category pc1 on pc1.id = pcd1.category_id "
-					+ " left join m_provision_category pc2 on pc2.id = pcd2.category_id ";
+					+ " left join m_provision_category pc2 on pc2.id = pcd2.category_id "
+					+ " left join m_loanaccount_provisioning_entry lape on lape.loan_id = l.id and lape.history_id = (select max(id) from m_provisioning_history) ";
 
         }
 
@@ -992,11 +994,13 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 			final String categoryNameByLoan = rs.getString("categoryNameByLoan");
 			final String categoryByCif = rs.getString("categoryByCif");
 			final String categoryNameByCif = rs.getString("categoryNameByCif");
+			final BigDecimal reservedAmount = rs.getBigDecimal("reservedAmount");
 			
 			loanAccountData.setCategoryByLoan(categoryByLoan);
 			loanAccountData.setCategoryByCif(categoryByCif);
 			loanAccountData.setCategoryNameByLoan(categoryNameByLoan);
 			loanAccountData.setCategoryNameByCif(categoryNameByCif);
+			loanAccountData.setReservedAmount(reservedAmount);
 			
             return loanAccountData;
         }

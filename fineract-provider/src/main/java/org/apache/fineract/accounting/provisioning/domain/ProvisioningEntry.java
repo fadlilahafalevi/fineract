@@ -44,10 +44,13 @@ public class ProvisioningEntry extends AbstractPersistableCustom<Long> {
     @Column(name = "journal_entry_created")
     private Boolean isJournalEntryCreated;
     
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "entry", orphanRemoval = true, fetch=FetchType.EAGER)
-    private Set<LoanProductProvisioningEntry> provisioningEntries = new HashSet<>();
+/*    @OneToMany(cascade = CascadeType.ALL, mappedBy = "entry", orphanRemoval = true, fetch=FetchType.EAGER)
+    private Set<LoanProductProvisioningEntry> provisioningEntries = new HashSet<>();*/
     
-    @OneToOne
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "entry", orphanRemoval = true)
+    Collection<LoanAccountProvisioningEntry> provisioningEntries = new HashSet<>();
+    
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "createdby_id")
     private AppUser createdBy;
 
@@ -55,7 +58,7 @@ public class ProvisioningEntry extends AbstractPersistableCustom<Long> {
     @Temporal(TemporalType.DATE)
     private Date createdDate;
 
-    @OneToOne
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "lastmodifiedby_id")
     private AppUser lastModifiedBy;
 
@@ -67,7 +70,7 @@ public class ProvisioningEntry extends AbstractPersistableCustom<Long> {
         
     }
     
-    public ProvisioningEntry(AppUser createdBy, Date createdDate, AppUser lastModifiedBy, Date lastModifiedDate, Set<LoanProductProvisioningEntry> provisioningEntries ) {
+    public ProvisioningEntry(AppUser createdBy, Date createdDate, AppUser lastModifiedBy, Date lastModifiedDate, Set<LoanAccountProvisioningEntry> provisioningEntries ) {
         this.provisioningEntries = provisioningEntries ;
         this.createdBy = createdBy ;
         this.createdDate = createdDate ;
@@ -75,12 +78,12 @@ public class ProvisioningEntry extends AbstractPersistableCustom<Long> {
         this.lastModifiedDate = lastModifiedDate ;
     }
     
-    public void setProvisioningEntries(Collection<LoanProductProvisioningEntry> provisioningEntries) {
+    public void setProvisioningEntries(Collection<LoanAccountProvisioningEntry> provisioningEntries) {
         if(this.provisioningEntries == null) this.provisioningEntries = new HashSet<>(); 
         this.provisioningEntries.addAll(provisioningEntries) ;
     }
     
-    public Collection<LoanProductProvisioningEntry> getLoanProductProvisioningEntries() {
+    public Collection<LoanAccountProvisioningEntry> getLoanAccountProvisioningEntries() {
         return this.provisioningEntries ;
     }
     

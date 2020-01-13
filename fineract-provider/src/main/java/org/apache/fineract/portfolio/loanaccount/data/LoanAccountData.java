@@ -233,6 +233,7 @@ public class LoanAccountData {
     private String categoryByCif;
     private String categoryNameByLoan;
     private String categoryNameByCif;
+    private BigDecimal reservedAmount;
 
     public static LoanAccountData importInstanceIndividual(EnumOptionData loanTypeEnumOption,Long clientId,Long productId,
             Long loanOfficerId,LocalDate submittedOnDate,
@@ -1942,5 +1943,21 @@ public class LoanAccountData {
 	 */
 	public void setCategoryNameByCif(String categoryNameByCif) {
 		this.categoryNameByCif = categoryNameByCif;
+	}
+
+
+	/**
+	 * @return the reservedAmount
+	 */
+	public BigDecimal getReservedAmount() {
+		return reservedAmount;
+	}
+
+
+	/**
+	 * @param reservedAmount the reservedAmount to set
+	 */
+	public void setReservedAmount(BigDecimal reservedAmount) {
+		this.reservedAmount = reservedAmount;
 	}
 }

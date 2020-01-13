@@ -31,6 +31,7 @@ import javax.ws.rs.core.UriInfo;
 
 import io.swagger.annotations.*;
 import org.apache.fineract.accounting.provisioning.constant.ProvisioningEntriesApiConstants;
+import org.apache.fineract.accounting.provisioning.data.LoanAccountProvisioningEntryData;
 import org.apache.fineract.accounting.provisioning.data.LoanProductProvisioningEntryData;
 import org.apache.fineract.accounting.provisioning.data.ProvisioningEntryData;
 import org.apache.fineract.accounting.provisioning.service.ProvisioningEntriesReadPlatformService;
@@ -145,7 +146,7 @@ public class ProvisioningEntriesApiResource {
             @QueryParam("productId") final Long productId, @QueryParam("categoryId") final Long categoryId, @Context final UriInfo uriInfo) {
         this.platformSecurityContext.authenticatedUser();
         SearchParameters params = SearchParameters.forProvisioningEntries(entryId, officeId, productId, categoryId, offset, limit);
-        Page<LoanProductProvisioningEntryData> entries = this.provisioningEntriesReadPlatformService.retrieveProvisioningEntries(params);
+        Page<LoanAccountProvisioningEntryData> entries = this.provisioningEntriesReadPlatformService.retrieveProvisioningEntriesByAccount(params);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.entriesApiJsonSerializer.serialize(settings, entries, PROVISIONING_ENTRY_PARAMETERS);
     }
