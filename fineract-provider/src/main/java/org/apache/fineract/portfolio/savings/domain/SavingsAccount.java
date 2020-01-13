@@ -327,6 +327,10 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     @Column(name = "total_savings_amount_on_hold", scale = 6, precision = 19, nullable = true)
     private BigDecimal savingsOnHoldAmount;
+    
+    @Column(name = "interest_compounding_type_enum", nullable = true)
+	protected Integer interestCompoundingTypeEnum;
+    
     protected SavingsAccount() {
         //
     }
@@ -1393,6 +1397,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             }
         }
 
+        if (command.isChangeInIntegerParameterNamed(SavingsApiConstants.interestCompoundingTypeParamName, this.getInterestCompoundingTypeEnum())) {
+			final Integer newValue = command.integerValueOfParameterNamed(SavingsApiConstants.interestCompoundingTypeParamName);
+			actualChanges.put(SavingsApiConstants.interestCompoundingTypeParamName, newValue);
+			this.setInterestCompoundingTypeEnum(newValue);
+				
+		}
+        
         validateLockinDetails(baseDataValidator);
         esnureOverdraftLimitsSetForOverdraftAccounts();
     }
@@ -3065,5 +3076,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     private boolean isOverdraft() {
     		return allowOverdraft;
     }
+
+	public Integer getInterestCompoundingTypeEnum() {
+		return interestCompoundingTypeEnum;
+	}
+
+	public void setInterestCompoundingTypeEnum(Integer interestCompoundingTypeEnum) {
+		this.interestCompoundingTypeEnum = interestCompoundingTypeEnum;
+	}
 
 }

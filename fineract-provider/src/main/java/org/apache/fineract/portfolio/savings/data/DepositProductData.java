@@ -56,6 +56,7 @@ public class DepositProductData {
     protected final BigDecimal minBalanceForInterestCalculation;
     protected final boolean withHoldTax;
     protected final TaxGroupData taxGroup;
+    protected EnumOptionData interestCompoundingType;
 
     // accounting
     protected final EnumOptionData accountingRule;
@@ -86,6 +87,7 @@ public class DepositProductData {
     protected final Collection<ChargeData> penaltyOptions;
     protected final InterestRateChartData chartTemplate;
     protected final Collection<TaxGroupData> taxGroupOptions;
+    protected Collection<EnumOptionData> interestCompoundingTypeOptions;
 
     public static DepositProductData template(final CurrencyData currency, final EnumOptionData interestCompoundingPeriodType,
             final EnumOptionData interestPostingPeriodType, final EnumOptionData interestCalculationType,
@@ -455,5 +457,21 @@ public class DepositProductData {
     public EnumOptionData getInterestCompoundingPeriodType() {
         return interestCompoundingPeriodType;
     }
+
+    public EnumOptionData getInterestCompoundingType() {
+		return interestCompoundingType;
+	}
+
+	public void setInterestCompoundingType(EnumOptionData interestCompoundingType) {
+		this.interestCompoundingType = interestCompoundingType;
+	}
+
+	public Collection<EnumOptionData> getInterestCompoundingTypeOptions() {
+		return interestCompoundingTypeOptions;
+	}
+
+	public void setInterestCompoundingTypeOptions(Collection<EnumOptionData> interestCompoundingTypeOptions) {
+		this.interestCompoundingTypeOptions = interestCompoundingTypeOptions;
+	}
 }
 

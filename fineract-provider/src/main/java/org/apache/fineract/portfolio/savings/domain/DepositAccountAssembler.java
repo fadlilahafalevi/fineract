@@ -84,6 +84,7 @@ import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetailAssembler;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
@@ -300,6 +301,8 @@ public class DepositAccountAssembler {
                 throw new UnsupportedParameterException(Arrays.asList(withHoldTaxParamName));
             }
         }
+        
+        final Integer interestCompoundingType = command.integerValueOfParameterNamed(SavingsApiConstants.interestCompoundingTypeParamName);
 
         SavingsAccount account = null;
         if (depositAccountType.isFixedDeposit()) {
@@ -313,6 +316,7 @@ public class DepositAccountAssembler {
                     lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, charges,
                     accountTermAndPreClosure, accountChart, withHoldTax);
             accountTermAndPreClosure.updateAccountReference(fdAccount);
+            fdAccount.setInterestCompoundingTypeEnum(interestCompoundingType); 
             fdAccount.validateDomainRules();
             account = fdAccount;
         } else if (depositAccountType.isRecurringDeposit()) {

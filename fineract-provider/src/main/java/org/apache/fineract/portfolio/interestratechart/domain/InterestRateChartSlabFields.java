@@ -227,6 +227,7 @@ public class InterestRateChartSlabFields {
     }
 
     public static boolean isNotProperAmountStart(final InterestRateChartSlabFields interestRateChartSlabFields) {
+    	//Afad - Pengecekan jika field tidak kosong dan bukan 0, ERROR karena kesalahan Logic [Penghapusan !]
     	return interestRateChartSlabFields.amountRangeFrom != null
                 && interestRateChartSlabFields.amountRangeFrom.compareTo(BigDecimal.ZERO) == 0;
     }
@@ -240,12 +241,14 @@ public class InterestRateChartSlabFields {
     }
 
     public static boolean isNotProperPeriodStart(InterestRateChartSlabFields interestRateChartSlabFields) {
-        return interestRateChartSlabFields.fromPeriod != null
-                && !(interestRateChartSlabFields.fromPeriod.equals(1) || interestRateChartSlabFields.fromPeriod.equals(0));
+    	//Afad - Pengecekan jika field tidak kosong dan sama dengan 0, ERROR karena kesalahan Logic [Penghapusan !]
+    	return interestRateChartSlabFields.fromPeriod != null
+                && interestRateChartSlabFields.fromPeriod.equals(0);
     }
 
     public boolean isNotProperPriodEnd() {
-        return !(this.toPeriod == null && this.amountRangeTo == null);
+    	//Afad - ERROR karena kesalahan Logic [Penghapusan !] Sebelumnya -> return !(this.toPeriod == null && this.amountRangeTo == null);
+        return (this.toPeriod == null && this.amountRangeTo == null);
 
     }
 

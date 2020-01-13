@@ -209,7 +209,7 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
 	private Long daysToEscheat;
     
     //Afad 20200110
-  	@Column(name = "interest_compounding_type_enum", nullable = false)
+  	@Column(name = "interest_compounding_type_enum", nullable = true)
   	protected Integer interestCompoundingTypeEnum;
 
     public static SavingsProduct createNew(final String name, final String shortName, final String description,

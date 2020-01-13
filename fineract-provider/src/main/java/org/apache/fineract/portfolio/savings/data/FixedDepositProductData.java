@@ -51,11 +51,9 @@ public class FixedDepositProductData extends DepositProductData {
     protected BigDecimal minDepositAmount;
     protected BigDecimal depositAmount;
     protected BigDecimal maxDepositAmount;
-    protected EnumOptionData interestCompoundingType;
 
     private Collection<EnumOptionData> preClosurePenalInterestOnTypeOptions;
     private Collection<EnumOptionData> periodFrequencyTypeOptions;
-    protected Collection<EnumOptionData> interestCompoundingTypeOptions;
 
     public static FixedDepositProductData template(final CurrencyData currency, final EnumOptionData interestCompoundingPeriodType,
             final EnumOptionData interestPostingPeriodType, final EnumOptionData interestCalculationType,
@@ -459,20 +457,4 @@ public class FixedDepositProductData extends DepositProductData {
     public boolean isPreClosurePenalApplicable() {
         return preClosurePenalApplicable;
     }
-
-    public EnumOptionData getInterestCompoundingType() {
-		return interestCompoundingType;
-	}
-
-	public void setInterestCompoundingType(EnumOptionData interestCompoundingType) {
-		this.interestCompoundingType = interestCompoundingType;
-	}
-
-	public Collection<EnumOptionData> getInterestCompoundingTypeOptions() {
-		return interestCompoundingTypeOptions;
-	}
-
-	public void setInterestCompoundingTypeOptions(Collection<EnumOptionData> interestCompoundingTypeOptions) {
-		this.interestCompoundingTypeOptions = interestCompoundingTypeOptions;
-	}
 }

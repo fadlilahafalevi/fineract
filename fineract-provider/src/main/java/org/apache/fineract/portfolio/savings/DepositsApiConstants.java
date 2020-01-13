@@ -315,6 +315,7 @@ public class DepositsApiConstants {
         fixedDepositRequestData.addAll(DEPOSIT_TERM_REQUEST_DATA_PARAMETERS);
         fixedDepositRequestData.add(linkedAccountParamName);
         fixedDepositRequestData.add(transferInterestToSavingsParamName);
+        fixedDepositRequestData.add(SavingsApiConstants.interestCompoundingTypeParamName);
         return fixedDepositRequestData;
     }
 

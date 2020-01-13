@@ -62,6 +62,7 @@ public class SavingsProductData {
     private final boolean withHoldTax;
     private final TaxGroupData taxGroup;
     private String depositAccountType = null;
+    protected EnumOptionData interestCompoundingType;
 
     // accounting
     private final EnumOptionData accountingRule;
@@ -91,6 +92,7 @@ public class SavingsProductData {
 	private final Long daysToInactive;
 	private final Long daysToDormancy;
 	private final Long daysToEscheat;
+    protected Collection<EnumOptionData> interestCompoundingTypeOptions;
 
     public static SavingsProductData template(final CurrencyData currency, final EnumOptionData interestCompoundingPeriodType,
             final EnumOptionData interestPostingPeriodType, final EnumOptionData interestCalculationType,
@@ -145,7 +147,7 @@ public class SavingsProductData {
     }
 
     public static SavingsProductData withCharges(final SavingsProductData product, final Collection<ChargeData> charges) {
-        return new SavingsProductData(product.id, product.name, product.shortName, product.description, product.currency,
+        SavingsProductData savingsProductData = new SavingsProductData(product.id, product.name, product.shortName, product.description, product.currency,
                 product.nominalAnnualInterestRate, product.interestCompoundingPeriodType, product.interestPostingPeriodType,
                 product.interestCalculationType, product.interestCalculationDaysInYearType, product.minRequiredOpeningBalance,
                 product.lockinPeriodFrequency, product.lockinPeriodFrequencyType, product.withdrawalFeeForTransfers,
@@ -159,6 +161,8 @@ public class SavingsProductData {
                 product.nominalAnnualInterestRateOverdraft, product.minOverdraftForInterestCalculation, product.withHoldTax,
                 product.taxGroup, product.taxGroupOptions, product.isDormancyTrackingActive, product.daysToInactive, 
                 product.daysToDormancy, product.daysToEscheat);
+        savingsProductData.setInterestCompoundingType(product.interestCompoundingType);
+        return savingsProductData;
     }
 
     /**
@@ -501,4 +505,20 @@ public class SavingsProductData {
     public boolean isWithdrawalFeeForTransfers() {
         return withdrawalFeeForTransfers;
     }
+
+	public EnumOptionData getInterestCompoundingType() {
+		return interestCompoundingType;
+	}
+
+	public void setInterestCompoundingType(EnumOptionData interestCompoundingType) {
+		this.interestCompoundingType = interestCompoundingType;
+	}
+
+	public Collection<EnumOptionData> getInterestCompoundingTypeOptions() {
+		return interestCompoundingTypeOptions;
+	}
+
+	public void setInterestCompoundingTypeOptions(Collection<EnumOptionData> interestCompoundingTypeOptions) {
+		this.interestCompoundingTypeOptions = interestCompoundingTypeOptions;
+	}
 }

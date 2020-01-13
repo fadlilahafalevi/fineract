@@ -31,6 +31,7 @@ import org.apache.fineract.infrastructure.entityaccess.domain.FineractEntityType
 import org.apache.fineract.infrastructure.entityaccess.service.FineractEntityAccessUtil;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
+import org.apache.fineract.portfolio.savings.CompoundingType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
@@ -138,7 +139,8 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             sqlBuilder.append("sp.is_dormancy_tracking_active as isDormancyTrackingActive,");
             sqlBuilder.append("sp.days_to_inactive as daysToInactive,");
             sqlBuilder.append("sp.days_to_dormancy as daysToDormancy,");
-            sqlBuilder.append("sp.days_to_escheat as daysToEscheat ");
+            sqlBuilder.append("sp.days_to_escheat as daysToEscheat, ");
+            sqlBuilder.append("sp.interest_compounding_type_enum as interestCompoundingTypeEnum ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sp.tax_group_id  ");
@@ -220,12 +222,17 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             final Long daysToDormancy = JdbcSupport.getLong(rs, "daysToDormancy");
             final Long daysToEscheat = JdbcSupport.getLong(rs, "daysToEscheat");
             
-            return SavingsProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
+            final EnumOptionData interestCompoundingType = CompoundingType.compoundingType(CompoundingType
+            		.fromInt(JdbcSupport.getInteger(rs, "interestCompoundingTypeEnum")));
+            
+            SavingsProductData savingsProductData = SavingsProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     accountingRuleType, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                     minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax,
                     taxGroupData, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat);
+            savingsProductData.setInterestCompoundingType(interestCompoundingType);
+            return savingsProductData;
         }
     }
 

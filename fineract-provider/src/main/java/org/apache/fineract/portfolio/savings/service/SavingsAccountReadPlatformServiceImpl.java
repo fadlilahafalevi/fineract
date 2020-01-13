@@ -52,6 +52,7 @@ import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.group.service.GroupReadPlatformService;
 import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
+import org.apache.fineract.portfolio.savings.CompoundingType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
@@ -320,7 +321,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sp.is_dormancy_tracking_active as isDormancyTrackingActive, ");
             sqlBuilder.append("sp.days_to_inactive as daysToInactive, ");
             sqlBuilder.append("sp.days_to_dormancy as daysToDormancy, ");
-            sqlBuilder.append("sp.days_to_escheat as daysToEscheat ");
+            sqlBuilder.append("sp.days_to_escheat as daysToEscheat, ");
+            sqlBuilder.append("sa.interest_compounding_type_enum as interestCompoundingTypeEnum ");
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
@@ -549,14 +551,19 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             if (taxGroupId != null) {
                 taxGroupData = TaxGroupData.lookup(taxGroupId, taxGroupName);
             }
+            
+            final EnumOptionData interestCompoundingType = CompoundingType.compoundingType(CompoundingType
+            		.fromInt(JdbcSupport.getInteger(rs, "interestCompoundingTypeEnum")));
 
-            return SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
+            SavingsAccountData savingsAccountData = SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName, clientId, clientName, productId,
                     productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency,
                     nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                     interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     summary, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                     minBalanceForInterestCalculation, onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, 
                     taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, onHoldAmount);
+            savingsAccountData.setInterestCompoundingType(interestCompoundingType);
+            return savingsAccountData;
         }
     }
 
@@ -654,6 +661,10 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     .retrieveSavingsProductApplicableCharges(feeChargesOnly);
 
             Collection<StaffData> fieldOfficerOptions = null;
+            
+            //Afad - Create new interest Compounding Type
+            final Collection<EnumOptionData> interestCompoundingTypeOptions = this.dropdownReadPlatformService.
+            		retrieveInterestCompoundingTypeOptions();
 
             if (officeId != null) {
 
@@ -683,6 +694,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, transactions,
                     charges, chargeOptions);
+            template.setInterestCompoundingTypeOptions(interestCompoundingTypeOptions);
         } else {
 
             String clientName = null;
@@ -974,7 +986,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             // sqlBuilder.append("sp.annual_fee_on_month as annualFeeOnMonth, ");
             // sqlBuilder.append("sp.annual_fee_on_day as annualFeeOnDay ");
             sqlBuilder.append("sp.min_required_balance as minRequiredBalance, ");
-            sqlBuilder.append("sp.enforce_min_required_balance as enforceMinRequiredBalance ");
+            sqlBuilder.append("sp.enforce_min_required_balance as enforceMinRequiredBalance, ");
+            sqlBuilder.append("sp.interest_compounding_type_enum as interestCompoundingTypeEnum ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sp.tax_group_id  ");
@@ -1050,7 +1063,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final boolean enforceMinRequiredBalance = rs.getBoolean("enforceMinRequiredBalance");
             final BigDecimal minBalanceForInterestCalculation = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs,
                     "minBalanceForInterestCalculation");
-
+            final EnumOptionData interestCompoundingType = CompoundingType.compoundingType(CompoundingType
+            		.fromInt(JdbcSupport.getInteger(rs, "interestCompoundingTypeEnum")));
             // final BigDecimal annualFeeAmount =
             // JdbcSupport.getBigDecimalDefaultToNullIfZero(rs,
             // "annualFeeAmount");
@@ -1103,13 +1117,15 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
             final SavingsAccountApplicationTimelineData timeline = SavingsAccountApplicationTimelineData.templateDefault();
             final EnumOptionData depositType = null;
-            return SavingsAccountData.instance(null, null, depositType, null, groupId, groupName, clientId, clientName, productId,
+            SavingsAccountData savingsAccountData = SavingsAccountData.instance(null, null, depositType, null, groupId, groupName, clientId, clientName, productId,
                     productName, fieldOfficerId, fieldOfficerName, status, subStatus, timeline, currency,
                     nominalAnnualIterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                     interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     summary, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                     minBalanceForInterestCalculation, onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, 
                     taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, savingsAmountOnHold);
+            savingsAccountData.setInterestCompoundingType(interestCompoundingType);
+            return savingsAccountData;
         }
     }
 

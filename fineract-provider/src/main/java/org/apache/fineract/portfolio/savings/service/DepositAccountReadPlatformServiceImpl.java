@@ -63,6 +63,7 @@ import org.apache.fineract.portfolio.interestratechart.service.InterestRateChart
 import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
+import org.apache.fineract.portfolio.savings.CompoundingType;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
@@ -304,7 +305,6 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             depositAccount = RecurringDepositAccountData.withInterestChartAndRecurringDetails((RecurringDepositAccountData) depositAccount,
                     chart, frequency, frequencyType);
         }
-
         return depositAccount;
     }
 
@@ -379,6 +379,10 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
 
             final boolean feeChargesOnly = false;
             final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveSavingsProductApplicableCharges(feeChargesOnly);
+            
+            Collection<EnumOptionData> interestCompoundingTypeOptions = this.savingsDropdownReadPlatformService.retrieveInterestCompoundingTypeOptions();
+            
+            EnumOptionData interestCompoundingType = template.getInterestCompoundingType();
 
             Collection<StaffData> fieldOfficerOptions = null;
 
@@ -419,6 +423,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                         periodFrequencyTypeOptions, savingsAccountDatas);
 
                 template = FixedDepositAccountData.withInterestChart((FixedDepositAccountData) template, accountChart);
+                template.setInterestCompoundingTypeOptions(interestCompoundingTypeOptions);
+                template.setInterestCompoundingType(interestCompoundingType);
             } else if (depositAccountType.isRecurringDeposit()) {
                 template = RecurringDepositAccountData.withTemplateOptions((RecurringDepositAccountData) template, productOptions,
                         fieldOfficerOptions, interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions,
@@ -780,7 +786,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append("datp.deposit_period as depositPeriod, ");
             sqlBuilder.append("datp.deposit_period_frequency_enum as depositPeriodFrequencyTypeId, ");
             sqlBuilder.append("datp.on_account_closure_enum as onAccountClosureId, ");
-            sqlBuilder.append("datp.transfer_interest_to_linked_account as transferInterestToSavings ");
+            sqlBuilder.append("datp.transfer_interest_to_linked_account as transferInterestToSavings, ");
+            sqlBuilder.append("sa.interest_compounding_type_enum as interestCompoundingTypeEnum ");
 
             sqlBuilder.append(super.selectTablesSql());
 
@@ -827,11 +834,15 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData onAccountClosureType = (onAccountClosureId == null) ? null : SavingsEnumerations
                     .depositAccountOnClosureType(onAccountClosureId);
             final Boolean transferInterestToSavings = rs.getBoolean("transferInterestToSavings");
+            final EnumOptionData interestCompoundingType = CompoundingType.compoundingType(CompoundingType
+            		.fromInt(JdbcSupport.getInteger(rs, "interestCompoundingTypeEnum")));
 
-            return FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
+            FixedDepositAccountData fixedDepositAccountData = FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount, maturityAmount, maturityDate, depositPeriod,
                     depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings);
+            fixedDepositAccountData.setInterestCompoundingType(interestCompoundingType);
+            return fixedDepositAccountData;
         }
     }
 
@@ -1095,7 +1106,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sa.deposit_type_enum as depositTypeId, ");
             selectFieldsSqlBuilder.append("sa.min_balance_for_interest_calculation as minBalanceForInterestCalculation, ");
             selectFieldsSqlBuilder.append("sa.withhold_tax as withHoldTax,");
-            selectFieldsSqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName ");
+            selectFieldsSqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName, ");
+            selectFieldsSqlBuilder.append("interest_compounding_type_enum as interestCompoundingTypeEnum ");
 
             this.selectFieldsSql = selectFieldsSqlBuilder.toString();
 
@@ -1196,11 +1208,19 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                 taxGroupData = TaxGroupData.lookup(taxGroupId, taxGroupName);
             }
 
-            return DepositAccountData.instance(null, null, null, groupId, groupName, clientId, clientName, productId, productName,
+            EnumOptionData interestCompoundingType = null;
+            if(depositType.getCode().matches(DepositAccountType.FIXED_DEPOSIT.getCode())){
+            	interestCompoundingType = CompoundingType.compoundingType(CompoundingType
+	            		.fromInt(JdbcSupport.getInteger(rs, "interestCompoundingTypeEnum")));
+            }
+            
+            DepositAccountData depositAccountData = DepositAccountData.instance(null, null, null, groupId, groupName, clientId, clientName, productId, productName,
                     fieldOfficerId, fieldOfficerName, status, timeline, currency, nominalAnnualIterestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, summary, depositType,
                     minBalanceForInterestCalculation, withHoldTax, taxGroupData);
+            depositAccountData.setInterestCompoundingType(interestCompoundingType);
+            return depositAccountData;
         }
     }
 
@@ -1265,10 +1285,12 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData onAccountClosureType = null;
             final Boolean transferInterestToSavings = false;
 
-            return FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
+            FixedDepositAccountData fixedDepositAccountData = FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount, maturityAmount, maturityDate, depositPeriod,
                     depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings);
+            fixedDepositAccountData.setInterestCompoundingType(depositAccountData.getInterestCompoundingType());
+            return fixedDepositAccountData;
         }
     }
 

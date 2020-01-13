@@ -256,6 +256,10 @@ public class SavingsProductsApiResource {
                 .retrieveAccountingRuleTypeOptions();
         final Map<String, List<GLAccountData>> accountingMappingOptions = this.accountingDropdownReadPlatformService
                 .retrieveAccountMappingOptionsForSavingsProducts();
+        
+        //Afad - Create new interest Compounding Type
+        final Collection<EnumOptionData> interestCompoundingTypeOptions = this.dropdownReadPlatformService.
+        		retrieveInterestCompoundingTypeOptions();
 
         // charges
         final boolean feeChargesOnly = false;
@@ -271,6 +275,7 @@ public class SavingsProductsApiResource {
                     interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
                     lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions, accountingRuleOptions,
                     accountingMappingOptions, chargeOptions, penaltyOptions, taxGroupOptions);
+            savingsProductToReturn.setInterestCompoundingType(savingsProduct.getInterestCompoundingType());
         } else {
             savingsProductToReturn = SavingsProductData.template(currency, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
@@ -279,6 +284,7 @@ public class SavingsProductsApiResource {
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, taxGroupOptions);
         }
 
+        savingsProductToReturn.setInterestCompoundingTypeOptions(interestCompoundingTypeOptions);
         return savingsProductToReturn;
     }
 

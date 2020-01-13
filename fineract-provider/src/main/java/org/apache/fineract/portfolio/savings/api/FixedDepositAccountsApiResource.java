@@ -270,6 +270,7 @@ public class FixedDepositAccountsApiResource {
             templateData = (FixedDepositAccountData) this.depositAccountReadPlatformService.retrieveTemplate(
                     DepositAccountType.FIXED_DEPOSIT, savingsAccount.clientId(), savingsAccount.groupId(), savingsAccount.productId(),
                     staffInSelectedOfficeOnly);
+            templateData.setInterestCompoundingType(savingsAccount.getInterestCompoundingType());
         }
 
         return FixedDepositAccountData.associationsAndTemplate(savingsAccount, templateData, transactions, charges, linkedAccount);

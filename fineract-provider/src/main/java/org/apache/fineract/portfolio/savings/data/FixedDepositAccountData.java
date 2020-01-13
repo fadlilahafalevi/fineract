@@ -173,7 +173,7 @@ public class FixedDepositAccountData extends DepositAccountData {
 
     public static FixedDepositAccountData withInterestChart(final FixedDepositAccountData account,
             final DepositAccountInterestRateChartData accountChart) {
-        return new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
+        FixedDepositAccountData fixedDepositAccountData = new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
                 account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
                 account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
                 account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
@@ -190,6 +190,8 @@ public class FixedDepositAccountData extends DepositAccountData {
                 account.depositPeriod, account.depositPeriodFrequency, account.periodFrequencyTypeOptions, account.depositType,
                 account.onAccountClosure, account.onAccountClosureOptions, account.paymentTypeOptions, account.savingsAccounts,
                 account.linkedAccount, account.transferInterestToSavings, account.withHoldTax, account.taxGroup);
+        fixedDepositAccountData.setInterestCompoundingType(account.interestCompoundingType);
+        return fixedDepositAccountData;
     }
 
     public static FixedDepositAccountData associationsAndTemplate(final FixedDepositAccountData account, FixedDepositAccountData template,
@@ -200,7 +202,7 @@ public class FixedDepositAccountData extends DepositAccountData {
             template = account;
         }
 
-        return new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
+         FixedDepositAccountData fixedDepositAccountData = new FixedDepositAccountData(account.id, account.accountNo, account.externalId, account.groupId, account.groupName,
                 account.clientId, account.clientName, account.depositProductId, account.depositProductName, account.fieldOfficerId,
                 account.fieldOfficerName, account.status, account.timeline, account.currency, account.nominalAnnualInterestRate,
                 account.interestCompoundingPeriodType, account.interestPostingPeriodType, account.interestCalculationType,
@@ -217,6 +219,9 @@ public class FixedDepositAccountData extends DepositAccountData {
                 account.depositPeriod, account.depositPeriodFrequency, template.periodFrequencyTypeOptions, account.depositType,
                 account.onAccountClosure, account.onAccountClosureOptions, account.paymentTypeOptions, template.savingsAccounts,
                 linkedAccount, account.transferInterestToSavings, account.withHoldTax, account.taxGroup);
+         fixedDepositAccountData.setInterestCompoundingType(account.interestCompoundingType);
+         fixedDepositAccountData.setInterestCompoundingTypeOptions(template.interestCompoundingTypeOptions);
+         return fixedDepositAccountData;
     }
 
     public static FixedDepositAccountData withTemplateOptions(final FixedDepositAccountData account,

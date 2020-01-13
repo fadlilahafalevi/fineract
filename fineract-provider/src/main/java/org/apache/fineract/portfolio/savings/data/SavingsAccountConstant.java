@@ -42,7 +42,7 @@ public class SavingsAccountConstant extends SavingsApiConstants {
 			withdrawalFeeForTransfersParamName, feeAmountParamName, feeOnMonthDayParamName, chargesParamName,
 			allowOverdraftParamName, overdraftLimitParamName, minRequiredBalanceParamName,
 			enforceMinRequiredBalanceParamName, nominalAnnualInterestRateOverdraftParamName,
-			minOverdraftForInterestCalculationParamName, withHoldTaxParamName, datatables));
+			minOverdraftForInterestCalculationParamName, withHoldTaxParamName, datatables, SavingsApiConstants.interestCompoundingTypeParamName));
 
 	/**
 	 * These parameters will match the class level parameters of

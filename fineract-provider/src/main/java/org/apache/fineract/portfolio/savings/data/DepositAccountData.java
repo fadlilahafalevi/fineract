@@ -63,6 +63,7 @@ public class DepositAccountData {
     protected final BigDecimal minBalanceForInterestCalculation;
     protected final boolean withHoldTax;
     protected final TaxGroupData taxGroup;
+    protected EnumOptionData interestCompoundingType;
 
     // associations
     protected final SavingsAccountSummaryData summary;
@@ -81,6 +82,7 @@ public class DepositAccountData {
     protected final Collection<EnumOptionData> lockinPeriodFrequencyTypeOptions;
     protected final Collection<EnumOptionData> withdrawalFeeTypeOptions;
     protected final Collection<ChargeData> chargeOptions;
+    protected Collection<EnumOptionData> interestCompoundingTypeOptions;
 
     protected final SavingsAccountChargeData withdrawalFee;
     protected final SavingsAccountChargeData annualFee;
@@ -357,4 +359,20 @@ public class DepositAccountData {
     public String accountNo() {
         return accountNo;
     }
+
+	public EnumOptionData getInterestCompoundingType() {
+		return interestCompoundingType;
+	}
+
+	public void setInterestCompoundingType(EnumOptionData interestCompoundingType) {
+		this.interestCompoundingType = interestCompoundingType;
+	}
+
+	public Collection<EnumOptionData> getInterestCompoundingTypeOptions() {
+		return interestCompoundingTypeOptions;
+	}
+
+	public void setInterestCompoundingTypeOptions(Collection<EnumOptionData> interestCompoundingTypeOptions) {
+		this.interestCompoundingTypeOptions = interestCompoundingTypeOptions;
+	}
 }
