@@ -185,7 +185,8 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                     constructEntityMap(BUSINESS_ENTITY.SAVING, account));
 
             return new CommandProcessingResultBuilder() //
-                    .withCommandId(command.commandId()) //
+            		.withCommandId(command.commandId()) //
+            		.withAccNo(account.getAccountNumber()) //
                     .withEntityId(savingsId) //
                     .withOfficeId(account.officeId()) //
                     .withClientId(account.clientId()) //
