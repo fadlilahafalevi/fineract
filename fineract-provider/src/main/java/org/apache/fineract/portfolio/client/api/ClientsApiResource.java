@@ -366,7 +366,7 @@ public class ClientsApiResource {
             @ApiResponse(code = 200, message = "OK", response = ClientsApiResourceSwagger.GetClientsClientIdAccountsResponse.class),
             @ApiResponse(code = 400, message = "Bad Request")
     })
-    public String retrieveAssociatedAccounts(@PathParam("clientId") @ApiParam(value = "clientId") final Long clientId, @Context final UriInfo uriInfo) {
+    public String retrieveAssociatedAccountsLoanModification(@PathParam("clientId") @ApiParam(value = "clientId") final Long clientId, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 

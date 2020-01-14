@@ -90,8 +90,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
     public AccountSummaryCollectionData retrieveClientAccountDetailsWithModifInLoan(final Long clientId) {
         // Check if client exists
         this.clientReadPlatformService.retrieveOne(clientId);
-        final String loanwhereClause = " left join m_loan_repayment_schedule lrs on l.id = lrs.loan_id and lrs.completed_derived = false where l.client_id = ? "
-        		+ "and lrs.duedate = (select MIN(sch1.duedate) from m_loan_repayment_schedule sch1 where sch1.loan_id=l.id and sch1.completed_derived=false) ";
+        final String loanwhereClause = " where l.client_id = ? and lrs.completed_derived = false ORDER BY lrs.duedate LIMIT 1 ";
         final String savingswhereClause = " where sa.client_id = ? order by sa.status_enum ASC, sa.account_no ASC";
         final String guarantorWhereClause = " where g.entity_id = ? and g.is_active = 1 order by l.account_no ASC";
 
@@ -157,7 +156,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
     }
     
     private List<LoanAccountSummaryData> retrieveLoanAccountDetailsModification(final String loanwhereClause, final Object[] inputs) {
-        final LoanAccountSummaryDataMapper rm = new LoanAccountSummaryDataMapper();
+        final LoanAccountSummaryDataLoanModificationMapper rm = new LoanAccountSummaryDataLoanModificationMapper();
         final String sql = "select " + rm.loanAccountSummarySchemaModification() + loanwhereClause;
         this.columnValidator.validateSqlInjection(rm.loanAccountSummarySchemaModification(), loanwhereClause);
         return this.jdbcTemplate.query(sql, rm, inputs);
@@ -466,7 +465,82 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
 
             return accountsSummary.toString();
         }
+
+        @Override
+        public LoanAccountSummaryData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+
+            final Long id = JdbcSupport.getLong(rs, "id");
+            final String accountNo = rs.getString("accountNo");
+            final String externalId = rs.getString("externalId");
+            final Long productId = JdbcSupport.getLong(rs, "productId");
+            final String loanProductName = rs.getString("productName");
+            final String shortLoanProductName = rs.getString("shortProductName");
+            final Integer loanStatusId = JdbcSupport.getInteger(rs, "statusId");
+            final LoanStatusEnumData loanStatus = LoanEnumerations.status(loanStatusId);
+            final Integer loanTypeId = JdbcSupport.getInteger(rs, "loanType");
+            final EnumOptionData loanType = AccountEnumerations.loanType(loanTypeId);
+            final Integer loanCycle = JdbcSupport.getInteger(rs, "loanCycle");
+
+            final LocalDate submittedOnDate = JdbcSupport.getLocalDate(rs, "submittedOnDate");
+            final String submittedByUsername = rs.getString("submittedByUsername");
+            final String submittedByFirstname = rs.getString("submittedByFirstname");
+            final String submittedByLastname = rs.getString("submittedByLastname");
+
+            final LocalDate rejectedOnDate = JdbcSupport.getLocalDate(rs, "rejectedOnDate");
+            final String rejectedByUsername = rs.getString("rejectedByUsername");
+            final String rejectedByFirstname = rs.getString("rejectedByFirstname");
+            final String rejectedByLastname = rs.getString("rejectedByLastname");
+
+            final LocalDate withdrawnOnDate = JdbcSupport.getLocalDate(rs, "withdrawnOnDate");
+            final String withdrawnByUsername = rs.getString("withdrawnByUsername");
+            final String withdrawnByFirstname = rs.getString("withdrawnByFirstname");
+            final String withdrawnByLastname = rs.getString("withdrawnByLastname");
+
+            final LocalDate approvedOnDate = JdbcSupport.getLocalDate(rs, "approvedOnDate");
+            final String approvedByUsername = rs.getString("approvedByUsername");
+            final String approvedByFirstname = rs.getString("approvedByFirstname");
+            final String approvedByLastname = rs.getString("approvedByLastname");
+
+            final LocalDate expectedDisbursementDate = JdbcSupport.getLocalDate(rs, "expectedDisbursementDate");
+            final LocalDate actualDisbursementDate = JdbcSupport.getLocalDate(rs, "actualDisbursementDate");
+            final String disbursedByUsername = rs.getString("disbursedByUsername");
+            final String disbursedByFirstname = rs.getString("disbursedByFirstname");
+            final String disbursedByLastname = rs.getString("disbursedByLastname");
+
+            final LocalDate closedOnDate = JdbcSupport.getLocalDate(rs, "closedOnDate");
+            final String closedByUsername = rs.getString("closedByUsername");
+            final String closedByFirstname = rs.getString("closedByFirstname");
+            final String closedByLastname = rs.getString("closedByLastname");
+            
+            final BigDecimal originalLoan = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs,"originalLoan");
+            final BigDecimal loanBalance = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs,"loanBalance");
+            final BigDecimal amountPaid = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs,"amountPaid");
+
+            final LocalDate writtenOffOnDate = JdbcSupport.getLocalDate(rs, "writtenOffOnDate");
+
+            final LocalDate expectedMaturityDate = JdbcSupport.getLocalDate(rs, "expectedMaturityDate");
+
+            final LocalDate overdueSinceDate = JdbcSupport.getLocalDate(rs, "overdueSinceDate");
+            Boolean inArrears = true;
+            if (overdueSinceDate == null) {
+                inArrears = false;
+            }
+
+            final LoanApplicationTimelineData timeline = new LoanApplicationTimelineData(submittedOnDate, submittedByUsername,
+                    submittedByFirstname, submittedByLastname, rejectedOnDate, rejectedByUsername, rejectedByFirstname, rejectedByLastname,
+                    withdrawnOnDate, withdrawnByUsername, withdrawnByFirstname, withdrawnByLastname, approvedOnDate, approvedByUsername,
+                    approvedByFirstname, approvedByLastname, expectedDisbursementDate, actualDisbursementDate, disbursedByUsername,
+                    disbursedByFirstname, disbursedByLastname, closedOnDate, closedByUsername, closedByFirstname, closedByLastname,
+                    expectedMaturityDate, writtenOffOnDate, closedByUsername, closedByFirstname, closedByLastname);
+            
+            return new LoanAccountSummaryData(id, accountNo, externalId, productId, loanProductName, shortLoanProductName, loanStatus, loanType, loanCycle,
+                    timeline, inArrears,originalLoan,loanBalance,amountPaid);
+        }
         
+    }
+    
+    private static final class LoanAccountSummaryDataLoanModificationMapper implements RowMapper<LoanAccountSummaryData> {
+    	
         public String loanAccountSummarySchemaModification() {
 
             final StringBuilder accountsSummary = new StringBuilder("l.id as id, l.account_no as accountNo, l.external_id as externalId,");
@@ -499,7 +573,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
                     .append(" cbu.username as closedByUsername, cbu.firstname as closedByFirstname, cbu.lastname as closedByLastname,")
                     .append(" la.overdue_since_date_derived as overdueSinceDate,")
                     .append(" l.writtenoffon_date as writtenOffOnDate, l.expected_maturedon_date as expectedMaturityDate, ")
-                    .append(" l.duedate ")
+                    .append(" lrs.duedate ")
 
                     .append(" from m_loan l ").append("LEFT JOIN m_product_loan AS lp ON lp.id = l.product_id")
                     .append(" left join m_appuser sbu on sbu.id = l.submittedon_userid")
@@ -508,7 +582,8 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
                     .append(" left join m_appuser abu on abu.id = l.approvedon_userid")
                     .append(" left join m_appuser dbu on dbu.id = l.disbursedon_userid")
                     .append(" left join m_appuser cbu on cbu.id = l.closedon_userid")
-                    .append(" left join m_loan_arrears_aging la on la.loan_id = l.id");
+                    .append(" left join m_loan_arrears_aging la on la.loan_id = l.id")
+                    .append(" left join m_loan_repayment_schedule lrs on l.id = lrs.loan_id ");
 
             return accountsSummary.toString();
         }
@@ -589,6 +664,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
         }
         
     }
+    
     private static final class GuarantorLoanAccountSummaryDataMapper implements
 		RowMapper<GuarantorAccountSummaryData> {
 
