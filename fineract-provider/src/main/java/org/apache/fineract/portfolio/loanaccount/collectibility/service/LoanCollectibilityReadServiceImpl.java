@@ -53,13 +53,13 @@ public class LoanCollectibilityReadServiceImpl implements LoanCollectibilityRead
 
 		protected LoanCollectibilityEntryMapper() {
 			sqlQuery = new StringBuilder()
-					.append("select distinct l.id as loanId, l.product_id as productId, l.client_id as clientId, l.group_id as groupId, pcd.criteria_id as criteriaId, GREATEST(datediff(sch.duedate, now()),0) as numberoverduesaccount, Greatest(T1.numberoverduescif,T2.numberoverduescif) numberoverduescif, now() > l.expected_maturedon_date as ismatured ")
+					.append("select distinct l.id as loanId, l.product_id as productId, l.client_id as clientId, l.group_id as groupId, pcd.criteria_id as criteriaId, GREATEST(datediff(now(), sch.duedate),0) as numberoverduesaccount, Greatest(T1.numberoverduescif,T2.numberoverduescif) numberoverduescif, now() > l.expected_maturedon_date as ismatured ")
 					.append("from m_loan l ")
 					.append("join m_loan_repayment_schedule sch on sch.loan_id=l.id ")
 					.append("join m_loanproduct_provisioning_mapping lpm on lpm.product_id = l.product_id ")
 					.append("join m_provisioning_criteria_definition pcd on pcd.criteria_id = lpm.criteria_id ")
-					.append("left join (SELECT lo.client_id, Greatest(Datediff(Min(sch1.duedate), now()), 0) AS numberoverduescif FROM m_loan_repayment_schedule sch1 left join m_loan lo ON lo.id = sch1.loan_id join m_loanproduct_provisioning_mapping lpm ON lpm.product_id = lo.product_id WHERE sch1.completed_derived = false AND lo.loan_status_id = 300 group by lo.client_id) T1 on T1.client_id = l.client_id ")
-					.append("left join (SELECT lo.group_id, Greatest(Datediff(Min(sch1.duedate), now()), 0) AS numberoverduescif FROM m_loan_repayment_schedule sch1 left join m_loan lo ON lo.id = sch1.loan_id join m_loanproduct_provisioning_mapping lpm ON lpm.product_id = lo.product_id WHERE sch1.completed_derived = false AND lo.loan_status_id = 300 group by lo.group_id) T2 on T2.group_id = l.group_id ")
+					.append("left join (SELECT lo.client_id, Greatest(Datediff(now(), Min(sch1.duedate)), 0) AS numberoverduescif FROM m_loan_repayment_schedule sch1 left join m_loan lo ON lo.id = sch1.loan_id join m_loanproduct_provisioning_mapping lpm ON lpm.product_id = lo.product_id WHERE sch1.completed_derived = false AND lo.loan_status_id = 300 group by lo.client_id) T1 on T1.client_id = l.client_id ")
+					.append("left join (SELECT lo.group_id, Greatest(Datediff(now(), Min(sch1.duedate)), 0) AS numberoverduescif FROM m_loan_repayment_schedule sch1 left join m_loan lo ON lo.id = sch1.loan_id join m_loanproduct_provisioning_mapping lpm ON lpm.product_id = lo.product_id WHERE sch1.completed_derived = false AND lo.loan_status_id = 300 group by lo.group_id) T2 on T2.group_id = l.group_id ")
 					.append("where l.loan_status_id=300 and sch.duedate = (select MIN(sch1.duedate) from m_loan_repayment_schedule sch1 where sch1.loan_id=l.id and sch1.completed_derived=false) ");
 		}
 
