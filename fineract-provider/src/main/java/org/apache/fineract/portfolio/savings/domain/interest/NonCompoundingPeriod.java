@@ -135,8 +135,7 @@ public class NonCompoundingPeriod implements CompoundingPeriod {
 
 	@Override
 	public LocalDateInterval getPeriodInterval() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.periodInterval;
 	}
 
 

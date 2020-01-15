@@ -356,8 +356,31 @@ public class PostingPeriod {
                     periodStartDate = periodEndDate.plusDays(1);
                 }
             break;
-        // case NO_COMPOUNDING_SIMPLE_INTEREST:
-        // break;
+            case NON_COMPOUNDING:
+           	 final LocalDate nPostingPeriodEndDate = postingPeriodInterval.endDate();
+
+                periodStartDate = postingPeriodInterval.startDate();
+                periodEndDate = periodStartDate;
+
+                while (!periodStartDate.isAfter(nPostingPeriodEndDate) && !periodEndDate.isAfter(nPostingPeriodEndDate)) {
+
+                    periodEndDate = determineInterestPeriodEndDateFrom(periodStartDate, interestPeriodType, upToInterestCalculationDate, financialYearBeginningMonth);
+                    if (periodEndDate.isAfter(nPostingPeriodEndDate)) {
+                        periodEndDate = nPostingPeriodEndDate;
+                    }
+
+                    final LocalDateInterval compoundingPeriodInterval = LocalDateInterval.create(periodStartDate, periodEndDate);
+                    if (postingPeriodInterval.contains(compoundingPeriodInterval)) {
+
+                        compoundingPeriod = NonCompoundingPeriod.create(compoundingPeriodInterval, allEndOfDayBalances,
+                                upToInterestCalculationDate);
+                        compoundingPeriods.add(compoundingPeriod);
+                    }
+
+                    // move periodStartDate forward to day after this period
+                    periodStartDate = periodEndDate.plusDays(1);
+                }
+            break;
         }
 
         return compoundingPeriods;
@@ -407,10 +430,10 @@ public class PostingPeriod {
                 }
             break;
 
-        // case NO_COMPOUNDING_SIMPLE_INTEREST:
-        // periodEndDate = periodStartDate.monthOfYear().withMaximumValue();
-        // periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
-        // break;
+            case NON_COMPOUNDING:
+    			periodEndDate = periodStartDate.withMonthOfYear(previousMonth);
+    			periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
+    		break;
         }
 
         return periodEndDate;

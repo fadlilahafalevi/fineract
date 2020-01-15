@@ -222,7 +222,10 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             final Long daysToDormancy = JdbcSupport.getLong(rs, "daysToDormancy");
             final Long daysToEscheat = JdbcSupport.getLong(rs, "daysToEscheat");
             
-            final EnumOptionData interestCompoundingType = CompoundingType.compoundingType(CompoundingType
+            EnumOptionData interestCompoundingType = CompoundingType.compoundingType(CompoundingType
+            		.fromInt(1));
+            
+            interestCompoundingType = CompoundingType.compoundingType(CompoundingType
             		.fromInt(JdbcSupport.getInteger(rs, "interestCompoundingTypeEnum")));
             
             SavingsProductData savingsProductData = SavingsProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,

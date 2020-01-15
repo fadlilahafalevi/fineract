@@ -1241,7 +1241,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append("dptp.min_deposit_term_type_enum as minDepositTermTypeId, ");
             sqlBuilder.append("dptp.max_deposit_term_type_enum as maxDepositTermTypeId, ");
             sqlBuilder.append("dptp.in_multiples_of_deposit_term as inMultiplesOfDepositTerm, ");
-            sqlBuilder.append("dptp.in_multiples_of_deposit_term_type_enum as inMultiplesOfDepositTermTypeId ");
+            sqlBuilder.append("dptp.in_multiples_of_deposit_term_type_enum as inMultiplesOfDepositTermTypeId, ");
+            sqlBuilder.append("dptp.deposit_amount ");
 
             sqlBuilder.append(super.selectTablesSql());
 
@@ -1277,7 +1278,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData inMultiplesOfDepositTermType = (inMultiplesOfDepositTermTypeId == null) ? null : SavingsEnumerations
                     .depositTermFrequencyType(inMultiplesOfDepositTermTypeId);
 
-            final BigDecimal depositAmount = null;
+            final BigDecimal depositAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "deposit_amount");
             final BigDecimal maturityAmount = null;
             final LocalDate maturityDate = null;
             final Integer depositPeriod = null;

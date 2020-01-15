@@ -65,7 +65,7 @@ public class EndOfDayBalance {
             final BigDecimal overdraftInterestRateAsFraction, final BigDecimal minOverdraftForInterestCalculation) {
 
         BigDecimal interest = BigDecimal.ZERO.setScale(9, MoneyHelper.getRoundingMode());
-        final BigDecimal realBalanceForInterestCalculation = this.endOfDayBalance.getAmount().add(interestToCompound);
+        final BigDecimal realBalanceForInterestCalculation = this.endOfDayBalance.getAmount();
         if(realBalanceForInterestCalculation.compareTo(BigDecimal.ZERO) >= 0){
             if (realBalanceForInterestCalculation.compareTo(minBalanceForInterestCalculation) >= 0) {
 	            final BigDecimal multiplicand = BigDecimal.ONE.divide(BigDecimal.valueOf(daysInYear), MathContext.DECIMAL64);
