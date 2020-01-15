@@ -508,6 +508,13 @@ public class CommandWrapperBuilder {
         this.href = "/clients/template";
         return this;
     }
+    
+    public CommandWrapperBuilder createClient2() {
+        this.actionName = "CREATE";
+        this.entityName = "CLIENT2";
+        this.href = "/clients2";
+        return this;
+    }
 
     public CommandWrapperBuilder activateClient(final Long clientId) {
         this.actionName = "ACTIVATE";
@@ -835,6 +842,15 @@ public class CommandWrapperBuilder {
         this.entityId = null;
         this.loanId = null;
         this.href = "/loans";
+        return this;
+    }
+    
+    public CommandWrapperBuilder createLoanApplication2() {
+        this.actionName = "CREATE";
+        this.entityName = "LOAN2";
+        this.entityId = null;
+        this.loanId = null;
+        this.href = "/loans2";
         return this;
     }
 

@@ -222,188 +222,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     public CommandProcessingResult submitApplication(final JsonCommand command) {
 
         try {
-            final AppUser currentUser = getAppUserIfPresent();
-            boolean isMeetingMandatoryForJLGLoans = configurationDomainService.isMeetingMandatoryForJLGLoans();
-            final Long productId = this.fromJsonHelper.extractLongNamed("productId", command.parsedJson());
-            final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
-            if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
-
-            final Long clientId = this.fromJsonHelper.extractLongNamed("clientId", command.parsedJson());
-                        if(clientId !=null){
-                        Client client= this.clientRepository.findOneWithNotFoundDetection(clientId);
-                        officeSpecificLoanProductValidation( productId,client.getOffice().getId());
-                        }
-                        final Long groupId = this.fromJsonHelper.extractLongNamed("groupId", command.parsedJson());
-                        if(groupId != null){
-                        	Group group= this.groupRepository.findOneWithNotFoundDetection(groupId);
-                            officeSpecificLoanProductValidation( productId,group.getOffice().getId());
-                        }
-            
-            this.fromApiJsonDeserializer.validateForCreate(command.json(), isMeetingMandatoryForJLGLoans, loanProduct);
-
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
-
-            if (loanProduct.useBorrowerCycle()) {
-                Integer cycleNumber = 0;
-                if (clientId != null) {
-                    cycleNumber = this.loanReadPlatformService.retriveLoanCounter(clientId, loanProduct.getId());
-                } else if (groupId != null) {
-                    cycleNumber = this.loanReadPlatformService.retriveLoanCounter(groupId, AccountType.GROUP.getValue(),
-                            loanProduct.getId());
-                }
-                this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator,
-                        loanProduct, cycleNumber);
-            } else {
-                this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator,
-                        loanProduct);
-            }
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-
-            final Loan newLoanApplication = this.loanAssembler.assembleFrom(command, currentUser);
-
-	     checkForProductMixRestrictions(newLoanApplication);
-
-            validateSubmittedOnDate(newLoanApplication);
-
-            final LoanProductRelatedDetail productRelatedDetail = newLoanApplication.repaymentScheduleDetail();
-
-            if (loanProduct.getLoanProductConfigurableAttributes() != null) {
-                updateProductRelatedDetails(productRelatedDetail, newLoanApplication);
-            }
-
-            this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(newLoanApplication.getTermFrequency(),
-                    newLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
-                    productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue(),
-                    newLoanApplication);
-
-            if(loanProduct.canUseForTopup() && clientId != null){
-                final Boolean isTopup = command.booleanObjectValueOfParameterNamed(LoanApiConstants.isTopup);
-                if(null == isTopup){
-                    newLoanApplication.setIsTopup(false);
-                }else{
-                    newLoanApplication.setIsTopup(isTopup);
-                }
-
-                if(newLoanApplication.isTopup()){
-                    final Long loanIdToClose = command.longValueOfParameterNamed(LoanApiConstants.loanIdToClose);
-                    final Loan loanToClose = this.loanRepositoryWrapper.findNonClosedLoanThatBelongsToClient(loanIdToClose, clientId);
-                    if(loanToClose == null){
-                        throw new GeneralPlatformDomainRuleException("error.msg.loan.loanIdToClose.no.active.loan.associated.to.client.found",
-                                "loanIdToClose is invalid, No Active Loan associated with the given Client ID found.");
-                    }
-                    if(loanToClose.isMultiDisburmentLoan() && !loanToClose.isInterestRecalculationEnabledForProduct()){
-                        throw new GeneralPlatformDomainRuleException(
-                                "error.msg.loan.topup.on.multi.tranche.loan.without.interest.recalculation.not.supported",
-                                "Topup on loan with multi-tranche disbursal and without interest recalculation is not supported.");
-                    }
-                    final LocalDate disbursalDateOfLoanToClose = loanToClose.getDisbursementDate();
-                    if(!newLoanApplication.getSubmittedOnDate().isAfter(disbursalDateOfLoanToClose)){
-                        throw new GeneralPlatformDomainRuleException(
-                                "error.msg.loan.submitted.date.should.be.after.topup.loan.disbursal.date",
-                                "Submitted date of this loan application "+newLoanApplication.getSubmittedOnDate()
-                                        +" should be after the disbursed date of loan to be closed "+ disbursalDateOfLoanToClose);
-                    }
-                    if(!loanToClose.getCurrencyCode().equals(newLoanApplication.getCurrencyCode())){
-                        throw new GeneralPlatformDomainRuleException("error.msg.loan.to.be.closed.has.different.currency",
-                                "loanIdToClose is invalid, Currency code is different.");
-                    }
-                    final LocalDate lastUserTransactionOnLoanToClose = loanToClose.getLastUserTransactionDate();
-                    if(newLoanApplication.getDisbursementDate().isBefore(lastUserTransactionOnLoanToClose)){
-                        throw new GeneralPlatformDomainRuleException(
-                                "error.msg.loan.disbursal.date.should.be.after.last.transaction.date.of.loan.to.be.closed",
-                                "Disbursal date of this loan application "+newLoanApplication.getDisbursementDate()
-                                        +" should be after last transaction date of loan to be closed "+ lastUserTransactionOnLoanToClose);
-                    }
-                    BigDecimal loanOutstanding = this.loanReadPlatformService.retrieveLoanPrePaymentTemplate(loanIdToClose,
-                            newLoanApplication.getDisbursementDate()).getAmount();
-                    final BigDecimal firstDisbursalAmount = newLoanApplication.getFirstDisbursalAmount();
-                    if(loanOutstanding.compareTo(firstDisbursalAmount) > 0){
-                        throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
-                                "Topup loan amount should be greater than outstanding amount of loan to be closed.");
-                    }
-
-                    final LoanTopupDetails topupDetails = new LoanTopupDetails(newLoanApplication, loanIdToClose);
-                    newLoanApplication.setTopupLoanDetails(topupDetails);
-                }
-            }
-
-            this.loanRepositoryWrapper.save(newLoanApplication);
-
-            if (loanProduct.isInterestRecalculationEnabled()) {
-                this.fromApiJsonDeserializer.validateLoanForInterestRecalculation(newLoanApplication);
-                createAndPersistCalendarInstanceForInterestRecalculation(newLoanApplication);
-            }
-
-            if (newLoanApplication.isAccountNumberRequiresAutoGeneration()) {
-                final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository
-                        .findByAccountType(EntityAccountType.LOAN);
-                newLoanApplication.updateAccountNo(this.accountNumberGenerator.generate(newLoanApplication, accountNumberFormat));
-                this.loanRepositoryWrapper.save(newLoanApplication);
-            }
-
-            final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
-            if (StringUtils.isNotBlank(submittedOnNote)) {
-                final Note note = Note.loanNote(newLoanApplication, submittedOnNote);
-                this.noteRepository.save(note);
-            }
-
-            // Save calendar instance
-            final Long calendarId = command.longValueOfParameterNamed("calendarId");
-            Calendar calendar = null;
-
-            if (calendarId != null && calendarId != 0) {
-                calendar = this.calendarRepository.findOne(calendarId);
-                if (calendar == null) { throw new CalendarNotFoundException(calendarId); }
-
-                final CalendarInstance calendarInstance = new CalendarInstance(calendar, newLoanApplication.getId(),
-                        CalendarEntityType.LOANS.getValue());
-                this.calendarInstanceRepository.save(calendarInstance);
-            } else {
-                final LoanApplicationTerms loanApplicationTerms = this.loanScheduleAssembler.assembleLoanTerms(command.parsedJson());
-                final Integer repaymentFrequencyNthDayType = command.integerValueOfParameterNamed("repaymentFrequencyNthDayType");
-                if (loanApplicationTerms.getRepaymentPeriodFrequencyType() == PeriodFrequencyType.MONTHS
-                        && repaymentFrequencyNthDayType != null) {
-                    final String title = "loan_schedule_" + newLoanApplication.getId();
-                    LocalDate calendarStartDate = loanApplicationTerms.getRepaymentsStartingFromLocalDate();
-                    if (calendarStartDate == null) calendarStartDate = loanApplicationTerms.getExpectedDisbursementDate();
-                    final CalendarFrequencyType calendarFrequencyType = CalendarFrequencyType.MONTHLY;
-                    final Integer frequency = loanApplicationTerms.getRepaymentEvery();
-                    final Integer repeatsOnDay = loanApplicationTerms.getWeekDayType().getValue();
-                    final Integer repeatsOnNthDayOfMonth = loanApplicationTerms.getNthDay();
-                    final Integer calendarEntityType = CalendarEntityType.LOANS.getValue();
-                    final Calendar loanCalendar = Calendar.createRepeatingCalendar(title, calendarStartDate,
-                            CalendarType.COLLECTION.getValue(), calendarFrequencyType, frequency, repeatsOnDay, repeatsOnNthDayOfMonth);
-                    this.calendarRepository.save(loanCalendar);
-                    final CalendarInstance calendarInstance = CalendarInstance.from(loanCalendar, newLoanApplication.getId(),
-                            calendarEntityType);
-                    this.calendarInstanceRepository.save(calendarInstance);
-                }
-            }
-
-            // Save linked account information
-            final Long savingsAccountId = command.longValueOfParameterNamed("linkAccountId");
-            if (savingsAccountId != null) {
-                final SavingsAccount savingsAccount = this.savingsAccountAssembler.assembleFrom(savingsAccountId);
-                this.fromApiJsonDeserializer.validatelinkedSavingsAccount(savingsAccount, newLoanApplication);
-                boolean isActive = true;
-                final AccountAssociations accountAssociations = AccountAssociations.associateSavingsAccount(newLoanApplication,
-                        savingsAccount, AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue(), isActive);
-                this.accountAssociationsRepository.save(accountAssociations);
-            }
-
-            if(command.parameterExists(LoanApiConstants.datatables)){
-                this.entityDatatableChecksWritePlatformService.saveDatatables(StatusEnum.CREATE.getCode().longValue(),
-                        EntityTables.LOAN.getName(), newLoanApplication.getId(), newLoanApplication.productId(),
-                        command.arrayOfParameterNamed(LoanApiConstants.datatables));
-            }
-
-            this.entityDatatableChecksWritePlatformService.runTheCheckForProduct(newLoanApplication.getId(),
-                    EntityTables.LOAN.getName(), StatusEnum.CREATE.getCode().longValue(),
-                    EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(), newLoanApplication.productId());
-
-            this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.LOAN_CREATE,
-                    constructEntityMap(BUSINESS_ENTITY.LOAN, newLoanApplication));
+            final Loan newLoanApplication = createNewLoan(command);
 
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -422,6 +241,218 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
          	return CommandProcessingResult.empty();
         }
     }
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult submitApplication2(final JsonCommand command) {
+
+        try {
+            final Loan newLoanApplication = createNewLoan(command);
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(newLoanApplication.getId()) //
+                    .withOfficeId(newLoanApplication.getOfficeId()) //
+                    .withClientId(newLoanApplication.getClientId()) //
+                    .withGroupId(newLoanApplication.getGroupId()) //
+                    .withLoanId(newLoanApplication.getId()) //
+                    .withAccNo(newLoanApplication.getAccountNumber())
+                    .build();
+        } catch (final DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        }catch(final PersistenceException dve) {
+        	Throwable throwable = ExceptionUtils.getRootCause(dve.getCause()) ;
+            handleDataIntegrityIssues(command, throwable, dve);
+         	return CommandProcessingResult.empty();
+        }
+    }
+
+	public Loan createNewLoan(final JsonCommand command) {
+		final AppUser currentUser = getAppUserIfPresent();
+		boolean isMeetingMandatoryForJLGLoans = configurationDomainService.isMeetingMandatoryForJLGLoans();
+		final Long productId = this.fromJsonHelper.extractLongNamed("productId", command.parsedJson());
+		final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
+		if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
+
+		final Long clientId = this.fromJsonHelper.extractLongNamed("clientId", command.parsedJson());
+		            if(clientId !=null){
+		            Client client= this.clientRepository.findOneWithNotFoundDetection(clientId);
+		            officeSpecificLoanProductValidation( productId,client.getOffice().getId());
+		            }
+		            final Long groupId = this.fromJsonHelper.extractLongNamed("groupId", command.parsedJson());
+		            if(groupId != null){
+		            	Group group= this.groupRepository.findOneWithNotFoundDetection(groupId);
+		                officeSpecificLoanProductValidation( productId,group.getOffice().getId());
+		            }
+		
+		this.fromApiJsonDeserializer.validateForCreate(command.json(), isMeetingMandatoryForJLGLoans, loanProduct);
+
+		final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+		final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
+
+		if (loanProduct.useBorrowerCycle()) {
+		    Integer cycleNumber = 0;
+		    if (clientId != null) {
+		        cycleNumber = this.loanReadPlatformService.retriveLoanCounter(clientId, loanProduct.getId());
+		    } else if (groupId != null) {
+		        cycleNumber = this.loanReadPlatformService.retriveLoanCounter(groupId, AccountType.GROUP.getValue(),
+		                loanProduct.getId());
+		    }
+		    this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator,
+		            loanProduct, cycleNumber);
+		} else {
+		    this.loanProductCommandFromApiJsonDeserializer.validateMinMaxConstraints(command.parsedJson(), baseDataValidator,
+		            loanProduct);
+		}
+		if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+
+		final Loan newLoanApplication = this.loanAssembler.assembleFrom(command, currentUser);
+
+    checkForProductMixRestrictions(newLoanApplication);
+
+		validateSubmittedOnDate(newLoanApplication);
+
+		final LoanProductRelatedDetail productRelatedDetail = newLoanApplication.repaymentScheduleDetail();
+
+		if (loanProduct.getLoanProductConfigurableAttributes() != null) {
+		    updateProductRelatedDetails(productRelatedDetail, newLoanApplication);
+		}
+
+		this.fromApiJsonDeserializer.validateLoanTermAndRepaidEveryValues(newLoanApplication.getTermFrequency(),
+		        newLoanApplication.getTermPeriodFrequencyType(), productRelatedDetail.getNumberOfRepayments(),
+		        productRelatedDetail.getRepayEvery(), productRelatedDetail.getRepaymentPeriodFrequencyType().getValue(),
+		        newLoanApplication);
+
+		if(loanProduct.canUseForTopup() && clientId != null){
+		    final Boolean isTopup = command.booleanObjectValueOfParameterNamed(LoanApiConstants.isTopup);
+		    if(null == isTopup){
+		        newLoanApplication.setIsTopup(false);
+		    }else{
+		        newLoanApplication.setIsTopup(isTopup);
+		    }
+
+		    if(newLoanApplication.isTopup()){
+		        final Long loanIdToClose = command.longValueOfParameterNamed(LoanApiConstants.loanIdToClose);
+		        final Loan loanToClose = this.loanRepositoryWrapper.findNonClosedLoanThatBelongsToClient(loanIdToClose, clientId);
+		        if(loanToClose == null){
+		            throw new GeneralPlatformDomainRuleException("error.msg.loan.loanIdToClose.no.active.loan.associated.to.client.found",
+		                    "loanIdToClose is invalid, No Active Loan associated with the given Client ID found.");
+		        }
+		        if(loanToClose.isMultiDisburmentLoan() && !loanToClose.isInterestRecalculationEnabledForProduct()){
+		            throw new GeneralPlatformDomainRuleException(
+		                    "error.msg.loan.topup.on.multi.tranche.loan.without.interest.recalculation.not.supported",
+		                    "Topup on loan with multi-tranche disbursal and without interest recalculation is not supported.");
+		        }
+		        final LocalDate disbursalDateOfLoanToClose = loanToClose.getDisbursementDate();
+		        if(!newLoanApplication.getSubmittedOnDate().isAfter(disbursalDateOfLoanToClose)){
+		            throw new GeneralPlatformDomainRuleException(
+		                    "error.msg.loan.submitted.date.should.be.after.topup.loan.disbursal.date",
+		                    "Submitted date of this loan application "+newLoanApplication.getSubmittedOnDate()
+		                            +" should be after the disbursed date of loan to be closed "+ disbursalDateOfLoanToClose);
+		        }
+		        if(!loanToClose.getCurrencyCode().equals(newLoanApplication.getCurrencyCode())){
+		            throw new GeneralPlatformDomainRuleException("error.msg.loan.to.be.closed.has.different.currency",
+		                    "loanIdToClose is invalid, Currency code is different.");
+		        }
+		        final LocalDate lastUserTransactionOnLoanToClose = loanToClose.getLastUserTransactionDate();
+		        if(newLoanApplication.getDisbursementDate().isBefore(lastUserTransactionOnLoanToClose)){
+		            throw new GeneralPlatformDomainRuleException(
+		                    "error.msg.loan.disbursal.date.should.be.after.last.transaction.date.of.loan.to.be.closed",
+		                    "Disbursal date of this loan application "+newLoanApplication.getDisbursementDate()
+		                            +" should be after last transaction date of loan to be closed "+ lastUserTransactionOnLoanToClose);
+		        }
+		        BigDecimal loanOutstanding = this.loanReadPlatformService.retrieveLoanPrePaymentTemplate(loanIdToClose,
+		                newLoanApplication.getDisbursementDate()).getAmount();
+		        final BigDecimal firstDisbursalAmount = newLoanApplication.getFirstDisbursalAmount();
+		        if(loanOutstanding.compareTo(firstDisbursalAmount) > 0){
+		            throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
+		                    "Topup loan amount should be greater than outstanding amount of loan to be closed.");
+		        }
+
+		        final LoanTopupDetails topupDetails = new LoanTopupDetails(newLoanApplication, loanIdToClose);
+		        newLoanApplication.setTopupLoanDetails(topupDetails);
+		    }
+		}
+
+		this.loanRepositoryWrapper.save(newLoanApplication);
+
+		if (loanProduct.isInterestRecalculationEnabled()) {
+		    this.fromApiJsonDeserializer.validateLoanForInterestRecalculation(newLoanApplication);
+		    createAndPersistCalendarInstanceForInterestRecalculation(newLoanApplication);
+		}
+
+		if (newLoanApplication.isAccountNumberRequiresAutoGeneration()) {
+		    final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository
+		            .findByAccountType(EntityAccountType.LOAN);
+		    newLoanApplication.updateAccountNo(this.accountNumberGenerator.generate(newLoanApplication, accountNumberFormat));
+		    this.loanRepositoryWrapper.save(newLoanApplication);
+		}
+
+		final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
+		if (StringUtils.isNotBlank(submittedOnNote)) {
+		    final Note note = Note.loanNote(newLoanApplication, submittedOnNote);
+		    this.noteRepository.save(note);
+		}
+
+		// Save calendar instance
+		final Long calendarId = command.longValueOfParameterNamed("calendarId");
+		Calendar calendar = null;
+
+		if (calendarId != null && calendarId != 0) {
+		    calendar = this.calendarRepository.findOne(calendarId);
+		    if (calendar == null) { throw new CalendarNotFoundException(calendarId); }
+
+		    final CalendarInstance calendarInstance = new CalendarInstance(calendar, newLoanApplication.getId(),
+		            CalendarEntityType.LOANS.getValue());
+		    this.calendarInstanceRepository.save(calendarInstance);
+		} else {
+		    final LoanApplicationTerms loanApplicationTerms = this.loanScheduleAssembler.assembleLoanTerms(command.parsedJson());
+		    final Integer repaymentFrequencyNthDayType = command.integerValueOfParameterNamed("repaymentFrequencyNthDayType");
+		    if (loanApplicationTerms.getRepaymentPeriodFrequencyType() == PeriodFrequencyType.MONTHS
+		            && repaymentFrequencyNthDayType != null) {
+		        final String title = "loan_schedule_" + newLoanApplication.getId();
+		        LocalDate calendarStartDate = loanApplicationTerms.getRepaymentsStartingFromLocalDate();
+		        if (calendarStartDate == null) calendarStartDate = loanApplicationTerms.getExpectedDisbursementDate();
+		        final CalendarFrequencyType calendarFrequencyType = CalendarFrequencyType.MONTHLY;
+		        final Integer frequency = loanApplicationTerms.getRepaymentEvery();
+		        final Integer repeatsOnDay = loanApplicationTerms.getWeekDayType().getValue();
+		        final Integer repeatsOnNthDayOfMonth = loanApplicationTerms.getNthDay();
+		        final Integer calendarEntityType = CalendarEntityType.LOANS.getValue();
+		        final Calendar loanCalendar = Calendar.createRepeatingCalendar(title, calendarStartDate,
+		                CalendarType.COLLECTION.getValue(), calendarFrequencyType, frequency, repeatsOnDay, repeatsOnNthDayOfMonth);
+		        this.calendarRepository.save(loanCalendar);
+		        final CalendarInstance calendarInstance = CalendarInstance.from(loanCalendar, newLoanApplication.getId(),
+		                calendarEntityType);
+		        this.calendarInstanceRepository.save(calendarInstance);
+		    }
+		}
+
+		// Save linked account information
+		final Long savingsAccountId = command.longValueOfParameterNamed("linkAccountId");
+		if (savingsAccountId != null) {
+		    final SavingsAccount savingsAccount = this.savingsAccountAssembler.assembleFrom(savingsAccountId);
+		    this.fromApiJsonDeserializer.validatelinkedSavingsAccount(savingsAccount, newLoanApplication);
+		    boolean isActive = true;
+		    final AccountAssociations accountAssociations = AccountAssociations.associateSavingsAccount(newLoanApplication,
+		            savingsAccount, AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue(), isActive);
+		    this.accountAssociationsRepository.save(accountAssociations);
+		}
+
+		if(command.parameterExists(LoanApiConstants.datatables)){
+		    this.entityDatatableChecksWritePlatformService.saveDatatables(StatusEnum.CREATE.getCode().longValue(),
+		            EntityTables.LOAN.getName(), newLoanApplication.getId(), newLoanApplication.productId(),
+		            command.arrayOfParameterNamed(LoanApiConstants.datatables));
+		}
+
+		this.entityDatatableChecksWritePlatformService.runTheCheckForProduct(newLoanApplication.getId(),
+		        EntityTables.LOAN.getName(), StatusEnum.CREATE.getCode().longValue(),
+		        EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(), newLoanApplication.productId());
+
+		this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.LOAN_CREATE,
+		        constructEntityMap(BUSINESS_ENTITY.LOAN, newLoanApplication));
+		return newLoanApplication;
+	}
 
 
 public void checkForProductMixRestrictions(final Loan loan) {

@@ -35,15 +35,21 @@ public class CommandProcessingResultBuilder {
     private String resourceIdentifier;
     private Long entityId;
     private Long subEntityId;
+    private String accountNumber;
     private String transactionId;
     private Map<String, Object> changes;
     private Long productId;
     private boolean rollbackTransaction = false;
 
     public CommandProcessingResult build() {
-        return CommandProcessingResult.fromDetails(this.commandId, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
+        return CommandProcessingResult.fromDetails(this.commandId,this.accountNumber, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
                 this.resourceIdentifier, this.entityId, this.transactionId, this.changes, this.productId, this.rollbackTransaction,
                 this.subEntityId);
+    }
+    
+    public CommandProcessingResultBuilder withAccNo(final String withAccNo) {
+        this.accountNumber = withAccNo;
+        return this;
     }
 
     public CommandProcessingResultBuilder withCommandId(final Long withCommandId) {

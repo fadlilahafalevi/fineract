@@ -36,4 +36,6 @@ public interface LoanApplicationWritePlatformService {
     CommandProcessingResult rejectApplication(Long loanId, JsonCommand command);
 
     CommandProcessingResult applicantWithdrawsFromApplication(Long loanId, JsonCommand command);
+
+	CommandProcessingResult submitApplication2(JsonCommand command);
 }
