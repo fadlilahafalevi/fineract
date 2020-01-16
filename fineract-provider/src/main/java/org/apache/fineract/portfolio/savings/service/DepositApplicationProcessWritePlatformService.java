@@ -41,4 +41,6 @@ public interface DepositApplicationProcessWritePlatformService {
     CommandProcessingResult rejectApplication(Long accountId, JsonCommand command, DepositAccountType depositAccountType);
 
     CommandProcessingResult applicantWithdrawsFromApplication(Long accountId, JsonCommand command, DepositAccountType depositAccountType);
+
+	CommandProcessingResult submitFDApplication2(JsonCommand command);
 }

@@ -25,6 +25,8 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountDataDTO;
 public interface SavingsApplicationProcessWritePlatformService {
 
     CommandProcessingResult submitApplication(JsonCommand command);
+    
+    CommandProcessingResult submitApplication2(JsonCommand command);
 
     CommandProcessingResult modifyApplication(Long savingsId, JsonCommand command);
 

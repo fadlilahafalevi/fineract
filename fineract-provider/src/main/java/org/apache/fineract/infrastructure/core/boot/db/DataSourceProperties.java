@@ -54,13 +54,14 @@ public class DataSourceProperties extends PoolProperties {
     @Value("${" + UID + ":root}")
     private volatile @NotNull String username;
 
-    @Value("${" + PWD + ":mysql}")
+    @Value("${" + PWD + ":amanamansaja}")
     private volatile @NotNull String password;
 
     @Value("${" + PROTOCOL + ":jdbc}")
     private volatile @NotNull String jdbcProtocol;
 
     @Value("${" + SUBPROTOCOL + ":mysql:thin}")
+    //@Value("${" + SUBPROTOCOL + ":mysql}")
     private volatile @NotNull String jdbcSubprotocol;
 
     public DataSourceProperties(String driverClassName, String protocol, String subProtocol, Integer port) {

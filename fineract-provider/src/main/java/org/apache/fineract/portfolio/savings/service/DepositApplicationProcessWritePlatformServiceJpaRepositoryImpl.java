@@ -238,6 +238,74 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                     constructEntityMap(BUSINESS_ENTITY.DEPOSIT_ACCOUNT, account));
 
             return new CommandProcessingResultBuilder() //
+            		//.withAccNo(account.getAccountNumber())
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(savingsId) //
+                    .withOfficeId(account.officeId()) //
+                    .withClientId(account.clientId()) //
+                    .withGroupId(account.groupId()) //
+                    .withSavingsId(savingsId) //
+                    .build();
+        } catch (final DataAccessException dve) {
+            handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        }catch (final PersistenceException dve) {
+        	Throwable throwable = ExceptionUtils.getRootCause(dve.getCause()) ;
+        	handleDataIntegrityIssues(command, throwable, dve);
+            return CommandProcessingResult.empty();
+        }
+    }
+    
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult submitFDApplication2(final JsonCommand command) {
+        try {
+            this.depositAccountDataValidator.validateFixedDepositForSubmit(command.json());
+            final AppUser submittedBy = this.context.authenticatedUser();
+
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
+                    .isSavingsInterestPostingAtCurrentPeriodEnd();
+            final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+
+            final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(command, submittedBy,
+                    DepositAccountType.FIXED_DEPOSIT);
+
+            final MathContext mc = MathContext.DECIMAL64;
+            final boolean isPreMatureClosure = false;
+
+            account.updateMaturityDateAndAmountBeforeAccountActivation(mc, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
+                    financialYearBeginningMonth);
+            this.fixedDepositAccountRepository.save(account);
+
+            if (account.isAccountNumberRequiresAutoGeneration()) {
+                AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.CLIENT);
+                account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+
+                this.savingAccountRepository.save(account);
+            }
+
+            // Save linked account information
+            final Long savingsAccountId = command.longValueOfParameterNamed(DepositsApiConstants.linkedAccountParamName);
+            if (savingsAccountId != null) {
+                final SavingsAccount savingsAccount = this.depositAccountAssembler.assembleFrom(savingsAccountId,
+                        DepositAccountType.SAVINGS_DEPOSIT);
+                this.depositAccountDataValidator.validatelinkedSavingsAccount(savingsAccount, account);
+                boolean isActive = true;
+                final AccountAssociations accountAssociations = AccountAssociations.associateSavingsAccount(account, savingsAccount,
+                        AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue(), isActive);
+                this.accountAssociationsRepository.save(accountAssociations);
+            }
+
+            final Long savingsId = account.getId();
+            this.businessEventNotifierService.notifyBusinessEventWasExecuted( BUSINESS_EVENTS.FIXED_DEPOSIT_ACCOUNT_CREATE,
+            		constructEntityMap(BUSINESS_ENTITY.DEPOSIT_ACCOUNT, account));
+
+            this.businessEventNotifierService.notifyBusinessEventWasExecuted( BUSINESS_EVENTS.FIXED_DEPOSIT_ACCOUNT_CREATE,
+                    constructEntityMap(BUSINESS_ENTITY.DEPOSIT_ACCOUNT, account));
+
+            return new CommandProcessingResultBuilder() //
+            		.withAccNo(account.getAccountNumber())
                     .withCommandId(command.commandId()) //
                     .withEntityId(savingsId) //
                     .withOfficeId(account.officeId()) //

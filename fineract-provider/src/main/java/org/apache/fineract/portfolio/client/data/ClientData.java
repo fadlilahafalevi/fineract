@@ -117,6 +117,8 @@ final public class ClientData implements Comparable<ClientData> {
     private Long clientClassificationId;
     private Long legalFormId;
     private LocalDate submittedOnDate;
+    
+    private String a;
 
     public static ClientData importClientEntityInstance(Long legalFormId,Integer rowIndex,String fullname,Long officeId, Long clientTypeId,
             Long clientClassificationId,Long staffId,Boolean active,LocalDate activationDate,LocalDate submittedOnDate,
@@ -608,5 +610,13 @@ final public class ClientData implements Comparable<ClientData> {
 
     public Boolean getIsAddressEnabled() {
 		return this.isAddressEnabled;
+	}
+
+	public String getA() {
+		return a;
+	}
+
+	public void setA(String a) {
+		this.a = a;
 	}
 }
