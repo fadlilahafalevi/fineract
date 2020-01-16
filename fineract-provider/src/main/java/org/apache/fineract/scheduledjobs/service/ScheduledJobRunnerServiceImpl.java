@@ -29,6 +29,12 @@ import java.util.Map;
 import org.apache.fineract.accounting.glaccount.domain.TrialBalance;
 import org.apache.fineract.accounting.glaccount.domain.TrialBalanceRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
+import org.apache.fineract.portfolio.loanaccount.collectibility.data.LoanCollectibilityData;
+import org.apache.fineract.portfolio.loanaccount.collectibility.domain.LoanCollectibility;
+import org.apache.fineract.portfolio.loanaccount.collectibility.domain.LoanCollectibilityRepositoryWrapper;
+import org.apache.fineract.portfolio.loanaccount.collectibility.service.LoanCollectibilityReadService;
+import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.joda.time.LocalDate;
 import org.joda.time.DateTime;
 
@@ -40,6 +46,10 @@ import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
+import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.organisation.provisioning.data.ProvisioningCriteriaData;
+import org.apache.fineract.organisation.provisioning.data.ProvisioningCriteriaDefinitionData;
+import org.apache.fineract.organisation.provisioning.service.ProvisioningCriteriaReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
@@ -50,6 +60,7 @@ import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPla
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.service.ShareAccountDividendReadPlatformService;
 import org.apache.fineract.portfolio.shareaccounts.service.ShareAccountSchedularService;
+import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -77,6 +88,11 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final ShareAccountDividendReadPlatformService shareAccountDividendReadPlatformService;
     private final ShareAccountSchedularService shareAccountSchedularService;
     private final TrialBalanceRepositoryWrapper trialBalanceRepositoryWrapper;
+    private final PlatformSecurityContext context;
+    private final LoanCollectibilityRepositoryWrapper loanCollectibilityRepositoryWrapper; 
+    private final LoanCollectibilityReadService loanCollectibilityReadService;
+    private final ProvisioningCriteriaReadPlatformService provisioningCriteriaReadPlatformService;
+    private final LoanRepositoryWrapper loanRepositoryWrapper;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -85,7 +101,13 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final DepositAccountReadPlatformService depositAccountReadPlatformService,
             final DepositAccountWritePlatformService depositAccountWritePlatformService,
             final ShareAccountDividendReadPlatformService shareAccountDividendReadPlatformService,
-            final ShareAccountSchedularService shareAccountSchedularService, final TrialBalanceRepositoryWrapper trialBalanceRepositoryWrapper) {
+            final ShareAccountSchedularService shareAccountSchedularService, 
+            final TrialBalanceRepositoryWrapper trialBalanceRepositoryWrapper,
+            final PlatformSecurityContext context,
+            final LoanCollectibilityRepositoryWrapper loanCollectibilityRepositoryWrapper,
+            final LoanCollectibilityReadService loanCollectibilityReadService,
+            final ProvisioningCriteriaReadPlatformService provisioningCriteriaReadPlatformService,
+            final LoanRepositoryWrapper loanRepositoryWrapper) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -94,6 +116,11 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.shareAccountDividendReadPlatformService = shareAccountDividendReadPlatformService;
         this.shareAccountSchedularService = shareAccountSchedularService;
         this.trialBalanceRepositoryWrapper=trialBalanceRepositoryWrapper;
+        this.context = context;
+        this.loanCollectibilityRepositoryWrapper = loanCollectibilityRepositoryWrapper;
+        this.loanCollectibilityReadService = loanCollectibilityReadService;
+        this.provisioningCriteriaReadPlatformService = provisioningCriteriaReadPlatformService;
+        this.loanRepositoryWrapper = loanRepositoryWrapper;
     }
 
     @Transactional
@@ -482,5 +509,77 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         }
 
     }
+    
+	@Override
+	@CronTarget(jobName = JobName.GENERATE_LOAN_COLLECTIBILITY)
+	public void generateLoanCollectibility() {
+		
+		final AppUser appUser = this.context.authenticatedUser();
+		final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+		
+		Collection<LoanCollectibilityData> loanCollectibilityData = this.loanCollectibilityReadService.retrieveLoanCollectibility();
+		
+		for(LoanCollectibilityData loanCollect : loanCollectibilityData){
+			
+			try {
+				LoanCollectibility loanCollectibility = this.loanCollectibilityRepositoryWrapper.findOneByLoanIdWithNotFoundDetection(loanCollect.getLoanId());
+				
+				if (loanCollectibility == null){
+					loanCollectibility = new LoanCollectibility();
+				}
+				
+				loanCollectibility.setLoanId(loanCollect.getLoanId());
+				loanCollectibility.setNumberOverduesDayAccount(loanCollect.getNumberOverduesDayAccount());
+				loanCollectibility.setNumberOverduesDayCif(loanCollect.getNumberOverduesDayCif());
+				
+				final ProvisioningCriteriaData provisioningCriteriaData = this.provisioningCriteriaReadPlatformService.retrieveProvisioningCriteria(loanCollect.getCriteriaId());
+				
+				for (ProvisioningCriteriaDefinitionData provisioningCriteriaDefinitionData : provisioningCriteriaData.getDefinitions()){
+					if (loanCollect.getNumberOverduesDayAccount() >= provisioningCriteriaDefinitionData.getMinAge() && loanCollect.getNumberOverduesDayAccount() <= provisioningCriteriaDefinitionData.getMaxAge()){
+						loanCollectibility.setCollectibilityAccount(provisioningCriteriaDefinitionData.getCategoryId());
+						if (provisioningCriteriaDefinitionData.getCategoryId().equals(Long.valueOf(5))){
+							if (loanCollectibility.getLossDate() == null){
+								loanCollectibility.setLossDate(new Date());
+							}
+						}
+						break;
+					} else {
+						loanCollectibility.setCollectibilityAccount(5L);
+						if (loanCollectibility.getLossDate() == null){
+							loanCollectibility.setLossDate(new Date());
+						}
+					}
+				}
+
+				loanCollectibility.setManualCollectibility(loanCollect.getManualCollectibility());
+				
+				if (loanCollectibility.getSubmittedById() != null){
+					loanCollectibility.setUpdatedById(appUser.getId());
+					loanCollectibility.setUpdatedOn(new Date());
+				} else {
+					loanCollectibility.setSubmittedById(appUser.getId());
+					loanCollectibility.setSubmittedOn(new Date());
+				}
+				
+				this.loanCollectibilityRepositoryWrapper.save(loanCollectibility);
+				
+				LoanCollectibilityData loanCollectibilityCifData = this.loanCollectibilityReadService.retrieveLoanCollectibilityCifByClientId(loanCollect.getClientId());
+				final String sqlCif = "update m_loan_collectibility lc " + 
+						"left join m_loan l on lc.loan_id = l.id " + 
+						"left join m_client c on c.id = l.client_id " + 
+						"join m_loanproduct_provisioning_mapping lpm on lpm.product_id = l.product_id " + 
+						"set collectibility_cif = ? " + 
+						"where lc.loan_id = l.id and c.id = ? and lc.collectibility_account is not null and l.loan_status_id = 300 ";
+				
+				jdbcTemplate.update(sqlCif, loanCollectibilityCifData.getCollectibilityCif(), loanCollect.getClientId());
+				
+			} catch (final PlatformApiDataValidationException e) {
+				final List<ApiParameterError> errors = e.getErrors();
+				for (final ApiParameterError error : errors) {
+					logger.error("Generate Loan Collectibility failed for account:" + loanCollect.getLoanId() + " with message " + error.getDeveloperMessage());
+				}
+			}
+		}
+	}
 
 }

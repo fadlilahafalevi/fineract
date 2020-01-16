@@ -29,27 +29,27 @@ public final class ProvisioningCriteriaDefinitionData implements Comparable<Prov
     private final Long minAge;
     private final Long maxAge;
     private final BigDecimal provisioningPercentage;
-    private final Long liabilityAccount;
-    private final String liabilityCode;
-    private final String liabilityName ;
+    private final Long assetAccount;
+    private final String assetCode;
+    private final String assetName ;
     private final Long expenseAccount;
     private final String expenseCode;
     private final String expenseName ;
     
     public ProvisioningCriteriaDefinitionData(Long id, Long categoryId, String categoryName, Long minAge, Long maxAge,
-            BigDecimal provisioningPercentage, Long liabilityAccount, final String liabilityCode, String liabilityName, Long expenseAccount, 
+            BigDecimal provisioningPercentage, Long assetAccount, final String assetCode, String assetName, Long expenseAccount, 
             final String expenseCode, final String expenseName) {
         this.id = id;
         this.categoryId = categoryId;
         this.minAge = minAge;
         this.maxAge = maxAge;
         this.provisioningPercentage = provisioningPercentage;
-        this.liabilityAccount = liabilityAccount;
+        this.assetAccount = assetAccount;
         this.expenseAccount = expenseAccount;
         this.categoryName = categoryName;
-        this.liabilityCode = liabilityCode;
+        this.assetCode = assetCode;
         this.expenseCode = expenseCode;
-        this.liabilityName = liabilityName ;
+        this.assetName = assetName ;
         this.expenseName =  expenseName ;
     }
 
@@ -81,23 +81,43 @@ public final class ProvisioningCriteriaDefinitionData implements Comparable<Prov
         return this.provisioningPercentage;
     }
 
-    public Long getLiabilityAccount() {
-        return this.liabilityAccount;
-    }
-
     public Long getExpenseAccount() {
         return this.expenseAccount;
-    }
-
-    public String getLiabilityCode() {
-        return this.liabilityCode;
     }
 
     public String getExpenseCode() {
         return this.expenseCode;
     }
 
-    @Override
+    /**
+	 * @return the assetAccount
+	 */
+	public Long getAssetAccount() {
+		return assetAccount;
+	}
+
+	/**
+	 * @return the assetCode
+	 */
+	public String getAssetCode() {
+		return assetCode;
+	}
+
+	/**
+	 * @return the assetName
+	 */
+	public String getAssetName() {
+		return assetName;
+	}
+
+	/**
+	 * @return the expenseName
+	 */
+	public String getExpenseName() {
+		return expenseName;
+	}
+
+	@Override
     public int compareTo(ProvisioningCriteriaDefinitionData obj) {
         if (obj == null) { return -1; }
         return obj.id.compareTo(this.id);

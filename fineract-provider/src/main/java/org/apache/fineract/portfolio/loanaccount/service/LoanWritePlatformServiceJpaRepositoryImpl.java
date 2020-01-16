@@ -2385,7 +2385,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
             if (reprocessRequired) {
                 addInstallmentIfPenaltyAppliedAfterLastDueDate(loan, lastChargeDate);
-                ChangedTransactionDetail changedTransactionDetail = loan.reprocessTransactions();
+                /*ChangedTransactionDetail changedTransactionDetail = loan.reprocessTransactions();
                 if (changedTransactionDetail != null) {
                     for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
                         this.loanTransactionRepository.save(mapEntry.getValue());
@@ -2394,7 +2394,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                         loan.addLoanTransaction(mapEntry.getValue());
                         this.accountTransfersWritePlatformService.updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
                     }
-                }
+                }*/
                 saveLoanWithDataIntegrityViolationChecks(loan);
             }
 

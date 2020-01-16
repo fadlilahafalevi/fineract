@@ -906,6 +906,38 @@ public class AccountingProcessorHelper {
                 loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
         this.glJournalEntryRepository.saveAndFlush(journalEntry);
     }
+    
+    public void createProvisioningDebitJournalEntry(Date transactionDate, Long provisioningentryId, Office office, String currencyCode,
+            GLAccount account, BigDecimal amount, String loanAccNumber) {
+        LoanTransaction loanTransaction = null;
+        SavingsAccountTransaction savingsAccountTransaction = null;
+        ClientTransaction clientTransaction = null;
+        PaymentDetail paymentDetail = null;
+        final Long shareTransactionId = null;
+        final boolean manualEntry = false;
+        String modifiedTransactionId = PROVISIONING_TRANSACTION_IDENTIFIER + provisioningentryId;
+        String description = "Reserved Amount (PPAP) from Loan Account : " + loanAccNumber;
+        final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
+                manualEntry, transactionDate, JournalEntryType.DEBIT, amount, description, PortfolioProductType.PROVISIONING.getValue(),
+                provisioningentryId, null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
+        this.glJournalEntryRepository.saveAndFlush(journalEntry);
+    }
+
+    public void createProvisioningCreditJournalEntry(Date transactionDate, Long provisioningentryId, Office office, String currencyCode,
+            GLAccount account, BigDecimal amount, String loanAccNumber) {
+        LoanTransaction loanTransaction = null;
+        SavingsAccountTransaction savingsAccountTransaction = null;
+        ClientTransaction clientTransaction = null;
+        PaymentDetail paymentDetail = null;
+        final Long shareTransactionId = null;
+        final boolean manualEntry = false;
+        String modifiedTransactionId = PROVISIONING_TRANSACTION_IDENTIFIER + provisioningentryId;
+        String description = "Reserved Amount (PPAP) from Loan Account : " + loanAccNumber;
+        final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
+                manualEntry, transactionDate, JournalEntryType.CREDIT, amount, description, PortfolioProductType.PROVISIONING.getValue(),
+                provisioningentryId, null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
+        this.glJournalEntryRepository.saveAndFlush(journalEntry);
+    }
 
     private void createDebitJournalEntryForSavings(final Office office, final String currencyCode, final GLAccount account,
             final Long savingsId, final String transactionId, final Date transactionDate, final BigDecimal amount) {

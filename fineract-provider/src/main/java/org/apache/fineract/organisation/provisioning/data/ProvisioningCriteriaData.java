@@ -89,4 +89,11 @@ public class ProvisioningCriteriaData implements Comparable<ProvisioningCriteria
         if (obj == null ) { return -1; }
         return obj.criteriaId.compareTo(this.criteriaId);
     }
+
+	/**
+	 * @return the definitions
+	 */
+	public Collection<ProvisioningCriteriaDefinitionData> getDefinitions() {
+		return definitions;
+	}
 }

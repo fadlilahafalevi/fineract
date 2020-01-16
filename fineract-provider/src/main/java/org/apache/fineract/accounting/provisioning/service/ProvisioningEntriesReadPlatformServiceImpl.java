@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.fineract.accounting.provisioning.data.LoanAccountProvisioningEntryData;
 import org.apache.fineract.accounting.provisioning.data.LoanProductProvisioningEntryData;
 import org.apache.fineract.accounting.provisioning.data.ProvisioningEntryData;
 import org.apache.fineract.infrastructure.core.service.Page;
@@ -47,6 +48,7 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
     private final JdbcTemplate jdbcTemplate;
 
     private final PaginationHelper<LoanProductProvisioningEntryData> loanProductProvisioningEntryDataPaginationHelper = new PaginationHelper<>();
+    private final PaginationHelper<LoanAccountProvisioningEntryData> loanAccountProvisioningEntryDataPaginationHelper = new PaginationHelper<>();
     private final PaginationHelper<ProvisioningEntryData> provisioningEntryDataPaginationHelper = new PaginationHelper<>();
 
     @Autowired
@@ -62,6 +64,71 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
         final String sql = mapper.schema();
         return this.jdbcTemplate.query(sql, mapper, new Object[] {});
     }
+    
+    @Override
+    public Collection<LoanAccountProvisioningEntryData> retrieveLoanAccountsProvisioningData(Date date) {
+        String formattedDate = new SimpleDateFormat("yyyy-MM-dd").format(date);
+        formattedDate = "'" + formattedDate + "'";
+        LoanAccountProvisioningEntryMapper mapper = new LoanAccountProvisioningEntryMapper(formattedDate);
+        final String sql = mapper.schema();
+        return this.jdbcTemplate.query(sql, mapper, new Object[] {});
+    }
+    
+    private static final class LoanAccountProvisioningEntryMapper implements RowMapper<LoanAccountProvisioningEntryData> {
+
+        private final StringBuilder sqlQuery;
+
+        protected LoanAccountProvisioningEntryMapper(String formattedDate) {
+        	
+        	sqlQuery = new StringBuilder()
+        			
+			.append("select ")
+			.append("distinct l.id as loanId,  ")
+			.append("if(l.loan_type_enum = 1, mclient.office_id,  mgroup.office_id) as office_id, ")
+			.append("l.loan_type_enum, l.currency_code, l.product_id as productId, l.client_id as clientId, l.group_id as groupId, lc.number_overdues_day_account, l.total_outstanding_derived, l.principal_outstanding_derived, ")
+			.append("pcd1.criteria_id as criteria_id, ")
+			.append("pcd1.category_id as categoryAccount, ")
+			.append("pcd1.provision_percentage as provisionPercentageAccount, ")
+			.append("pcd1.asset_account  as asset_account, ")
+			.append("pcd1.expense_account as expense_account, ")
+			.append("pcd2.category_id as categoryCif, ")
+			.append("pcd2.provision_percentage as provisionPercentageCif ")
+        	.append("from m_loan l ")
+        	.append("join m_loan_repayment_schedule sch on sch.loan_id=l.id ")
+        	.append("join m_loanproduct_provisioning_mapping lpm on lpm.product_id = l.product_id ")
+        	.append("join m_loan_collectibility lc on lc.loan_id = l.id ")
+        	.append("left join m_provisioning_criteria_definition pcd1 on pcd1.criteria_id = lpm.criteria_id and pcd1.category_id = lc.collectibility_account ")
+        	.append("left join m_provisioning_criteria_definition pcd2 on pcd2.criteria_id = lpm.criteria_id and pcd2.category_id = lc.collectibility_cif ")
+        	.append("LEFT JOIN m_client mclient ON mclient.id = l.client_id ")
+        	.append("LEFT JOIN m_group mgroup ON mgroup.id = l.group_id ")
+        	.append("where l.loan_status_id=300 and sch.duedate = (select MIN(sch1.duedate) from m_loan_repayment_schedule sch1 where sch1.loan_id=l.id and sch1.completed_derived=false)");
+        }
+
+        @Override
+        public LoanAccountProvisioningEntryData mapRow(ResultSet rs, int rowNum) throws SQLException {
+            Long officeId = rs.getLong("office_id");
+            Long loanId = rs.getLong("loanId");
+            String currentcyCode = rs.getString("currency_code");
+            Long overdueDays = rs.getLong("number_overdues_day_account");
+            Long categoryId = rs.getLong("categoryAccount");
+            Long categoryIdByCif = rs.getLong("categoryCif");
+            BigDecimal percentage = rs.getBigDecimal("provisionPercentageAccount");
+            BigDecimal percentageByCif = rs.getBigDecimal("provisionPercentageCif");
+            BigDecimal outstandingBalance = rs.getBigDecimal("total_outstanding_derived");
+            Long assetAccountCode = rs.getLong("asset_account");
+            Long expenseAccountCode = rs.getLong("expense_account");
+            Long criteriaId = rs.getLong("criteria_id");
+            Long historyId = null;
+            LoanAccountProvisioningEntryData loanAccountProvisioningEntryData = new LoanAccountProvisioningEntryData(historyId, officeId, currentcyCode, loanId, categoryId, categoryIdByCif, overdueDays, percentage, percentageByCif,
+                    outstandingBalance, assetAccountCode, expenseAccountCode, criteriaId, null);
+            loanAccountProvisioningEntryData.setPrincipal(rs.getBigDecimal("principal_outstanding_derived"));
+            return loanAccountProvisioningEntryData;
+        }
+
+        public String schema() {
+            return sqlQuery.toString();
+        }
+    }	
 
     private static final class LoanProductProvisioningEntryMapper implements RowMapper<LoanProductProvisioningEntryData> {
 
@@ -73,7 +140,7 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
                     .append("GREATEST(datediff(")
                     .append(formattedDate)
                     .append(",sch.duedate),0) as numberofdaysoverdue,sch.duedate, pcd.category_id, pcd.provision_percentage,")
-                    .append("loan.total_outstanding_derived as outstandingbalance, pcd.liability_account, pcd.expense_account from m_loan_repayment_schedule sch")
+                    .append("loan.total_outstanding_derived as outstandingbalance, pcd.asset_account, pcd.expense_account from m_loan_repayment_schedule sch")
                     .append(" LEFT JOIN m_loan loan on sch.loan_id = loan.id")
                     .append(" JOIN m_loanproduct_provisioning_mapping lpm on lpm.product_id = loan.product_id")
                     .append(" JOIN m_provisioning_criteria_definition pcd on pcd.criteria_id = lpm.criteria_id and ")
@@ -95,13 +162,13 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
             Long categoryId = rs.getLong("category_id");
             BigDecimal percentage = rs.getBigDecimal("provision_percentage");
             BigDecimal outstandingBalance = rs.getBigDecimal("outstandingbalance");
-            Long liabilityAccountCode = rs.getLong("liability_account");
+            Long assetAccountCode = rs.getLong("asset_account");
             Long expenseAccountCode = rs.getLong("expense_account");
             Long criteriaId = rs.getLong("criteriaid");
             Long historyId = null;
 
             return new LoanProductProvisioningEntryData(historyId, officeId, currentcyCode, productId, categoryId, overdueDays, percentage,
-                    outstandingBalance, liabilityAccountCode, expenseAccountCode, criteriaId);
+                    outstandingBalance, assetAccountCode, expenseAccountCode, criteriaId);
         }
 
         public String schema() {
@@ -187,14 +254,58 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
             return sqlQuery.toString();
         }
     }
+    
+    private static final class LoanAccountProvisioningEntryRowMapper implements RowMapper<LoanAccountProvisioningEntryData> {
+
+        private final StringBuilder sqlQuery = new StringBuilder()
+                .append(" entry.id, entry.history_id as historyId, office_id, entry.criteria_id as criteriaid, office.name as officename, product.name as productname, l.product_id, l.account_no, ")
+                .append("category_id, category.category_name, asset.id as assetid, asset.gl_code as assetcode, asset.name as assetname, ")
+                .append("expense.id as expenseid, expense.gl_code as expensecode, expense.name as expensename, entry.currency_code, entry.overdue_in_days, entry.reserved_amount_by_cif from m_loanaccount_provisioning_entry entry ")
+                .append("left join m_office office ON office.id = entry.office_id ")
+                .append("left join m_loan l ON l.id = entry.loan_id ")
+                .append("left join m_product_loan product ON product.id = l.product_id ")
+                .append("left join m_provision_category category ON category.id = entry.category_id ")
+                .append("left join acc_gl_account asset ON asset.id = entry.asset_account ")
+                .append("left join acc_gl_account expense ON expense.id = entry.expense_account ");
+
+        @Override
+        @SuppressWarnings("unused")
+        public LoanAccountProvisioningEntryData mapRow(ResultSet rs, int rowNum) throws SQLException {
+            Long historyId = rs.getLong("historyId");
+            Long officeId = rs.getLong("office_id");
+            String officeName = rs.getString("officename");
+            Long productId = rs.getLong("product_id");
+            String productName = rs.getString("productname");
+            String currentcyCode = rs.getString("currency_code");
+            Long overdueDays = rs.getLong("overdue_in_days");
+            Long categoryId = rs.getLong("category_id");
+            String categoryName = rs.getString("category_name");
+            BigDecimal amountreserved = rs.getBigDecimal("reserved_amount_by_cif");
+            Long assetAccountCode = rs.getLong("assetid");
+            String assetAccountglCode = rs.getString("assetcode");
+            String expenseAccountglCode = rs.getString("expensecode");
+            Long expenseAccountCode = rs.getLong("expenseid");
+            Long criteriaId = rs.getLong("criteriaid");
+            String assetAccountName = rs.getString("assetname");
+            String expenseAccountName = rs.getString("expensename");
+            String loanAccountNumber = rs.getString("account_no");
+            return new LoanAccountProvisioningEntryData(historyId, officeId, officeName, currentcyCode, productId, productName, categoryId,
+                    criteriaId, categoryName, overdueDays, amountreserved, null, amountreserved, null, assetAccountCode, assetAccountglCode, assetAccountName,
+                    expenseAccountCode, expenseAccountglCode, expenseAccountName, criteriaId, null, criteriaId, loanAccountNumber);
+        }
+
+        public String getSchema() {
+            return sqlQuery.toString();
+        }
+    }
 
     private static final class ProvisioningEntryDataMapperWithSumReserved implements RowMapper<ProvisioningEntryData> {
 
         private final StringBuilder sqlQuery = new StringBuilder()
                 .append(" entry.id, journal_entry_created, createdby_id, created_date, created.username as createduser,")
-                .append("lastmodifiedby_id, modified.username as modifieduser, lastmodified_date, SUM(reserved.reseve_amount) as totalreserved ")
+                .append("lastmodifiedby_id, modified.username as modifieduser, lastmodified_date, SUM(reserved.reserved_amount_by_cif) as totalreserved ")
                 .append("from m_provisioning_history entry ")
-                .append("JOIN m_loanproduct_provisioning_entry reserved on entry.id = reserved.history_id ")
+                .append("JOIN m_loanaccount_provisioning_entry reserved on entry.id = reserved.history_id ")
                 .append("left JOIN m_appuser created ON created.id = entry.createdby_id ")
                 .append("left JOIN m_appuser modified ON modified.id = entry.lastmodifiedby_id ");
 
@@ -350,6 +461,51 @@ public class ProvisioningEntriesReadPlatformServiceImpl implements ProvisioningE
         Object[] whereClauseItemsitems = items.toArray();
         final String sqlCountRows = "SELECT FOUND_ROWS()";
         return this.loanProductProvisioningEntryDataPaginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(),
+                whereClauseItemsitems, mapper);
+    }
+    
+    @Override
+    public Page<LoanAccountProvisioningEntryData> retrieveProvisioningEntriesByAccount(SearchParameters searchParams) {
+        LoanAccountProvisioningEntryRowMapper mapper = new LoanAccountProvisioningEntryRowMapper();
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+        sqlBuilder.append(mapper.getSchema());
+        String whereClose = " where ";
+        List<Object> items = new ArrayList<>();
+
+        if (searchParams.isProvisioningEntryIdPassed()) {
+            sqlBuilder.append(whereClose + " entry.history_id = ?");
+            items.add(searchParams.getProvisioningEntryId());
+            whereClose = " and ";
+        }
+
+        if (searchParams.isOfficeIdPassed()) {
+            sqlBuilder.append(whereClose + " entry.office_id = ?");
+            items.add(searchParams.getOfficeId());
+            whereClose = " and ";
+        }
+
+        if (searchParams.isProductIdPassed()) {
+            sqlBuilder.append(whereClose + " l.product_id = ?");
+            items.add(searchParams.getProductId());
+            whereClose = " and ";
+        }
+
+        if (searchParams.isCategoryIdPassed()) {
+            sqlBuilder.append(whereClose + " entry.category_id = ?");
+            items.add(searchParams.getCategoryId());
+        }
+        sqlBuilder.append(" order by entry.id");
+
+        if (searchParams.isLimited()) {
+            sqlBuilder.append(" limit ").append(searchParams.getLimit());
+            if (searchParams.isOffset()) {
+                sqlBuilder.append(" offset ").append(searchParams.getOffset());
+            }
+        }
+        Object[] whereClauseItemsitems = items.toArray();
+        final String sqlCountRows = "SELECT FOUND_ROWS()";
+        return this.loanAccountProvisioningEntryDataPaginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(),
                 whereClauseItemsitems, mapper);
     }
 

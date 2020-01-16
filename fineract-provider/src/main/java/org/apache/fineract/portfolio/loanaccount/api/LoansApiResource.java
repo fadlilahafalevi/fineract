@@ -627,6 +627,12 @@ public class LoansApiResource {
                 calendarOptions, notes, accountLinkingOptions, linkedAccount, disbursementData, emiAmountVariations,
                 overdueCharges, paidInAdvanceTemplate, interestRatesPeriods, clientActiveLoanOptions);
 
+        loanAccount.setCategoryByCif(loanBasicDetails.getCategoryByCif());
+        loanAccount.setCategoryByLoan(loanBasicDetails.getCategoryByLoan());
+        loanAccount.setCategoryNameByCif(loanBasicDetails.getCategoryNameByCif());
+        loanAccount.setCategoryNameByLoan(loanBasicDetails.getCategoryNameByLoan());
+        loanAccount.setReservedAmount(loanBasicDetails.getReservedAmount());
+        
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
         String toReturn = this.toApiJsonSerializer.serialize(settings, loanAccount, this.LOAN_DATA_PARAMETERS);

@@ -56,6 +56,7 @@ import org.apache.fineract.accounting.journalentry.exception.JournalEntryInvalid
 import org.apache.fineract.accounting.journalentry.exception.JournalEntryRuntimeException;
 import org.apache.fineract.accounting.journalentry.serialization.JournalEntryCommandFromApiJsonDeserializer;
 import org.apache.fineract.accounting.producttoaccountmapping.domain.PortfolioProductType;
+import org.apache.fineract.accounting.provisioning.domain.LoanAccountProvisioningEntry;
 import org.apache.fineract.accounting.provisioning.domain.LoanProductProvisioningEntry;
 import org.apache.fineract.accounting.provisioning.domain.ProvisioningEntry;
 import org.apache.fineract.accounting.rule.domain.AccountingRule;
@@ -410,50 +411,40 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
 
     @Override
     public String createProvisioningJournalEntries(ProvisioningEntry provisioningEntry) {
-        Collection<LoanProductProvisioningEntry> provisioningEntries = provisioningEntry.getLoanProductProvisioningEntries();
-        Map<OfficeCurrencyKey, List<LoanProductProvisioningEntry>> officeMap = new HashMap<>();
+        Collection<LoanAccountProvisioningEntry> provisioningEntries = provisioningEntry.getLoanAccountProvisioningEntries();
+        Map<OfficeCurrencyKey, List<LoanAccountProvisioningEntry>> officeMap = new HashMap<>();
 
-        for (LoanProductProvisioningEntry entry : provisioningEntries) {
+        for (LoanAccountProvisioningEntry entry : provisioningEntries) {
             OfficeCurrencyKey key = new OfficeCurrencyKey(entry.getOffice(), entry.getCurrencyCode());
             if (officeMap.containsKey(key)) {
-                List<LoanProductProvisioningEntry> list = officeMap.get(key);
+                List<LoanAccountProvisioningEntry> list = officeMap.get(key);
                 list.add(entry);
             } else {
-                List<LoanProductProvisioningEntry> list = new ArrayList<>();
+                List<LoanAccountProvisioningEntry> list = new ArrayList<>();
                 list.add(entry);
                 officeMap.put(key, list);
             }
         }
 
         Set<OfficeCurrencyKey> officeSet = officeMap.keySet();
-        Map<GLAccount, BigDecimal> liabilityMap = new HashMap<>();
+        Map<GLAccount, BigDecimal> assetMap = new HashMap<>();
         Map<GLAccount, BigDecimal> expenseMap = new HashMap<>();
 
         for (OfficeCurrencyKey key : officeSet) {
-            liabilityMap.clear();
+        	assetMap.clear();
             expenseMap.clear();
-            List<LoanProductProvisioningEntry> entries = officeMap.get(key);
-            for (LoanProductProvisioningEntry entry : entries) {
-                if (liabilityMap.containsKey(entry.getLiabilityAccount())) {
-                    BigDecimal amount = liabilityMap.get(entry.getLiabilityAccount());
-                    amount = amount.add(entry.getReservedAmount());
-                    liabilityMap.put(entry.getLiabilityAccount(), amount);
-                } else {
-                    BigDecimal amount = BigDecimal.ZERO.add(entry.getReservedAmount());
-                    liabilityMap.put(entry.getLiabilityAccount(), amount);
-                }
-
-                if (expenseMap.containsKey(entry.getExpenseAccount())) {
-                    BigDecimal amount = expenseMap.get(entry.getExpenseAccount());
-                    amount = amount.add(entry.getReservedAmount());
-                    expenseMap.put(entry.getExpenseAccount(), amount);
-                } else {
-                    BigDecimal amount = BigDecimal.ZERO.add(entry.getReservedAmount());
-                    expenseMap.put(entry.getExpenseAccount(), amount);
-                }
+            List<LoanAccountProvisioningEntry> entries = officeMap.get(key);
+            for (LoanAccountProvisioningEntry entry : entries) {
+            	
+            	BigDecimal amountAsset = BigDecimal.ZERO.add(entry.getReservedAmountByCif());
+                assetMap.put(entry.getAssetAccount(), amountAsset);
+                
+                BigDecimal amountExpenses = BigDecimal.ZERO.add(entry.getReservedAmountByCif());
+                expenseMap.put(entry.getExpenseAccount(), amountExpenses);
+                
+                createJournalEnry(provisioningEntry.getCreatedDate(), provisioningEntry.getId(), key.office, key.currency, entry.getAssetAccount(),
+                		entry.getExpenseAccount(), amountAsset, amountExpenses, entry.getLoan().getAccountNumber());
             }
-            createJournalEnry(provisioningEntry.getCreatedDate(), provisioningEntry.getId(), key.office, key.currency, liabilityMap,
-                    expenseMap);
         }
         return "P" + provisioningEntry.getId();
     }
@@ -470,6 +461,20 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             this.helper.createProvisioningDebitJournalEntry(transactionDate, entryId, office, currencyCode, account,
                     expenseMap.get(account));
         }
+    }
+    
+    private void createJournalEnry(Date transactionDate, Long entryId, Office office, String currencyCode,
+            GLAccount assetMap, GLAccount expenseMap, BigDecimal assetAmount, BigDecimal expenseAmount, String loanAccNumber) {
+    	
+    	if (expenseAmount.compareTo(BigDecimal.ZERO) != 0){
+	        this.helper.createProvisioningDebitJournalEntry(transactionDate, entryId, office, currencyCode, expenseMap,
+	        		expenseAmount, loanAccNumber);
+    	}
+        
+    	if (assetAmount.compareTo(BigDecimal.ZERO) != 0){
+	        this.helper.createProvisioningCreditJournalEntry(transactionDate, entryId, office, currencyCode, assetMap,
+	        		assetAmount, loanAccNumber);
+    	}
     }
 
     private void validateCommentForReversal(final String reversalComment) {

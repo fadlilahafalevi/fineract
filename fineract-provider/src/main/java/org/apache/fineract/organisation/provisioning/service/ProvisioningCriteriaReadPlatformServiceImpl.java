@@ -137,10 +137,10 @@ public class ProvisioningCriteriaReadPlatformServiceImpl implements Provisioning
 
         private final StringBuilder sqlQuery = new StringBuilder()
                 .append("pc.id, pc.criteria_id, pc.category_id, mpc.category_name, pc.min_age, pc.max_age, ")
-                .append("pc.provision_percentage, pc.liability_account, pc.expense_account, lia.gl_code as liabilitycode, expe.gl_code as expensecode, ")
-                .append("lia.name as liabilityname, expe.name as expensename ")
+                .append("pc.provision_percentage, pc.asset_account, pc.expense_account, asset.gl_code as assetcode, expe.gl_code as expensecode, ")
+                .append("asset.name as assetname, expe.name as expensename ")
                 .append("from m_provisioning_criteria_definition as pc ")
-                .append("LEFT JOIN acc_gl_account lia ON lia.id = pc.liability_account ")
+                .append("LEFT JOIN acc_gl_account asset ON asset.id = pc.asset_account ")
                 .append("LEFT JOIN acc_gl_account expe ON expe.id = pc.expense_account ")
                 .append("LEFT JOIN m_provision_category mpc ON mpc.id = pc.category_id");
 
@@ -154,15 +154,15 @@ public class ProvisioningCriteriaReadPlatformServiceImpl implements Provisioning
             Long minAge = rs.getLong("min_age");
             Long maxAge = rs.getLong("max_age");
             BigDecimal provisioningPercentage = rs.getBigDecimal("provision_percentage");
-            Long liabilityAccount = rs.getLong("liability_account");
-            String liabilityAccountCode = rs.getString("liabilitycode");
-            String liabilityAccountName = rs.getString("liabilityname") ;
+            Long assetAccount = rs.getLong("asset_account");
+            String assetAccountCode = rs.getString("assetcode");
+            String assetAccountName = rs.getString("assetname") ;
             Long expenseAccount = rs.getLong("expense_account");
             String expenseAccountCode = rs.getString("expensecode");
             String expenseAccountName = rs.getString("expensename") ;
             
             return new ProvisioningCriteriaDefinitionData(id, categoryId, categoryName, minAge, maxAge, provisioningPercentage,
-                    liabilityAccount, liabilityAccountCode, liabilityAccountName, expenseAccount, expenseAccountCode, expenseAccountName);
+            		assetAccount, assetAccountCode, assetAccountName, expenseAccount, expenseAccountCode, expenseAccountName);
         }
 
         public String schema() {

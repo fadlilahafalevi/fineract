@@ -146,17 +146,17 @@ public class ProvisioningCriteriaWritePlatformServiceJpaRepositoryImpl implement
             Long maximumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MAXIMUM_AGE_PARAM, jsonObject);
             BigDecimal provisioningpercentage = this.fromApiJsonHelper.extractBigDecimalNamed(ProvisioningCriteriaConstants.JSON_PROVISIONING_PERCENTAGE_PARAM,
                     jsonObject, locale);
-            Long liabilityAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_LIABILITY_ACCOUNT_PARAM, jsonObject);
+            Long assetAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM, jsonObject);
             Long expenseAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_EXPENSE_ACCOUNT_PARAM, jsonObject);
-            GLAccount liabilityAccount = glAccountRepository.findOne(liabilityAccountId);
+            GLAccount assetAccount = glAccountRepository.findOne(assetAccountId);
             GLAccount expenseAccount = glAccountRepository.findOne(expenseAccountId);
             String categoryName = null ;
             String liabilityAccountName = null ;
             String expenseAccountName = null ;
             ProvisioningCriteriaDefinitionData data = new ProvisioningCriteriaDefinitionData(id, categoryId, 
                     categoryName, minimumAge, maximumAge, provisioningpercentage, 
-                    liabilityAccount.getId(), liabilityAccount.getGlCode(), liabilityAccountName, expenseAccount.getId(), expenseAccount.getGlCode(), expenseAccountName) ;
-            provisioningCriteria.update(data, liabilityAccount, expenseAccount) ;
+                    assetAccount.getId(), assetAccount.getGlCode(), liabilityAccountName, expenseAccount.getId(), expenseAccount.getGlCode(), expenseAccountName) ;
+            provisioningCriteria.update(data, assetAccount, expenseAccount) ;
         }
     }
     

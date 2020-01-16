@@ -641,7 +641,13 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " l.is_topup as isTopup, "
                     + " topup.closure_loan_id as closureLoanId, "
                     + " topuploan.account_no as closureLoanAccountNo, "
-                    + " topup.topup_amount as topupAmount "
+                    + " topup.topup_amount as topupAmount, "
+					+ " pcd1.asset_account as ppapAssetAccount, " 
+					+ " pcd1.category_id as categoryByLoan, "
+					+ " pc1.category_name as categoryNameByLoan, " 
+					+ " pcd2.category_id as categoryByCif, "
+					+ " pc2.category_name as  categoryNameByCif, " 
+					+ " lape.reserved_amount_by_cif as reservedAmount "
                     + " from m_loan l" //
                     + " join m_product_loan lp on lp.id = l.product_id" //
                     + " left join m_loan_recalculation_details lir on lir.loan_id = l.id "
@@ -662,7 +668,14 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " left join ref_loan_transaction_processing_strategy lps on lps.id = l.loan_transaction_strategy_id"
                     + " left join m_product_loan_variable_installment_config lpvi on lpvi.loan_product_id = l.product_id"
                     + " left join m_loan_topup as topup on l.id = topup.loan_id"
-                    + " left join m_loan as topuploan on topuploan.id = topup.closure_loan_id";
+                    + " left join m_loan as topuploan on topuploan.id = topup.closure_loan_id"
+		            + " left join m_loanproduct_provisioning_mapping lpm on lpm.product_id = l.product_id "
+					+ " left join m_loan_collectibility lc on lc.loan_id = l.id "
+					+ " left join m_provisioning_criteria_definition pcd1 on pcd1.criteria_id = lpm.criteria_id and pcd1.category_id = lc.collectibility_account "
+					+ " left join m_provisioning_criteria_definition pcd2 on pcd2.criteria_id = lpm.criteria_id and pcd2.category_id = lc.collectibility_cif "
+					+ " left join m_provision_category pc1 on pc1.id = pcd1.category_id "
+					+ " left join m_provision_category pc2 on pc2.id = pcd2.category_id "
+					+ " left join m_loanaccount_provisioning_entry lape on lape.loan_id = l.id and lape.history_id = (select max(id) from m_provisioning_history) ";
 
         }
 
@@ -961,8 +974,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Long closureLoanId = rs.getLong("closureLoanId");
             final String closureLoanAccountNo = rs.getString("closureLoanAccountNo");
             final BigDecimal topupAmount = rs.getBigDecimal("topupAmount");
-
-            return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientAccountNo, clientName,
+			
+			LoanAccountData loanAccountData = LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientAccountNo, clientName,
                     clientOfficeId, groupData, loanType, loanProductId, loanProductName, loanProductDescription,
                     isLoanProductLinkedToFloatingRate, fundId, fundName, loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
                     currencyData, proposedPrincipal, principal, approvedPrincipal, totalOverpaid, inArrearsTolerance, termFrequency,
@@ -976,6 +989,20 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     graceOnArrearsAgeing, isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
                     interestRecalculationData, createStandingInstructionAtDisbursement, isvariableInstallmentsAllowed, minimumGap,
                     maximumGap, loanSubStatus, canUseForTopup, isTopup, closureLoanId, closureLoanAccountNo, topupAmount, isEqualAmortization);
+
+            final String categoryByLoan = rs.getString("categoryByLoan");
+			final String categoryNameByLoan = rs.getString("categoryNameByLoan");
+			final String categoryByCif = rs.getString("categoryByCif");
+			final String categoryNameByCif = rs.getString("categoryNameByCif");
+			final BigDecimal reservedAmount = rs.getBigDecimal("reservedAmount");
+			
+			loanAccountData.setCategoryByLoan(categoryByLoan);
+			loanAccountData.setCategoryByCif(categoryByCif);
+			loanAccountData.setCategoryNameByLoan(categoryNameByLoan);
+			loanAccountData.setCategoryNameByCif(categoryNameByCif);
+			loanAccountData.setReservedAmount(reservedAmount);
+			
+            return loanAccountData;
         }
     }
 
@@ -2148,13 +2175,13 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
             sqlBuilder.append("if(max(tr.transaction_date)>ls.dueDate,max(tr.transaction_date),ls.dueDate) as transactionDate,");
             sqlBuilder
-                    .append("ls.principal_amount - IFNULL(ls.principal_writtenoff_derived,0) - IFNULL(ls.principal_completed_derived,0) as principalDue,");
+                    .append("ANY_VALUE(ls.principal_amount - IFNULL(ls.principal_writtenoff_derived,0) - IFNULL(ls.principal_completed_derived,0)) as principalDue,");
             sqlBuilder
-                    .append("ls.interest_amount - IFNULL(ls.interest_completed_derived,0) - IFNULL(ls.interest_waived_derived,0) - IFNULL(ls.interest_writtenoff_derived,0) as interestDue,");
+                    .append("ANY_VALUE(ls.interest_amount - IFNULL(ls.interest_completed_derived,0) - IFNULL(ls.interest_waived_derived,0) - IFNULL(ls.interest_writtenoff_derived,0)) as interestDue,");
             sqlBuilder
-                    .append("ls.fee_charges_amount - IFNULL(ls.fee_charges_completed_derived,0) - IFNULL(ls.fee_charges_writtenoff_derived,0) - IFNULL(ls.fee_charges_waived_derived,0) as feeDue,");
+                    .append("ANY_VALUE(ls.fee_charges_amount - IFNULL(ls.fee_charges_completed_derived,0) - IFNULL(ls.fee_charges_writtenoff_derived,0) - IFNULL(ls.fee_charges_waived_derived,0)) as feeDue,");
             sqlBuilder
-                    .append("ls.penalty_charges_amount - IFNULL(ls.penalty_charges_completed_derived,0) - IFNULL(ls.penalty_charges_writtenoff_derived,0) - IFNULL(ls.penalty_charges_waived_derived,0) as penaltyDue,");
+                    .append("ANY_VALUE(ls.penalty_charges_amount - IFNULL(ls.penalty_charges_completed_derived,0) - IFNULL(ls.penalty_charges_writtenoff_derived,0) - IFNULL(ls.penalty_charges_waived_derived,0)) as penaltyDue,");
             sqlBuilder
                     .append(" l.currency_code as currencyCode, l.currency_digits as currencyDigits, l.currency_multiplesof as inMultiplesOf, rc.`name` as currencyName, ");
             sqlBuilder.append(" rc.display_symbol as currencyDisplaySymbol, rc.internationalized_name_code as currencyNameCode ");

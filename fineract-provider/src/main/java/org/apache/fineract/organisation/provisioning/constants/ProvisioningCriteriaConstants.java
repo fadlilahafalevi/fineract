@@ -37,6 +37,7 @@ public interface ProvisioningCriteriaConstants {
 	public final static String JSON_MAXIMUM_AGE_PARAM = "maxAge";
 	public final static String JSON_PROVISIONING_PERCENTAGE_PARAM = "provisioningPercentage";
 	public final static String JSON_LIABILITY_ACCOUNT_PARAM = "liabilityAccount";
+	public final static String JSON_ASSET_ACCOUNT_PARAM = "assetAccount";
 	public final static String JSON_EXPENSE_ACCOUNT_PARAM = "expenseAccount";
 	public final static String DEFINITIONS_PARAM = "definitions";
 	public final static String LOANPRODUCTS_PARAM = "loanProducts";
