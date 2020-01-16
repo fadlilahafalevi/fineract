@@ -61,6 +61,7 @@ public class DataSourceProperties extends PoolProperties {
     private volatile @NotNull String jdbcProtocol;
 
     @Value("${" + SUBPROTOCOL + ":mysql:thin}")
+    //@Value("${" + SUBPROTOCOL + ":mysql}")
     private volatile @NotNull String jdbcSubprotocol;
 
     public DataSourceProperties(String driverClassName, String protocol, String subProtocol, Integer port) {

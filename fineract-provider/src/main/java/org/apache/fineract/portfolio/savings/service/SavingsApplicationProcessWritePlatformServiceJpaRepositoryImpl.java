@@ -186,7 +186,7 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
             return new CommandProcessingResultBuilder() //
             		.withCommandId(command.commandId()) //
-            		.withAccNo(account.getAccountNumber()) //
+            		//.withAccNo(account.getAccountNumber()) //
                     .withEntityId(savingsId) //
                     .withOfficeId(account.officeId()) //
                     .withClientId(account.clientId()) //
@@ -209,6 +209,51 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
 
             this.savingAccountRepository.save(account);
+        }
+    }
+    
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult submitApplication2(final JsonCommand command) {
+        try {
+            this.savingsAccountDataValidator.validateForSubmit(command.json());
+            final AppUser submittedBy = this.context.authenticatedUser();
+
+            final SavingsAccount account = this.savingAccountAssembler.assembleFrom(command, submittedBy);
+            this.savingAccountRepository.save(account);
+
+            generateAccountNumber(account);
+
+            final Long savingsId = account.getId();
+            if(command.parameterExists(SavingsApiConstants.datatables)){
+                this.entityDatatableChecksWritePlatformService.saveDatatables(StatusEnum.CREATE.getCode().longValue(),
+                        EntityTables.SAVING.getName(), savingsId, account.productId(),
+                        command.arrayOfParameterNamed(SavingsApiConstants.datatables));
+            }
+            this.entityDatatableChecksWritePlatformService.runTheCheckForProduct(savingsId,
+                    EntityTables.SAVING.getName(), StatusEnum.CREATE.getCode().longValue(),
+                    EntityTables.SAVING.getForeignKeyColumnNameOnDatatable(), account.productId());
+
+            this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_CREATE,
+                    constructEntityMap(BUSINESS_ENTITY.SAVING, account));
+
+            return new CommandProcessingResultBuilder() //
+            		.withCommandId(command.commandId()) //
+            		.withAccNo(account.getAccountNumber()) //
+                    .withEntityId(savingsId) //
+                    .withOfficeId(account.officeId()) //
+                    .withClientId(account.clientId()) //
+                    .withGroupId(account.groupId()) //
+                    .withSavingsId(savingsId) //
+                    .build();
+        } catch (final DataAccessException dve) {
+            handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        }catch (final PersistenceException dve) {
+        	Throwable throwable = ExceptionUtils.getRootCause(dve.getCause()) ;
+        	handleDataIntegrityIssues(command, throwable, dve);
+        	return CommandProcessingResult.empty();
         }
     }
 

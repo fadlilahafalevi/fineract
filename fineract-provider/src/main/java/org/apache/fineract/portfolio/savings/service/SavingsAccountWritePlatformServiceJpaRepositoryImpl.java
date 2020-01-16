@@ -297,7 +297,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
         
         return new CommandProcessingResultBuilder() //
-                .withEntityId(deposit.getId()) //
+        		//.withTransactionDate(deposit.createdDate())
+        		.withEntityId(deposit.getId()) //
                 .withOfficeId(account.officeId()) //
                 .withClientId(account.clientId()) //
                 .withGroupId(account.groupId()) //
@@ -306,6 +307,52 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .build();
        
     }
+    
+    
+    /*################# Start Secondary Endpoint #############################################################*/
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult deposit2(final Long savingsId, final JsonCommand command) {
+
+        this.context.authenticatedUser();
+
+        this.savingsAccountTransactionDataValidator.validate(command);
+
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+        checkClientOrGroupActive(account);
+        final Locale locale = command.extractLocale();
+        final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+        boolean isAccountTransfer = false;
+        boolean isRegularTransaction = true;
+        final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
+                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.savingsTransactionNote(account, deposit, noteText);
+            this.noteRepository.save(note) ;
+        }
+        
+        return new CommandProcessingResultBuilder() //
+        		.withCreatedDate(deposit.createdDate())
+        		.withEntityId(deposit.getId()) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(savingsId) //
+                .with(changes) //
+                .build();
+       
+    }
+    
+    /*################# End Secondary Endpoint #############################################################*/  
 
     private Long saveTransactionToGenerateTransactionId(final SavingsAccountTransaction transaction) {
         this.savingsAccountTransactionRepository.saveAndFlush(transaction);
@@ -346,7 +393,54 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
         
         return new CommandProcessingResultBuilder() //
-                .withEntityId(withdrawal.getId()) //
+        		//.withTransactionDate(withdrawal.createdDate())
+        		.withEntityId(withdrawal.getId()) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(savingsId) //-
+                .with(changes)//
+                .build();
+    }
+    
+/*################# Start Secondary Endpoint #############################################################*/
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult withdrawal2(final Long savingsId, final JsonCommand command) {
+
+        this.savingsAccountTransactionDataValidator.validate(command);
+
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+
+        final Locale locale = command.extractLocale();
+        final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+        checkClientOrGroupActive(account);
+        final boolean isAccountTransfer = false;
+        final boolean isRegularTransaction = true;
+        final boolean isApplyWithdrawFee = true;
+        final boolean isInterestTransfer = false;
+        final boolean isWithdrawBalance = false;
+        final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
+                isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance);
+        final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate,
+                transactionAmount, paymentDetail, transactionBooleanValues);
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.savingsTransactionNote(account, withdrawal, noteText);
+            this.noteRepository.save(note) ;
+        }
+        
+        return new CommandProcessingResultBuilder() //
+        		.withCreatedDate(withdrawal.createdDate())
+        		.withEntityId(withdrawal.getId()) //
                 .withOfficeId(account.officeId()) //
                 .withClientId(account.clientId()) //
                 .withGroupId(account.groupId()) //
@@ -354,6 +448,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .with(changes)//
                 .build();
     }
+    
+/*################# End Secondary Endpoint #############################################################*/    
 
     @Transactional
     @Override

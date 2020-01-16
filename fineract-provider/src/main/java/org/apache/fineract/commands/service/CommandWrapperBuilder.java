@@ -1125,6 +1125,14 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/template";
         return this;
     }
+    
+    public CommandWrapperBuilder createSavingsAccount2() {
+        this.actionName = "CREATE2";
+        this.entityName = "SAVINGSACCOUNT";
+        this.entityId = null;
+        this.href = "/savingsaccounts/template";
+        return this;
+    }
 
     public CommandWrapperBuilder updateSavingsAccount(final Long accountId) {
         this.actionName = "UPDATE";
@@ -1236,9 +1244,27 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "/transactions";
         return this;
     }
+    
+    public CommandWrapperBuilder savingsAccountDeposit2(final Long accountId) {
+        this.actionName = "DEPOSIT2";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = null;
+        this.href = "/savingsaccounts/" + accountId + "/transactions";
+        return this;
+    }
 
     public CommandWrapperBuilder savingsAccountWithdrawal(final Long accountId) {
         this.actionName = "WITHDRAWAL";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = null;
+        this.href = "/savingsaccounts/" + accountId + "/transactions";
+        return this;
+    }
+    
+    public CommandWrapperBuilder savingsAccountWithdrawal2(final Long accountId) {
+        this.actionName = "WITHDRAWAL2";
         this.entityName = "SAVINGSACCOUNT";
         this.savingsId = accountId;
         this.entityId = null;
@@ -1964,6 +1990,14 @@ public class CommandWrapperBuilder {
 
     public CommandWrapperBuilder createFixedDepositAccount() {
         this.actionName = "CREATE";
+        this.entityName = "FIXEDDEPOSITACCOUNT";
+        this.entityId = null;
+        this.href = "/fixeddepositaccounts/template";
+        return this;
+    }
+    
+    public CommandWrapperBuilder createFixedDepositAccount2() {
+        this.actionName = "CREATE2";
         this.entityName = "FIXEDDEPOSITACCOUNT";
         this.entityId = null;
         this.href = "/fixeddepositaccounts/template";
