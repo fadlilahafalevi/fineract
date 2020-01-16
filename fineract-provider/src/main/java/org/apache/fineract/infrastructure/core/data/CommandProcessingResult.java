@@ -108,8 +108,8 @@ public class CommandProcessingResult implements Serializable {
     private CommandProcessingResult(Date createdDate, final Long commandId, final String accountNumber, final Long officeId, final Long groupId, final Long clientId, final Long loanId,
             final Long savingsId, final String resourceIdentifier, final Long resourceId, final String transactionId,
             final Map<String, Object> changesOnly, final Long productId, Boolean rollbackTransaction, final Long subResourceId) {
-        this.createdDate = createdDate;
-    	this.commandId = commandId;
+		this.createdDate = createdDate;
+		this.commandId = commandId;
         this.accountNumber = accountNumber;
         this.officeId = officeId;
         this.groupId = groupId;

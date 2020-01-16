@@ -44,11 +44,10 @@ public class CommandProcessingResultBuilder {
     private boolean rollbackTransaction = false;
 
     public CommandProcessingResult build() {
-        return CommandProcessingResult.fromDetails(this.createdDate,this.commandId,this.accountNumber, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
+        return CommandProcessingResult.fromDetails(this.createdDate, this.commandId, this.accountNumber, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
                 this.resourceIdentifier, this.entityId, this.transactionId, this.changes, this.productId, this.rollbackTransaction,
                 this.subEntityId);
     }
-
     public CommandProcessingResultBuilder withCreatedDate(Date withCreatedDate) {
         this.createdDate = withCreatedDate;
         return this;
