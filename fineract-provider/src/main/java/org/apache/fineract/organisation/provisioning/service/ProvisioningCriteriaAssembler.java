@@ -136,6 +136,7 @@ public class ProvisioningCriteriaAssembler {
         Long categoryId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_CATEOGRYID_PARAM, jsonObject);
         Long minimumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MINIMUM_AGE_PARAM, jsonObject);
         Long maximumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MAXIMUM_AGE_PARAM, jsonObject);
+        Boolean isNPL = this.fromApiJsonHelper.extractBooleanNamed(ProvisioningCriteriaConstants.JSON_ISNPL_PARAM, jsonObject);
         BigDecimal provisioningpercentage = this.fromApiJsonHelper.extractBigDecimalNamed(ProvisioningCriteriaConstants.JSON_PROVISIONING_PERCENTAGE_PARAM,
                 jsonObject, locale);
         Long assetAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM, jsonObject);
@@ -145,6 +146,6 @@ public class ProvisioningCriteriaAssembler {
         GLAccount assetAccount = glAccountRepository.findOne(assetAccountId);
         GLAccount expenseAccount = glAccountRepository.findOne(expenseAccountId);
         return ProvisioningCriteriaDefinition.newPrivisioningCriteria(criteria, provisioningCategory, minimumAge, maximumAge,
-                provisioningpercentage, assetAccount, expenseAccount);
+                provisioningpercentage, assetAccount, expenseAccount, isNPL);
     }
 }

@@ -47,6 +47,9 @@ public class ProvisioningCriteriaDefinition extends AbstractPersistableCustom<Lo
 
     @Column(name = "max_age", nullable = false)
     private Long maximumAge;
+    
+    @Column(name = "is_npl", nullable = true)
+    private Boolean isNPL;
 
     @Column(name = "provision_percentage", nullable = false)
     private BigDecimal provisioningPercentage;
@@ -64,7 +67,7 @@ public class ProvisioningCriteriaDefinition extends AbstractPersistableCustom<Lo
     }
     
     private ProvisioningCriteriaDefinition(ProvisioningCriteria criteria, ProvisioningCategory provisioningCategory, Long minimumAge,
-            Long maximumAge, BigDecimal provisioningPercentage, GLAccount assetAccount, GLAccount expenseAccount) {
+            Long maximumAge, BigDecimal provisioningPercentage, GLAccount assetAccount, GLAccount expenseAccount, Boolean isNPL) {
         this.criteria = criteria;
         this.provisioningCategory = provisioningCategory;
         this.minimumAge = minimumAge;
@@ -72,22 +75,24 @@ public class ProvisioningCriteriaDefinition extends AbstractPersistableCustom<Lo
         this.provisioningPercentage = provisioningPercentage;
         this.assetAccount = assetAccount;
         this.expenseAccount = expenseAccount;
+        this.isNPL = isNPL;
     }
 
     public static ProvisioningCriteriaDefinition newPrivisioningCriteria(ProvisioningCriteria criteria,
             ProvisioningCategory provisioningCategory, Long minimumAge, Long maximumAge, BigDecimal provisioningPercentage,
-            GLAccount assetAccount, GLAccount expenseAccount) {
+            GLAccount assetAccount, GLAccount expenseAccount, Boolean isNPL) {
 
         return new ProvisioningCriteriaDefinition(criteria, provisioningCategory, minimumAge, maximumAge, provisioningPercentage,
-        		assetAccount, expenseAccount);
+        		assetAccount, expenseAccount, isNPL);
     }
     
-    public void update(Long minAge, Long maxAge, BigDecimal percentage, GLAccount asset, GLAccount exp) {
+    public void update(Long minAge, Long maxAge, BigDecimal percentage, GLAccount asset, GLAccount exp, Boolean isNPL) {
         this.minimumAge = minAge ;
         this.maximumAge = maxAge ;
         this.provisioningPercentage = percentage ;
         this.assetAccount = asset ;
         this.expenseAccount = exp ;
+        this.isNPL = isNPL;
     }
     
     

@@ -60,7 +60,7 @@ public class ProvisioningCriteriaDefinitionJsonDeserializer implements Provision
 	private final static Set<String> provisioningcriteriaSupportedParams = new HashSet<>(
 			Arrays.asList(JSON_CATEOGRYID_PARAM, JSON_CATEOGRYNAME_PARAM, JSON_MINIMUM_AGE_PARAM,
 					JSON_MAXIMUM_AGE_PARAM, JSON_MINIMUM_AGE_PARAM, JSON_PROVISIONING_PERCENTAGE_PARAM,
-					JSON_EXPENSE_ACCOUNT_PARAM, JSON_LIABILITY_ACCOUNT_PARAM, JSON_ASSET_ACCOUNT_PARAM));
+					JSON_EXPENSE_ACCOUNT_PARAM, JSON_LIABILITY_ACCOUNT_PARAM, JSON_ASSET_ACCOUNT_PARAM, JSON_ISNPL_PARAM));
 
     @Autowired
     public ProvisioningCriteriaDefinitionJsonDeserializer(final FromJsonHelper fromApiJsonHelper) {

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.fineract.accounting.common.AccountingConstants.ACCRUAL_ACCOUNTS_FOR_LOAN;
 import org.apache.fineract.accounting.common.AccountingConstants.CASH_ACCOUNTS_FOR_LOAN;
 import org.apache.fineract.accounting.common.AccountingConstants.LOAN_PRODUCT_ACCOUNTING_PARAMS;
 import org.apache.fineract.accounting.glaccount.domain.GLAccount;
@@ -90,10 +91,23 @@ public class ProductToGLAccountMappingHelper {
 
         // get the existing product
         if (accountId != null) {
-            final ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(productId,
+            ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(productId,
                     portfolioProductType.getValue(), accountTypeId);
-            if (accountMapping == null) { throw new ProductToGLAccountMappingNotFoundException(portfolioProductType, productId,
-                    accountTypeName); }
+            if (accountMapping == null) { 
+            	if ((portfolioProductType.isLoanProduct()) && accountTypeId == ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue()) {
+            		accountMapping = new ProductToGLAccountMapping();
+            		accountMapping.setFinancialAccountType(accountTypeId);
+            		accountMapping.setProductId(productId);
+            		accountMapping.setProductType(portfolioProductType.getValue());
+            		
+            		final GLAccount glAccount = getAccountByIdAndType(paramName, expectedAccountType, accountId);
+                    changes.put(paramName, accountId);
+                    accountMapping.setGlAccount(glAccount);
+                    this.accountMappingRepository.save(accountMapping);
+            	} else {
+            		throw new ProductToGLAccountMappingNotFoundException(portfolioProductType, productId, accountTypeName); 
+            	}
+            }
             if (accountMapping.getGlAccount().getId() != accountId) {
                 final GLAccount glAccount = getAccountByIdAndType(paramName, expectedAccountType, accountId);
                 changes.put(paramName, accountId);

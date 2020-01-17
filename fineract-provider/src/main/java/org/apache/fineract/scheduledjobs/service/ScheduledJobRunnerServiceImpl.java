@@ -303,7 +303,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
 
-        final StringBuilder resetNPASqlBuilder = new StringBuilder(900);
+/*        final StringBuilder resetNPASqlBuilder = new StringBuilder(900);
         resetNPASqlBuilder.append("update m_loan loan ");
         resetNPASqlBuilder.append("left join m_loan_arrears_aging laa on laa.loan_id = loan.id ");
         resetNPASqlBuilder.append("inner join m_product_loan mpl on mpl.id = loan.product_id and mpl.overdue_days_for_npa is not null ");
@@ -324,8 +324,29 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         updateSqlBuilder.append("WHERE loan.loan_status_id = 300  and ");
         updateSqlBuilder.append("laa.overdue_since_date_derived < SUBDATE(CURDATE(),INTERVAL  ifnull(mpl.overdue_days_for_npa,0) day) ");
         updateSqlBuilder.append("group by loan.id) as sl ");
-        updateSqlBuilder.append("SET ml.is_npa=1 where ml.id=sl.id ");
+        updateSqlBuilder.append("SET ml.is_npa=1 where ml.id=sl.id ");*/
+        
+        final StringBuilder resetNPASqlBuilder = new StringBuilder(900);
+        resetNPASqlBuilder.append("update m_loan ");
+        resetNPASqlBuilder.append("set is_npa = '0'");
 
+        jdbcTemplate.update(resetNPASqlBuilder.toString());
+        
+        final StringBuilder updateSqlBuilder = new StringBuilder(900);
+
+        updateSqlBuilder.append("UPDATE m_loan as ml, ");
+        updateSqlBuilder.append("(select distinct l.id as loanId from m_loan l ");
+        updateSqlBuilder.append("join m_loan_repayment_schedule sch on sch.loan_id = l.id ");
+        updateSqlBuilder.append("join m_loanproduct_provisioning_mapping lpm on lpm.product_id = l.product_id ");
+        updateSqlBuilder.append("join m_loan_collectibility lc on lc.loan_id = l.id ");
+        updateSqlBuilder.append("left join m_provisioning_criteria_definition pcd1 on pcd1.criteria_id = lpm.criteria_id and pcd1.category_id = lc.collectibility_account ");
+        updateSqlBuilder.append("LEFT JOIN m_client mclient ON mclient.id = l.client_id ");
+        updateSqlBuilder.append("LEFT JOIN m_group mgroup ON mgroup.id = l.group_id ");
+        updateSqlBuilder.append("where l.loan_status_id=300 and sch.duedate = (select MIN(sch1.duedate) from m_loan_repayment_schedule sch1 where sch1.loan_id=l.id and sch1.completed_derived=false) ");
+        updateSqlBuilder.append("and pcd1.is_npl = true) as sl ");
+        updateSqlBuilder.append("SET is_npa = '1' ");
+        updateSqlBuilder.append("where ml.id=sl.loanId ");
+        
         final int result = jdbcTemplate.update(updateSqlBuilder.toString());
 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Results affected by update: " + result);

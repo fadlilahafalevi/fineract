@@ -144,6 +144,7 @@ public class ProvisioningCriteriaWritePlatformServiceJpaRepositoryImpl implement
             Long categoryId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_CATEOGRYID_PARAM, jsonObject);
             Long minimumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MINIMUM_AGE_PARAM, jsonObject);
             Long maximumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MAXIMUM_AGE_PARAM, jsonObject);
+            Boolean isNPL = this.fromApiJsonHelper.extractBooleanNamed(ProvisioningCriteriaConstants.JSON_ISNPL_PARAM, jsonObject);
             BigDecimal provisioningpercentage = this.fromApiJsonHelper.extractBigDecimalNamed(ProvisioningCriteriaConstants.JSON_PROVISIONING_PERCENTAGE_PARAM,
                     jsonObject, locale);
             Long assetAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM, jsonObject);
@@ -155,7 +156,7 @@ public class ProvisioningCriteriaWritePlatformServiceJpaRepositoryImpl implement
             String expenseAccountName = null ;
             ProvisioningCriteriaDefinitionData data = new ProvisioningCriteriaDefinitionData(id, categoryId, 
                     categoryName, minimumAge, maximumAge, provisioningpercentage, 
-                    assetAccount.getId(), assetAccount.getGlCode(), liabilityAccountName, expenseAccount.getId(), expenseAccount.getGlCode(), expenseAccountName) ;
+                    assetAccount.getId(), assetAccount.getGlCode(), liabilityAccountName, expenseAccount.getId(), expenseAccount.getGlCode(), expenseAccountName, isNPL) ;
             provisioningCriteria.update(data, assetAccount, expenseAccount) ;
         }
     }

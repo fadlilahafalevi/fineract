@@ -137,6 +137,9 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 this.loanProductToGLAccountMappingHelper.saveLoanToAssetAccountMapping(element,
                         LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_RECEIVABLE.getValue(), loanProductId,
                         ACCRUAL_ACCOUNTS_FOR_LOAN.PENALTIES_RECEIVABLE.getValue());
+                this.loanProductToGLAccountMappingHelper.saveLoanToAssetAccountMapping(element, 
+                		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ASSET.getValue(), loanProductId, 
+                		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue());
 
                 // income
                 this.loanProductToGLAccountMappingHelper.saveLoanToIncomeAccountMapping(element,

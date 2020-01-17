@@ -117,7 +117,7 @@ public class ProvisioningCriteria extends AbstractAuditableCustom<AppUser, Long>
     public void update(ProvisioningCriteriaDefinitionData data, GLAccount liability, GLAccount expense) {
         for(ProvisioningCriteriaDefinition def: provisioningCriteriaDefinition) {
             if(data.getId().equals(def.getId())) {
-                def.update(data.getMinAge(), data.getMaxAge(), data.getProvisioningPercentage(), liability, expense) ;
+                def.update(data.getMinAge(), data.getMaxAge(), data.getProvisioningPercentage(), liability, expense, data.getIsNPL()) ;
                 break ;
             }
         }

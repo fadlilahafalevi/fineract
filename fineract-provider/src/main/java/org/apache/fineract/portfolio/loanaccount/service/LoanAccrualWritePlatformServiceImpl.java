@@ -32,6 +32,7 @@ import javax.sql.DataSource;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSource;
+import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
@@ -137,82 +138,110 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
     }
 
     private void addAccrualTillSpecificDate(final LocalDate tilldate, final LoanScheduleAccrualData accrualData) throws Exception {
-        LocalDate interestStartDate = accrualData.getFromDateAsLocaldate();
-        if (accrualData.getInterestCalculatedFrom() != null
-                && accrualData.getFromDateAsLocaldate().isBefore(accrualData.getInterestCalculatedFrom())) {
-            if (accrualData.getInterestCalculatedFrom().isBefore(accrualData.getDueDateAsLocaldate())) {
-                interestStartDate = accrualData.getInterestCalculatedFrom();
-            } else {
-                interestStartDate = accrualData.getDueDateAsLocaldate();
-            }
-        }
+		
+		BigDecimal amount = BigDecimal.ZERO;
+		
+		LocalDate interestStartDate = accrualData.getFromDateAsLocaldate();
+		if (accrualData.getInterestCalculatedFrom() != null
+				&& accrualData.getFromDateAsLocaldate().isBefore(accrualData.getInterestCalculatedFrom())) {
+			if (accrualData.getInterestCalculatedFrom().isBefore(accrualData.getDueDateAsLocaldate())) {
+				interestStartDate = accrualData.getInterestCalculatedFrom();
+			} else {
+				interestStartDate = accrualData.getDueDateAsLocaldate();
+			}
+		}
 
-        int totalNumberOfDays = Days.daysBetween(interestStartDate, accrualData.getDueDateAsLocaldate()).getDays();
-        LocalDate startDate = accrualData.getFromDateAsLocaldate();
-        if (accrualData.getInterestCalculatedFrom() != null && startDate.isBefore(accrualData.getInterestCalculatedFrom())) {
-            if (accrualData.getInterestCalculatedFrom().isBefore(tilldate)) {
-                startDate = accrualData.getInterestCalculatedFrom();
-            } else {
-                startDate = tilldate;
-            }
-        }
-        int daysToBeAccrued = Days.daysBetween(startDate, tilldate).getDays();
-        double interestPerDay = accrualData.getAccruableIncome().doubleValue() / totalNumberOfDays;
-        BigDecimal amount = BigDecimal.ZERO;
-        BigDecimal interestportion = null;
-        BigDecimal feeportion = accrualData.getDueDateFeeIncome();
-        BigDecimal penaltyportion = accrualData.getDueDatePenaltyIncome();
-        if (daysToBeAccrued >= totalNumberOfDays) {
-            interestportion = accrualData.getAccruableIncome();
-        } else {
-            double iterest = interestPerDay * daysToBeAccrued;
-            interestportion = BigDecimal.valueOf(iterest);
-        }
-        interestportion = interestportion.setScale(accrualData.getCurrencyData().decimalPlaces(), MoneyHelper.getRoundingMode());
+		LocalDate startDate = accrualData.getFromDateAsLocaldate();
+		if (accrualData.getInterestCalculatedFrom() != null
+				&& startDate.isBefore(accrualData.getInterestCalculatedFrom())) {
+			if (accrualData.getInterestCalculatedFrom().isBefore(tilldate)) {
+				startDate = accrualData.getInterestCalculatedFrom();
+			} else {
+				startDate = tilldate;
+			}
+		}
+		
+		//amount accrued interest before
+		BigDecimal totalAccInterest = accrualData.getAccruedInterestIncome(); 
+		
+		BigDecimal interestportion = calculateDailyInterestAccrue(tilldate, startDate, interestStartDate, accrualData.getDueDateAsLocaldate(), 
+				accrualData.getAccruableIncome(), accrualData.getCurrencyData(), totalAccInterest);
+		
+		if (interestportion != null) {
+			if (totalAccInterest == null) {
+				totalAccInterest = BigDecimal.ZERO;
+			}
+			amount = amount.add(interestportion);
+			totalAccInterest = totalAccInterest.add(interestportion);
+			if (interestportion.compareTo(BigDecimal.ZERO) == 0) {
+				interestportion = null;
+			}
+		}
+		
+		
+		BigDecimal feeportion = accrualData.getDueDateFeeIncome();
+		BigDecimal penaltyportion = accrualData.getDueDatePenaltyIncome();
+		
+		BigDecimal totalAccPenalty = accrualData.getAccruedPenaltyIncome();
+		BigDecimal totalAccFee = accrualData.getAccruedFeeIncome();
+		
+		if (feeportion != null) {
+			if (totalAccFee == null) {
+				totalAccFee = BigDecimal.ZERO;
+			}
+			feeportion = feeportion.subtract(totalAccFee);
+			amount = amount.add(feeportion);
+			totalAccFee = totalAccFee.add(feeportion);
+			if (feeportion.compareTo(BigDecimal.ZERO) == 0) {
+				feeportion = null;
+			}
+		}
 
-        BigDecimal totalAccInterest = accrualData.getAccruedInterestIncome();
-        BigDecimal totalAccPenalty = accrualData.getAccruedPenaltyIncome();
-        BigDecimal totalAccFee = accrualData.getAccruedFeeIncome();
-
-        if (interestportion != null) {
-            if (totalAccInterest == null) {
-                totalAccInterest = BigDecimal.ZERO;
-            }
-            interestportion = interestportion.subtract(totalAccInterest);
-            amount = amount.add(interestportion);
-            totalAccInterest = totalAccInterest.add(interestportion);
-            if (interestportion.compareTo(BigDecimal.ZERO) == 0) {
-                interestportion = null;
-            }
-        }
-        if (feeportion != null) {
-            if (totalAccFee == null) {
-                totalAccFee = BigDecimal.ZERO;
-            }
-            feeportion = feeportion.subtract(totalAccFee);
-            amount = amount.add(feeportion);
-            totalAccFee = totalAccFee.add(feeportion);
-            if (feeportion.compareTo(BigDecimal.ZERO) == 0) {
-                feeportion = null;
-            }
-        }
-
-        if (penaltyportion != null) {
-            if (totalAccPenalty == null) {
-                totalAccPenalty = BigDecimal.ZERO;
-            }
-            penaltyportion = penaltyportion.subtract(totalAccPenalty);
-            amount = amount.add(penaltyportion);
-            totalAccPenalty = totalAccPenalty.add(penaltyportion);
-            if (penaltyportion.compareTo(BigDecimal.ZERO) == 0) {
-                penaltyportion = null;
-            }
-        }
-        if (amount.compareTo(BigDecimal.ZERO) == 1) {
-            addAccrualAccounting(accrualData, amount, interestportion, totalAccInterest, feeportion, totalAccFee, penaltyportion,
-                    totalAccPenalty, tilldate);
-        }
+		if (penaltyportion != null) {
+			if (totalAccPenalty == null) {
+				totalAccPenalty = BigDecimal.ZERO;
+			}
+			penaltyportion = penaltyportion.subtract(totalAccPenalty);
+			amount = amount.add(penaltyportion);
+			totalAccPenalty = totalAccPenalty.add(penaltyportion);
+			if (penaltyportion.compareTo(BigDecimal.ZERO) == 0) {
+				penaltyportion = null;
+			}
+		}
+		if (amount.compareTo(BigDecimal.ZERO) == 1) {
+			addAccrualAccounting(accrualData, amount, interestportion, totalAccInterest, feeportion, totalAccFee,
+					penaltyportion, totalAccPenalty, tilldate);
+		}
     }
+    
+	public BigDecimal calculateDailyInterestAccrue(final LocalDate tilldate, final LocalDate startDate, final LocalDate interestStartDate, 
+			final LocalDate interestDueDate, final BigDecimal interestAmount, final CurrencyData currencyData, final BigDecimal totalAccInterest) {
+		
+		//amount for daily interest portion
+		BigDecimal interestportion = null; 
+		
+		//days between fromdate and duedate interest installment
+		int totalNumberOfDays = Days.daysBetween(interestStartDate, interestDueDate).getDays(); 
+		
+		// days between fromdate and lastdate accrued interest installment
+		int daysToBeAccrued = Days.daysBetween(startDate, tilldate).getDays(); 
+		
+		// calculate interest day (interest per installment / totalNumberOfDays)
+		double interestPerDay = interestAmount.doubleValue() / totalNumberOfDays; 
+		
+		if (daysToBeAccrued >= totalNumberOfDays) {
+			interestportion = interestAmount;
+		} else {
+			//calculate interestperDay multiply by daystobeAccrued
+			double iterest = interestPerDay * daysToBeAccrued;
+			interestportion = BigDecimal.valueOf(iterest);
+		}
+		interestportion = interestportion.setScale(currencyData.decimalPlaces(),
+				MoneyHelper.getRoundingMode());
+		
+		interestportion = interestportion.subtract(totalAccInterest);
+		return interestportion;
+	}
 
     @Transactional
     public void addAccrualAccounting(LoanScheduleAccrualData scheduleAccrualData) throws Exception {

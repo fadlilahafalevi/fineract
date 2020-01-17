@@ -61,7 +61,7 @@ public class ProductToGLAccountMapping extends AbstractPersistableCustom<Long> {
         return new ProductToGLAccountMapping(glAccount, productId, productType, financialAccountType);
     }
 
-    protected ProductToGLAccountMapping() {
+    public ProductToGLAccountMapping() {
         //
     }
 
