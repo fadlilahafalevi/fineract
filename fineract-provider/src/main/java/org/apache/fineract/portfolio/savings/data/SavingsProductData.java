@@ -218,7 +218,7 @@ public class SavingsProductData {
         final Collection<ChargeData> chargeOptions = null;
         final Collection<ChargeData> penaltyOptions = null;
 
-        return new SavingsProductData(existingProduct.id, existingProduct.name, existingProduct.shortName, existingProduct.description,
+        SavingsProductData savingsProductData = new SavingsProductData(existingProduct.id, existingProduct.name, existingProduct.shortName, existingProduct.description,
                 existingProduct.currency, existingProduct.nominalAnnualInterestRate, existingProduct.interestCompoundingPeriodType,
                 existingProduct.interestPostingPeriodType, existingProduct.interestCalculationType,
                 existingProduct.interestCalculationDaysInYearType, existingProduct.minRequiredOpeningBalance,
@@ -234,6 +234,8 @@ public class SavingsProductData {
                 existingProduct.minOverdraftForInterestCalculation, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions, existingProduct.isDormancyTrackingActive, existingProduct.daysToInactive, 
                 existingProduct.daysToDormancy, existingProduct.daysToEscheat);
+        savingsProductData.setInterestCompoundingType(existingProduct.interestCompoundingType);
+        return savingsProductData;
     }
 
     public static SavingsProductData instance(final Long id, final String name, final String shortName, final String description,
