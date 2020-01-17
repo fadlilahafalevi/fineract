@@ -71,6 +71,8 @@ import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactioninqNotFoundException;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.Days;
@@ -777,6 +779,23 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
         return this.jdbcTemplate.queryForObject(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(),
                 transactionId });
+    }
+    
+    @Override
+    public SavingsAccountTransactionData retrieveSavingsTransactionByRecipt(final Long savingsId, final String receiptNumber,
+            DepositAccountType depositAccountType) {
+
+        final String sql = "select " + this.transactionsMapper.schema() + " where sa.id = ? and sa.deposit_type_enum = ? and pd.receipt_number= ?";
+        
+        SavingsAccountTransactionData transactionData = null;
+        try {
+        	transactionData = this.jdbcTemplate.queryForObject(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(),
+                    receiptNumber });
+        } catch (EmptyResultDataAccessException e) {
+        	throw new SavingsAccountTransactioninqNotFoundException(savingsId, receiptNumber);
+        }
+        
+        return transactionData;
     }
 
     /*
