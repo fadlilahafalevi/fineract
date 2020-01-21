@@ -253,6 +253,27 @@ public class AccountingProcessorHelper {
         return new SavingsDTO(loanId, loanProductId, officeId, currencyData.code(), cashBasedAccountingEnabled,
                 accrualBasedAccountingEnabled, newSavingsTransactions);
     }
+    
+    public SavingsDTO populateSavingsAccrualDtoFromMap(final Map<String, Object> accountingBridgeData, final boolean cashBasedAccountingEnabled,
+            final boolean accrualBasedAccountingEnabled) {
+        final Long savingsId = (Long) accountingBridgeData.get("savingsId");
+        final Long savingsProductId = (Long) accountingBridgeData.get("savingsProductId");
+        final Long officeId = (Long) accountingBridgeData.get("officeId");
+        final CurrencyData currencyData = (CurrencyData) accountingBridgeData.get("currency");
+        final BigDecimal interestAccrued = (BigDecimal) accountingBridgeData.get("interestAccrued");
+        final LocalDate accrualDate = (LocalDate) accountingBridgeData.get("accrualDate");
+        SavingsDTO savingsDTO = new SavingsDTO();
+        savingsDTO.setSavingsId(savingsId);
+        savingsDTO.setSavingsProductId(savingsProductId);
+        savingsDTO.setOfficeId(officeId);
+        savingsDTO.setCurrencyCode(currencyData.code());
+        savingsDTO.setInterestAccrued(interestAccrued);
+        savingsDTO.setAccrualDate(accrualDate);
+        savingsDTO.setCashBasedAccountingEnabled(cashBasedAccountingEnabled);
+        savingsDTO.setAccrualBasedAccountingEnabled(accrualBasedAccountingEnabled);
+        
+        return savingsDTO;
+    }
 
     public SharesDTO populateSharesDtoFromMap(final Map<String, Object> accountingBridgeData, final boolean cashBasedAccountingEnabled,
             final boolean accrualBasedAccountingEnabled) {
