@@ -84,6 +84,7 @@ import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
@@ -102,6 +103,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrap
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
+import org.apache.fineract.portfolio.savings.domain.interest.PostingPeriod;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException.PostInterestAsOnException_TYPE;
 import org.apache.fineract.portfolio.savings.exception.PostInterestClosingDateException;
@@ -114,7 +116,6 @@ import org.apache.fineract.portfolio.transfer.api.TransferApiConstants;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
 import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -566,16 +567,65 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
                     postInterestOnDate);
             // for generating transaction id's
+            BigDecimal accruedAmountAfterPosted = account.getLastAccrualAmount();
             List<SavingsAccountTransaction> transactions = account.getTransactions();
             for (SavingsAccountTransaction accountTransaction : transactions) {
                 if (accountTransaction.getId() == null) {
                     this.savingsAccountTransactionRepository.save(accountTransaction);
+                    accruedAmountAfterPosted = account.getLastAccrualAmount().subtract(accountTransaction.getAmount());
                 }
             }
 
+            account.setLastAccrualAmount(accruedAmountAfterPosted);
             this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        }
+    }
+
+    @Transactional
+    @Override
+    public void accrualPosting(final SavingsAccount account) {
+
+        final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
+                .isSavingsInterestPostingAtCurrentPeriodEnd();
+        final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+        if (account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0
+                || (account.allowOverdraft() && account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0)) {
+            final LocalDate today = DateUtils.getLocalDateOfTenant();
+            final MathContext mc = new MathContext(10, MoneyHelper.getRoundingMode());
+            boolean isInterestTransfer = false;
+            LocalDate postInterestOnDate = null;
+            LocalDate lastAccrualDate = null;
+            if (account.getLastAccrualDate() != null) {
+            	lastAccrualDate = LocalDate.fromDateFields(account.getLastAccrualDate());
+            }
+            if (lastAccrualDate == null) {
+            	lastAccrualDate = today;
+            }
+            
+            List<PostingPeriod> postingPeriods = new ArrayList<>();
+            BigDecimal interestAccrued = BigDecimal.ZERO;
+            if (account.getLastAccrualDate() == null ||  today.isAfter(lastAccrualDate)) {
+            	if (account.depositAccountType().equals(DepositAccountType.FIXED_DEPOSIT)) {
+            		postingPeriods = account.calculateInterestUsingFixedDepositAccrual(mc, today, isInterestTransfer,
+    	                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+            	} else if (account.depositAccountType().equals(DepositAccountType.SAVINGS_DEPOSIT)) {
+            		postingPeriods = account.calculateInterestUsing(mc, today, isInterestTransfer,
+    	                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+            	}
+	            
+            	for (PostingPeriod postingPeriod : postingPeriods) {
+            		interestAccrued = postingPeriod.getInterestEarned().getAmount();
+            	}
+            	account.setLastAccrualDate(today.toDate());
+            	account.setLastAccrualAmount(account.getLastAccrualAmount().add(interestAccrued));
+	            this.savingAccountRepositoryWrapper.saveAndFlush(account);
+	
+	            if (interestAccrued.compareTo(BigDecimal.ZERO) > 0) {
+	            	postJournalEntriesForAccrual(account, interestAccrued, today);
+	            }
+            }
         }
     }
 
@@ -1270,6 +1320,16 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
                 existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
         this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
+    }
+
+    private void postJournalEntriesForAccrual(final SavingsAccount savingsAccount, final BigDecimal interestAccrued, final LocalDate accrualDate) {
+
+        final MonetaryCurrency currency = savingsAccount.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
+        boolean isAccountTransfer = false;
+		final Map<String, Object> accountingBridgeData = savingsAccount
+				.deriveAccountingBridgeDataForAccrual(applicationCurrency.toData(), isAccountTransfer, interestAccrued, accrualDate);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavingsAccrual(accountingBridgeData);
     }
 
     @Override

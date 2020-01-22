@@ -108,6 +108,8 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     private final PaymentDetailWritePlatformService paymentDetailWritePlatformService;
     private final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper;
     private final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions;
+    private final AccountingProcessorForSavingsAccrual accountingProcessorForSavingsAccrual;
+    private final AccountingProcessorForSavingsAccrualFactory accountingProcessorForSavingsAccrualFactory;
 
     @Autowired
     public JournalEntryWritePlatformServiceJpaRepositoryImpl(final GLClosureRepository glClosureRepository,
@@ -121,7 +123,9 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final OrganisationCurrencyRepositoryWrapper organisationCurrencyRepository, final PlatformSecurityContext context,
             final PaymentDetailWritePlatformService paymentDetailWritePlatformService,
             final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper,
-            final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions) {
+            final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions,
+            final AccountingProcessorForSavingsAccrual accountingProcessorForSavingsAccrual,
+            final AccountingProcessorForSavingsAccrualFactory accountingProcessorForSavingsAccrualFactory) {
         this.glClosureRepository = glClosureRepository;
         this.officeRepositoryWrapper = officeRepositoryWrapper;
         this.glJournalEntryRepository = glJournalEntryRepository;
@@ -138,6 +142,8 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         this.paymentDetailWritePlatformService = paymentDetailWritePlatformService;
         this.financialActivityAccountRepositoryWrapper = financialActivityAccountRepositoryWrapper;
         this.accountingProcessorForClientTransactions = accountingProcessorForClientTransactions;
+        this.accountingProcessorForSavingsAccrual = accountingProcessorForSavingsAccrual;
+        this.accountingProcessorForSavingsAccrualFactory = accountingProcessorForSavingsAccrualFactory;
     }
 
     @Transactional
@@ -518,6 +524,23 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final AccountingProcessorForSavings accountingProcessorForSavings = this.accountingProcessorForSavingsFactory
                     .determineProcessor(savingsDTO);
             accountingProcessorForSavings.createJournalEntriesForSavings(savingsDTO);
+        }
+
+    }
+
+    @Transactional
+    @Override
+    public void createJournalEntriesForSavingsAccrual(final Map<String, Object> accountingBridgeData) {
+
+        final boolean cashBasedAccountingEnabled = (Boolean) accountingBridgeData.get("cashBasedAccountingEnabled");
+        final boolean accrualBasedAccountingEnabled = (Boolean) accountingBridgeData.get("accrualBasedAccountingEnabled");
+
+        if (cashBasedAccountingEnabled || accrualBasedAccountingEnabled) {
+            final SavingsDTO savingsDTO = this.helper.populateSavingsAccrualDtoFromMap(accountingBridgeData, cashBasedAccountingEnabled,
+                    accrualBasedAccountingEnabled);
+            final AccountingProcessorForSavingsAccrual accountingProcessorForSavings = this.accountingProcessorForSavingsAccrualFactory
+                    .determineProcessor(savingsDTO);
+            accountingProcessorForSavings.createJournalEntriesForSavingsAccrual(savingsDTO);
         }
 
     }
