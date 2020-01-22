@@ -52,7 +52,9 @@ public enum LoanTransactionType {
     REFUND(16, "loanTransactionType.refund"), //
     CHARGE_PAYMENT(17, "loanTransactionType.chargePayment"),  //
     REFUND_FOR_ACTIVE_LOAN(18, "loanTransactionType.refund"), //
-    INCOME_POSTING(19,"loanTransactionType.incomePosting");
+    INCOME_POSTING(19,"loanTransactionType.incomePosting"),
+	
+	ACCRUAL_ASSET(20, "loanTransactionType.accrualAsset");
 
     private final Integer value;
     private final String code;
@@ -130,6 +132,9 @@ public enum LoanTransactionType {
             case 19:
             	loanTransactionType = LoanTransactionType.INCOME_POSTING;
             	break;
+            case 20:
+            	loanTransactionType = LoanTransactionType.ACCRUAL_ASSET;
+            	break;
             default:
                 loanTransactionType = LoanTransactionType.INVALID;
             break;
@@ -178,5 +183,8 @@ public enum LoanTransactionType {
     }
     public boolean isIncomePosting() {
         return this.value.equals(LoanTransactionType.INCOME_POSTING.getValue());
+    }
+    public boolean isAccrualAsset() {
+        return this.value.equals(LoanTransactionType.ACCRUAL_ASSET.getValue());
     }
 }

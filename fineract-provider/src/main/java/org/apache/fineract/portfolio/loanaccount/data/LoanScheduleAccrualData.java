@@ -52,6 +52,11 @@ public class LoanScheduleAccrualData {
     private BigDecimal dueDateFeeIncome;
     private BigDecimal dueDatePenaltyIncome;
     private BigDecimal accruableIncome;
+    private Boolean isArrears;
+    private Boolean isNPL;
+    private Integer accrualType;
+    private BigDecimal accrualAmount;
+    private String loanAccountNumber;
 
     public LoanScheduleAccrualData(final Long loanId, final Long officeId, final Integer installmentNumber, final LocalDate accruedTill,
             final PeriodFrequencyType repaymentFrequency, final Integer repayEvery, final LocalDate dueDate, final LocalDate fromDate,
@@ -190,5 +195,73 @@ public class LoanScheduleAccrualData {
         this.accruableIncome = accruableIncome ;
     }
 
+	/**
+	 * @return the isArrears
+	 */
+	public Boolean getIsArrears() {
+		return isArrears;
+	}
 
+	/**
+	 * @param isArrears the isArrears to set
+	 */
+	public void setIsArrears(Boolean isArrears) {
+		this.isArrears = isArrears;
+	}
+
+	/**
+	 * @return the isNPL
+	 */
+	public Boolean getIsNPL() {
+		return isNPL;
+	}
+
+	/**
+	 * @param isNPL the isNPL to set
+	 */
+	public void setIsNPL(Boolean isNPL) {
+		this.isNPL = isNPL;
+	}
+
+	/**
+	 * @return the accrualType
+	 */
+	public Integer getAccrualType() {
+		return accrualType;
+	}
+
+	/**
+	 * @param accrualType the accrualType to set
+	 */
+	public void setAccrualType(Integer accrualType) {
+		this.accrualType = accrualType;
+	}
+
+	/**
+	 * @return the accrualAmount
+	 */
+	public BigDecimal getAccrualAmount() {
+		return accrualAmount;
+	}
+
+	/**
+	 * @param accrualAmount the accrualAmount to set
+	 */
+	public void setAccrualAmount(BigDecimal accrualAmount) {
+		this.accrualAmount = accrualAmount;
+	}
+
+	/**
+	 * @return the loanAccountNumber
+	 */
+	public String getLoanAccountNumber() {
+		return loanAccountNumber;
+	}
+
+	/**
+	 * @param loanAccountNumber the loanAccountNumber to set
+	 */
+	public void setLoanAccountNumber(String loanAccountNumber) {
+		this.loanAccountNumber = loanAccountNumber;
+	}
 }

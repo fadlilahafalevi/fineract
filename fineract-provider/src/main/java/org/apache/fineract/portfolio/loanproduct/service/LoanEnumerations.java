@@ -401,6 +401,10 @@ public class LoanEnumerations {
                 optionData = new LoanTransactionEnumData(LoanTransactionType.INCOME_POSTING.getValue().longValue(),
                         LoanTransactionType.INCOME_POSTING.getCode(), "Income Posting");
             break;
+            case ACCRUAL_ASSET:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.ACCRUAL_ASSET.getValue().longValue(),
+                        LoanTransactionType.ACCRUAL_ASSET.getCode(), "Accrual Asset");
+            break;
             default:
             break;
         }

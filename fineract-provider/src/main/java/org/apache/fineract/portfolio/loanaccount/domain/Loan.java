@@ -388,6 +388,12 @@ public class Loan extends AbstractPersistableCustom<Long> {
 
     @Column(name = "is_topup", nullable = false)
     private boolean isTopup = false;
+    
+    @Column(name = "accrual_type")
+    private Integer accrualType;
+    
+    @Column(name = "accrual_amount", scale = 6, precision = 19, nullable = true)
+    private BigDecimal accrualAmount;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "loan", optional = true, orphanRemoval = true, fetch=FetchType.EAGER)
     private LoanTopupDetails loanTopupDetails;
@@ -6528,4 +6534,32 @@ public class Loan extends AbstractPersistableCustom<Long> {
     }
     
     public boolean isIndividualLoan(){return AccountType.fromInt(this.loanType).isIndividualAccount();}
+
+	/**
+	 * @return the accrualType
+	 */
+	public Integer getAccrualType() {
+		return accrualType;
+	}
+
+	/**
+	 * @param accrualType the accrualType to set
+	 */
+	public void setAccrualType(Integer accrualType) {
+		this.accrualType = accrualType;
+	}
+
+	/**
+	 * @return the accrualAmount
+	 */
+	public BigDecimal getAccrualAmount() {
+		return accrualAmount;
+	}
+
+	/**
+	 * @param accrualAmount the accrualAmount to set
+	 */
+	public void setAccrualAmount(BigDecimal accrualAmount) {
+		this.accrualAmount = accrualAmount;
+	}
 }
