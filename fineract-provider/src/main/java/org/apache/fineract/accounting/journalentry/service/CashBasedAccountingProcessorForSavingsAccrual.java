@@ -38,7 +38,8 @@ public class CashBasedAccountingProcessorForSavingsAccrual implements Accounting
         this.helper = helper;
     }
 
-    @Override
+    @SuppressWarnings("deprecation")
+	@Override
     public void createJournalEntriesForSavingsAccrual(SavingsDTO savingsDTO) {
         final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(savingsDTO.getOfficeId());
         final String currencyCode = savingsDTO.getCurrencyCode();
@@ -49,12 +50,14 @@ public class CashBasedAccountingProcessorForSavingsAccrual implements Accounting
         final Long savingsProductId = savingsDTO.getSavingsProductId();
         final Boolean isReversal = false;
         final Long paymentTypeId = null;
+		String transactionId = "S" + office.getId() + savingsProductId + savingsId + transactionDate.getYear()
+				+ transactionDate.getMonth() + transactionDate.getDate();
         
         this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
         
         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                 CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
-                savingsProductId, paymentTypeId, savingsId, null, transactionDate, amount, isReversal);
+                savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
 
     }
 
