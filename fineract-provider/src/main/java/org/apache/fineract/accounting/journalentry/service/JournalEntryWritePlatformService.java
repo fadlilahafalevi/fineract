@@ -48,5 +48,5 @@ public interface JournalEntryWritePlatformService {
     
     void revertShareAccountJournalEntries(final ArrayList<Long> transactionId, final Date transactionDate);
 
-	void createJournalEntriesForSavingsAccrual(Map<String, Object> accountingBridgeData);
+	void createJournalEntriesForSavingsAccrual(Map<String, Object> accountingBridgeData, Boolean isReversal);
 }

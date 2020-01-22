@@ -872,6 +872,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
             this.savingsAccountDomainService.handleWithdrawal(account, fmt, closedDate, transactionAmount, paymentDetail,
                     transactionBooleanValues);
+            //reversal accrual
+            this.postJournalEntriesForReversalAccrual(account, closedDate);
 
         }
 
@@ -1327,9 +1329,25 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final MonetaryCurrency currency = savingsAccount.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
         boolean isAccountTransfer = false;
+        final boolean isReversal = false;
 		final Map<String, Object> accountingBridgeData = savingsAccount
 				.deriveAccountingBridgeDataForAccrual(applicationCurrency.toData(), isAccountTransfer, interestAccrued, accrualDate);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavingsAccrual(accountingBridgeData);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavingsAccrual(accountingBridgeData, isReversal);
+    }
+
+    @Override
+    public void postJournalEntriesForReversalAccrual(final SavingsAccount savingsAccount, final LocalDate accrualDate) {
+
+        final MonetaryCurrency currency = savingsAccount.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
+        boolean isAccountTransfer = false;
+        final boolean isReversal = false;
+        final BigDecimal interestAccrued = savingsAccount.getLastAccrualAmount();
+        if (interestAccrued.compareTo(BigDecimal.ZERO) > 0) {
+			final Map<String, Object> accountingBridgeData = savingsAccount
+					.deriveAccountingBridgeDataForAccrual(applicationCurrency.toData(), isAccountTransfer, interestAccrued, accrualDate);
+	        this.journalEntryWritePlatformService.createJournalEntriesForSavingsAccrual(accountingBridgeData, isReversal);
+        }
     }
 
     @Override

@@ -24,4 +24,6 @@ public interface AccountingProcessorForSavingsAccrual {
 
     void createJournalEntriesForSavingsAccrual(SavingsDTO sharesDTO);
 
+	void createJournalEntriesForSavingsAccrualReversal(SavingsDTO savingsDTO);
+
 }

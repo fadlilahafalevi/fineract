@@ -61,6 +61,7 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -83,6 +84,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final CalendarInstanceRepository calendarInstanceRepository;
+    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;  
 
     @Autowired
     public DepositAccountDomainServiceJpa(final PlatformSecurityContext context,final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -92,7 +94,8 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
             final ConfigurationDomainService configurationDomainService,
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-            final CalendarInstanceRepository calendarInstanceRepository) {
+            final CalendarInstanceRepository calendarInstanceRepository,
+            final SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
         this.context = context;
         this.savingsAccountRepository = savingsAccountRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -104,6 +107,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.configurationDomainService = configurationDomainService;
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.calendarInstanceRepository = calendarInstanceRepository;
+        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
     }
 
     @Transactional
@@ -427,6 +431,8 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.savingsAccountRepository.save(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        //reversal accrual
+        this.savingsAccountWritePlatformService.postJournalEntriesForReversalAccrual(account, tenantsTodayDate);
         return savingsTransactionId;
     }
 
