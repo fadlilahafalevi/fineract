@@ -53,7 +53,7 @@ public class CashBasedAccountingProcessorForSavingsAccrual implements Accounting
         Integer year = transactionDate.getYear() + 1900;
         Integer month = transactionDate.getMonth() + 1;
 		String transactionId = "S" + office.getId() + savingsProductId + savingsId + year + month
-				+ transactionDate.getDate();
+				+ transactionDate.getDate() + "A";
         
         this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
         

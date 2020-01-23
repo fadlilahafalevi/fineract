@@ -622,15 +622,18 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             	if (account.getTotalAccrualAmount() != null) {
             		totalAccrualAmount = account.getTotalAccrualAmount();
                 	account.setTotalAccrualAmount((interestAccrued.subtract(totalAccrualAmount)).add(totalAccrualAmount));
+                	account.setLastAccrualAmount(interestAccrued.subtract(totalAccrualAmount));
+                	totalAccrualAmount = interestAccrued.subtract(totalAccrualAmount);
             	} else {
-            		totalAccrualAmount = interestAccrued; 
+            		totalAccrualAmount = interestAccrued;
+            		account.setTotalAccrualAmount(interestAccrued);
+                	account.setLastAccrualAmount(interestAccrued);
             	}
             	account.setLastAccrualDate(today.toDate());
-            	account.setLastAccrualAmount(interestAccrued);
 	            this.savingAccountRepositoryWrapper.saveAndFlush(account);
 	
 	            if (interestAccrued.compareTo(BigDecimal.ZERO) > 0) {
-	            	postJournalEntriesForAccrual(account, interestAccrued, today);
+	            	postJournalEntriesForAccrual(account, totalAccrualAmount, today);
 	            }
             }
         }
