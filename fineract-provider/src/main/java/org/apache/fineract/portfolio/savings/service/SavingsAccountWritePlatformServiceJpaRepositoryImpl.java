@@ -621,9 +621,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             	BigDecimal totalAccrualAmount = BigDecimal.ZERO;
             	if (account.getTotalAccrualAmount() != null) {
             		totalAccrualAmount = account.getTotalAccrualAmount();
+                	account.setTotalAccrualAmount((interestAccrued.subtract(totalAccrualAmount)).add(totalAccrualAmount));
+            	} else {
+            		totalAccrualAmount = interestAccrued; 
             	}
             	account.setLastAccrualDate(today.toDate());
-            	account.setTotalAccrualAmount(totalAccrualAmount.add(interestAccrued));
             	account.setLastAccrualAmount(interestAccrued);
 	            this.savingAccountRepositoryWrapper.saveAndFlush(account);
 	
