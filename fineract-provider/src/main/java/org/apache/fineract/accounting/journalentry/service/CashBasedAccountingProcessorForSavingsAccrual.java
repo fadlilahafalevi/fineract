@@ -72,12 +72,16 @@ public class CashBasedAccountingProcessorForSavingsAccrual implements Accounting
         final Long savingsProductId = savingsDTO.getSavingsProductId();
         final Boolean isReversal = false;
         final Long paymentTypeId = null;
+        Integer year = transactionDate.getYear() + 1900;
+        Integer month = transactionDate.getMonth() + 1;
+		String transactionId = "S" + office.getId() + savingsProductId + savingsId + year + month
+				+ transactionDate.getDate() + "R";
         
         this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
         
         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
-                CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_FEES.getValue(),
-                savingsProductId, paymentTypeId, savingsId, null, transactionDate, amount, isReversal);
+                CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST_ACCRUAL.getValue(),
+                savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
 
     }
 

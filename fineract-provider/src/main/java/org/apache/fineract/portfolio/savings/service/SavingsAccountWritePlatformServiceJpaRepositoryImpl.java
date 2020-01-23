@@ -879,6 +879,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     transactionBooleanValues);
             //reversal accrual
             this.postJournalEntriesForReversalAccrual(account, closedDate);
+            account.setTotalAccrualAmount(BigDecimal.ZERO);
+            this.savingAccountRepositoryWrapper.save(account);
 
         }
 
@@ -1346,8 +1348,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final MonetaryCurrency currency = savingsAccount.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
         boolean isAccountTransfer = false;
-        final boolean isReversal = false;
-        final BigDecimal interestAccrued = savingsAccount.getLastAccrualAmount();
+        final boolean isReversal = true;
+        final BigDecimal interestAccrued = savingsAccount.getTotalAccrualAmount();
         if (interestAccrued.compareTo(BigDecimal.ZERO) > 0) {
 			final Map<String, Object> accountingBridgeData = savingsAccount
 					.deriveAccountingBridgeDataForAccrual(applicationCurrency.toData(), isAccountTransfer, interestAccrued, accrualDate);
