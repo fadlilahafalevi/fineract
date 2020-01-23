@@ -50,8 +50,10 @@ public class CashBasedAccountingProcessorForSavingsAccrual implements Accounting
         final Long savingsProductId = savingsDTO.getSavingsProductId();
         final Boolean isReversal = false;
         final Long paymentTypeId = null;
-		String transactionId = "S" + office.getId() + savingsProductId + savingsId + transactionDate.getYear()
-				+ transactionDate.getMonth() + transactionDate.getDate();
+        Integer year = transactionDate.getYear() + 1900;
+        Integer month = transactionDate.getMonth() + 1;
+		String transactionId = "S" + office.getId() + savingsProductId + savingsId + year + month
+				+ transactionDate.getDate();
         
         this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
         
