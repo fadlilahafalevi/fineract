@@ -20,7 +20,10 @@ package org.apache.fineract.organisation.provisioning.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -94,6 +97,7 @@ public class ProvisioningCriteriaAssembler {
                 } else if (def.get(i).isGap(def.get(j))) {
                 	throw new PlatformApiDataValidationException("error.msg.gap", "Gap", null);
                 }
+                break;
             }
         }
     }
@@ -103,7 +107,7 @@ public class ProvisioningCriteriaAssembler {
         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(jsonElement.getAsJsonObject());
         List<LoanProduct> loanProducts = parseLoanProducts(jsonElement) ;
         
-        Set<ProvisioningCriteriaDefinition> criteriaDefinitions = new HashSet<>();
+        Set<ProvisioningCriteriaDefinition> criteriaDefinitions = new LinkedHashSet<>();
         JsonArray jsonProvisioningCriteria = this.fromApiJsonHelper.extractJsonArrayNamed(
                 ProvisioningCriteriaConstants.JSON_PROVISIONING_DEFINITIONS_PARAM, jsonElement);
         for (JsonElement element : jsonProvisioningCriteria) {

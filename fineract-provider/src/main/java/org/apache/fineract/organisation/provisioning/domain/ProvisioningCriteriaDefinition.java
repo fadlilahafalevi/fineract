@@ -96,7 +96,21 @@ public class ProvisioningCriteriaDefinition extends AbstractPersistableCustom<Lo
     }
     
     
-    public boolean isOverlapping(ProvisioningCriteriaDefinition def) {
+    /**
+	 * @return the criteria
+	 */
+	public ProvisioningCriteria getCriteria() {
+		return criteria;
+	}
+
+	/**
+	 * @param criteria the criteria to set
+	 */
+	public void setCriteria(ProvisioningCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	public boolean isOverlapping(ProvisioningCriteriaDefinition def) {
         return this.minimumAge <= def.maximumAge && def.minimumAge <= this.maximumAge;
     }
     public boolean isGap(ProvisioningCriteriaDefinition def) {
