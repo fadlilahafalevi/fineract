@@ -112,7 +112,8 @@ public class SavingsProductDataValidator {
 					overdraftLimitParamName, nominalAnnualInterestRateOverdraftParamName,
 					minOverdraftForInterestCalculationParamName, SavingsApiConstants.minRequiredBalanceParamName,
 					SavingsApiConstants.enforceMinRequiredBalanceParamName, minBalanceForInterestCalculationParamName,
-					withHoldTaxParamName, taxGroupIdParamName, SavingsApiConstants.interestCompoundingTypeParamName));
+					withHoldTaxParamName, taxGroupIdParamName, SavingsApiConstants.interestCompoundingTypeParamName,
+					SavingsApiConstants.isMainProduct));
 
     @Autowired
     public SavingsProductDataValidator(final FromJsonHelper fromApiJsonHelper) {

@@ -627,7 +627,18 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             officeId = group.officeId();
         }
 
-        final Collection<SavingsProductData> productOptions = this.savingsProductReadPlatformService.retrieveAllForLookup();
+        Collection<SavingsProductData> productOptions = new ArrayList<>();
+        final Collection<SavingsProductData> mainProductOptions = this.savingsProductReadPlatformService.retrieveAllMainProductForLookup();
+        final Collection<SavingsProductData> subProductOptions = this.savingsProductReadPlatformService.retrieveAllSubProductForLookup();
+        
+        Boolean isMainCreated = this.checkingMainProduct(clientId);
+        
+        if (isMainCreated) {
+        	productOptions = subProductOptions;
+        } else {
+        	productOptions = mainProductOptions;
+        }
+        
         SavingsAccountData template = null;
         if (productId != null) {
 
@@ -1291,6 +1302,23 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 			return this.jdbcTemplate.queryForObject(sql, new Object[] { accountId }, String.class);
 		} catch (final EmptyResultDataAccessException e) {
 			throw new SavingsAccountNotFoundException(accountId);
+		}
+	}
+
+	@Override
+	public Boolean checkingMainProduct(Long clientId) {
+		try {
+			final String sql = "select count(*) from m_savings_account sa "
+					+ "left join m_savings_product sp on sa.product_id = sp.id "
+					+ "where sa.client_id = ? and sp.is_main_product = true";
+			Integer result = this.jdbcTemplate.queryForObject(sql, new Object[] { clientId }, Integer.class);
+			Boolean isMainCreated = false;
+			if (result > 0) {
+				isMainCreated = true;
+			}
+			return isMainCreated;
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNotFoundException(clientId);
 		}
 	}
 }
