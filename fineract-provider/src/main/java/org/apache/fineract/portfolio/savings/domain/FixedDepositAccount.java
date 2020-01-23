@@ -562,14 +562,14 @@ public class FixedDepositAccount extends SavingsAccount {
         boolean recalucateDailyBalance = false;
 
         // post remaining interest
-        final Money remainigInterestToBePosted = interestOnMaturity.minus(interestPostedToDate);
-        if (!remainigInterestToBePosted.isZero()) {
-            final boolean postInterestAsOn = false;
-            final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                    accountCloseDate, remainigInterestToBePosted, postInterestAsOn);
-            this.transactions.add(newPostingTransaction);
-            recalucateDailyBalance = true;
-        }
+        //final Money remainigInterestToBePosted = interestOnMaturity.minus(interestPostedToDate);
+        //if (!remainigInterestToBePosted.isZero()) {
+        //    final boolean postInterestAsOn = false;
+        //    final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
+        //            accountCloseDate, remainigInterestToBePosted, postInterestAsOn);
+        //    this.transactions.add(newPostingTransaction);
+        //    recalucateDailyBalance = true;
+        //}
 
         recalucateDailyBalance = applyWithholdTaxForDepositAccounts(accountCloseDate, recalucateDailyBalance);
 
