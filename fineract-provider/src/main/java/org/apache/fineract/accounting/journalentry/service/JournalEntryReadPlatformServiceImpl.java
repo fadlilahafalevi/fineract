@@ -231,10 +231,16 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                     transactionTypeEnumData = new TransactionTypeEnumData(loanTransactionType.id(), loanTransactionType.getCode(),
                             loanTransactionType.getValue());
                 } else if (PortfolioAccountType.fromInt(entityTypeId).isSavingsAccount()) {
-                    final SavingsAccountTransactionEnumData savingsTransactionType = SavingsEnumerations.transactionType(JdbcSupport
-                            .getInteger(rs, "savingsTransactionType"));
-                    transactionTypeEnumData = new TransactionTypeEnumData(savingsTransactionType.getId(), savingsTransactionType.getCode(),
-                            savingsTransactionType.getValue());
+                	SavingsAccountTransactionEnumData savingsTransactionType = null;
+                	Integer transcationType = JdbcSupport.getInteger(rs, "savingsTransactionType");
+                	if(transcationType != null) {
+	                    savingsTransactionType = SavingsEnumerations.transactionType(JdbcSupport
+	                            .getInteger(rs, "savingsTransactionType"));
+                	} else {
+                		 savingsTransactionType = SavingsEnumerations.transactionType(22);
+                	}
+                	 transactionTypeEnumData = new TransactionTypeEnumData(savingsTransactionType.getId(), savingsTransactionType.getCode(),
+	                            savingsTransactionType.getValue());
                 }
 
                 transactionDetailData = new TransactionDetailData(transaction, paymentDetailData, noteData, transactionTypeEnumData);

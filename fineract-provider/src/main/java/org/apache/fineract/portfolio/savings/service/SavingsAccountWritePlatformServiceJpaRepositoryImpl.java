@@ -567,16 +567,16 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
                     postInterestOnDate);
             // for generating transaction id's
-            BigDecimal accruedAmountAfterPosted = account.getLastAccrualAmount();
+            BigDecimal accruedAmountAfterPosted = account.getTotalAccrualAmount();
             List<SavingsAccountTransaction> transactions = account.getTransactions();
             for (SavingsAccountTransaction accountTransaction : transactions) {
                 if (accountTransaction.getId() == null) {
                     this.savingsAccountTransactionRepository.save(accountTransaction);
-                    accruedAmountAfterPosted = account.getLastAccrualAmount().subtract(accountTransaction.getAmount());
+                    accruedAmountAfterPosted = account.getTotalAccrualAmount().subtract(accountTransaction.getAmount());
                 }
             }
 
-            account.setLastAccrualAmount(accruedAmountAfterPosted);
+            account.setTotalAccrualAmount(accruedAmountAfterPosted);
             this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
@@ -616,10 +616,15 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             	}
 	            
             	for (PostingPeriod postingPeriod : postingPeriods) {
-            		interestAccrued = postingPeriod.getInterestEarned().getAmount();
+            		interestAccrued = postingPeriod.getInterestEarned().getAmount().add(interestAccrued);
+            	}
+            	BigDecimal totalAccrualAmount = BigDecimal.ZERO;
+            	if (account.getTotalAccrualAmount() != null) {
+            		totalAccrualAmount = account.getTotalAccrualAmount();
             	}
             	account.setLastAccrualDate(today.toDate());
-            	account.setLastAccrualAmount(account.getLastAccrualAmount().add(interestAccrued));
+            	account.setTotalAccrualAmount(totalAccrualAmount.add(interestAccrued));
+            	account.setLastAccrualAmount(interestAccrued);
 	            this.savingAccountRepositoryWrapper.saveAndFlush(account);
 	
 	            if (interestAccrued.compareTo(BigDecimal.ZERO) > 0) {

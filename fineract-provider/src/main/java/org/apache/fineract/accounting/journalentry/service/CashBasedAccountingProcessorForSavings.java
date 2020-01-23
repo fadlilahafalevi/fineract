@@ -175,7 +175,7 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                 // zero
                 if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
-                            CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
+                            CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue(),
                             savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
                 }
             }

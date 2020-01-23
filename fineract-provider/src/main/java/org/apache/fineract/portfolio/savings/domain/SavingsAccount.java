@@ -121,6 +121,10 @@ import org.springframework.util.CollectionUtils;
 
 import com.google.gson.JsonArray;
 
+/**
+ * @author USER
+ *
+ */
 @Entity
 @Table(name = "m_savings_account", uniqueConstraints = { @UniqueConstraint(columnNames = { "account_no" }, name = "sa_account_no_UNIQUE"),
         @UniqueConstraint(columnNames = { "external_id" }, name = "sa_external_id_UNIQUE") })
@@ -337,6 +341,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     @Column(name = "last_accrual_amount", nullable = true)
     protected BigDecimal lastAccrualAmount;
+
+    @Column(name = "total_accrual_amount", nullable = true)
+    protected BigDecimal totalAccrualAmount;
     
     protected SavingsAccount() {
         //
@@ -1482,15 +1489,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         final List<Map<String, Object>> newSavingsTransactions = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions() ;
         
-        //new validation for accrual without transaction id
-        if (!(existingTransactionIds.isEmpty() || existingReversedTransactionIds.isEmpty())) {
-	        for (final SavingsAccountTransaction transaction : trans) {
-	            if (transaction.isReversed() && !existingReversedTransactionIds.contains(transaction.getId())) {
-	                newSavingsTransactions.add(transaction.toMapData(currencyData));
-	            } else if (!existingTransactionIds.contains(transaction.getId())) {
-	                newSavingsTransactions.add(transaction.toMapData(currencyData));
-	            }
-	        }
+        for (final SavingsAccountTransaction transaction : trans) {
+            if (transaction.isReversed() && !existingReversedTransactionIds.contains(transaction.getId())) {
+                newSavingsTransactions.add(transaction.toMapData(currencyData));
+            } else if (!existingTransactionIds.contains(transaction.getId())) {
+                newSavingsTransactions.add(transaction.toMapData(currencyData));
+            }
         }
 
         accountingBridgeData.put("newSavingsTransactions", newSavingsTransactions);
@@ -3140,6 +3144,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
 	public void setLastAccrualAmount(BigDecimal lastAccrualAmount) {
 		this.lastAccrualAmount = lastAccrualAmount;
+	}
+
+	public BigDecimal getTotalAccrualAmount() {
+		return totalAccrualAmount;
+	}
+
+	public void setTotalAccrualAmount(BigDecimal totalAccrualAmount) {
+		this.totalAccrualAmount = totalAccrualAmount;
 	}
 
 }
