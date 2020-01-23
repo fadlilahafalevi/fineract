@@ -53,6 +53,7 @@ import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
+import org.apache.fineract.portfolio.savings.CompoundingType;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
@@ -292,8 +293,16 @@ public class FixedDepositAccount extends SavingsAccount {
 
         final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
 
-        final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
-                .fromInt(this.interestCompoundingPeriodType);
+        final CompoundingType compoundingType = CompoundingType.fromInt(this.interestCompoundingTypeEnum);
+        
+        SavingsCompoundingInterestPeriodType compoundingPeriodType = null;
+        
+        if (compoundingType.getValue() == 1) {
+        	compoundingPeriodType = SavingsCompoundingInterestPeriodType.fromInt(this.interestCompoundingPeriodType);
+        } else if (compoundingType.getValue() == 2) {
+        	compoundingPeriodType = SavingsCompoundingInterestPeriodType.NON_COMPOUNDING;
+        }
+
 
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
