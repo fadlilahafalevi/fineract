@@ -56,11 +56,15 @@ public class GLAccountData {
     final List<GLAccountData> equityHeaderAccountOptions;
     final List<GLAccountData> incomeHeaderAccountOptions;
     final List<GLAccountData> expenseHeaderAccountOptions;
+    final List<GLAccountData> offBalanceSheetClaimHeaderAccountOptions;
+    final List<GLAccountData> offBalanceSheetLiabilityHeaderAccountOptions;
     final Collection<CodeValueData> allowedAssetsTagOptions;
     final Collection<CodeValueData> allowedLiabilitiesTagOptions;
     final Collection<CodeValueData> allowedEquityTagOptions;
     final Collection<CodeValueData> allowedIncomeTagOptions;
     final Collection<CodeValueData> allowedExpensesTagOptions;
+    final Collection<CodeValueData> allowedOffBalanceSheetClaimTagOptions;
+    final Collection<CodeValueData> allowedOffBalanceSheetLiabilityTagOptions;
 
     //import fields
     private transient Integer rowIndex;
@@ -96,11 +100,15 @@ public class GLAccountData {
         this.equityHeaderAccountOptions = null;
         this.incomeHeaderAccountOptions = null;
         this.expenseHeaderAccountOptions = null;
+        this.offBalanceSheetClaimHeaderAccountOptions = null;
+        this.offBalanceSheetLiabilityHeaderAccountOptions = null;
         this.allowedAssetsTagOptions = null;
         this.allowedLiabilitiesTagOptions = null;
         this.allowedEquityTagOptions = null;
         this.allowedIncomeTagOptions = null;
         this.allowedExpensesTagOptions = null;
+        this.allowedOffBalanceSheetClaimTagOptions = null;
+        this.allowedOffBalanceSheetLiabilityTagOptions = null;
     }
 
     public Integer getRowIndex() {
@@ -133,20 +141,24 @@ public class GLAccountData {
         this.equityHeaderAccountOptions = null;
         this.incomeHeaderAccountOptions = null;
         this.expenseHeaderAccountOptions = null;
+        this.offBalanceSheetClaimHeaderAccountOptions = null;
+        this.offBalanceSheetLiabilityHeaderAccountOptions = null;
         this.allowedAssetsTagOptions = null;
         this.allowedLiabilitiesTagOptions = null;
         this.allowedEquityTagOptions = null;
         this.allowedIncomeTagOptions = null;
         this.allowedExpensesTagOptions = null;
+        this.allowedOffBalanceSheetClaimTagOptions = null;
+        this.allowedOffBalanceSheetLiabilityTagOptions = null;
     }
 
     public GLAccountData(final GLAccountData accountData, final List<EnumOptionData> accountTypeOptions,
             final List<EnumOptionData> usageOptions, final List<GLAccountData> assetHeaderAccountOptions,
             final List<GLAccountData> liabilityHeaderAccountOptions, final List<GLAccountData> equityHeaderAccountOptions,
             final List<GLAccountData> incomeHeaderAccountOptions, final List<GLAccountData> expenseHeaderAccountOptions,
+            List<GLAccountData> offBalanceSheetClaimHeaderAccountOptions, List<GLAccountData> offBalanceSheetLiabilityHeaderAccountOptions,
             final Collection<CodeValueData> allowedAssetsTagOptions, final Collection<CodeValueData> allowedLiabilitiesTagOptions,
-            final Collection<CodeValueData> allowedEquityTagOptions, final Collection<CodeValueData> allowedIncomeTagOptions,
-            final Collection<CodeValueData> allowedExpensesTagOptions) {
+            final Collection<CodeValueData> allowedEquityTagOptions, final Collection<CodeValueData> allowedIncomeTagOptions, final Collection<CodeValueData> allowedExpensesTagOptions, Collection<CodeValueData> allowedOffBalanceSheetClaimTagOptions, Collection<CodeValueData> allowedOffBalanceSheetLiabilityTagOptions) {
         this.id = accountData.id;
         this.name = accountData.name;
         this.parentId = accountData.parentId;
@@ -166,11 +178,15 @@ public class GLAccountData {
         this.equityHeaderAccountOptions = equityHeaderAccountOptions;
         this.incomeHeaderAccountOptions = incomeHeaderAccountOptions;
         this.expenseHeaderAccountOptions = expenseHeaderAccountOptions;
+        this.offBalanceSheetClaimHeaderAccountOptions = offBalanceSheetClaimHeaderAccountOptions;
+        this.offBalanceSheetLiabilityHeaderAccountOptions = offBalanceSheetLiabilityHeaderAccountOptions;
         this.allowedAssetsTagOptions = allowedAssetsTagOptions;
         this.allowedLiabilitiesTagOptions = allowedLiabilitiesTagOptions;
         this.allowedEquityTagOptions = allowedEquityTagOptions;
         this.allowedIncomeTagOptions = allowedIncomeTagOptions;
         this.allowedExpensesTagOptions = allowedExpensesTagOptions;
+        this.allowedOffBalanceSheetClaimTagOptions = allowedOffBalanceSheetClaimTagOptions;
+        this.allowedOffBalanceSheetLiabilityTagOptions = allowedOffBalanceSheetLiabilityTagOptions;
     }
 
     public static GLAccountData sensibleDefaultsForNewGLAccountCreation(final Integer glAccType) {
@@ -216,11 +232,15 @@ public class GLAccountData {
         this.equityHeaderAccountOptions = null;
         this.incomeHeaderAccountOptions = null;
         this.expenseHeaderAccountOptions = null;
+        this.offBalanceSheetClaimHeaderAccountOptions = null;
+        this.offBalanceSheetLiabilityHeaderAccountOptions = null;
         this.allowedAssetsTagOptions = null;
         this.allowedLiabilitiesTagOptions = null;
         this.allowedEquityTagOptions = null;
         this.allowedIncomeTagOptions = null;
         this.allowedExpensesTagOptions = null;
+        this.allowedOffBalanceSheetClaimTagOptions = null;
+        this.allowedOffBalanceSheetLiabilityTagOptions = null;
     }
 
     public Long getId() {

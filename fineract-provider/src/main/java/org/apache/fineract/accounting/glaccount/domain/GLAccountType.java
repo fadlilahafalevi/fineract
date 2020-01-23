@@ -24,8 +24,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum GLAccountType {
-    ASSET(1, "accountType.asset"), LIABILITY(2, "accountType.liability"), EQUITY(3, "accountType.equity"), INCOME(4, "accountType.income"), EXPENSE(
-            5, "accountType.expense");
+    ASSET(1, "accountType.asset"), 
+    LIABILITY(2, "accountType.liability"), 
+    EQUITY(3, "accountType.equity"), 
+    INCOME(4, "accountType.income"), 
+    EXPENSE(5, "accountType.expense"),
+    OFF_BALANCE_SHEET_CLAIM(6, "accountType.offBalanceSheetClaim"),
+    OFF_BALANCE_SHEET_LIABILITY(7, "accountType.offBalanceSheetLiability");
 
     private final Integer value;
     private final String code;
@@ -79,6 +84,12 @@ public enum GLAccountType {
         }else if(accountType!=null && accountType.equalsIgnoreCase(EXPENSE.toString())){
             accountTypeId=5L;
             return new EnumOptionData(accountTypeId,null,null);
+        }else if(accountType!=null && accountType.equalsIgnoreCase(OFF_BALANCE_SHEET_CLAIM.toString())){
+            accountTypeId=6L;
+            return new EnumOptionData(accountTypeId,null,null);
+        }else if(accountType!=null && accountType.equalsIgnoreCase(OFF_BALANCE_SHEET_LIABILITY.toString())){
+            accountTypeId=7L;
+            return new EnumOptionData(accountTypeId,null,null);
         }else {
             return null;
         }
@@ -122,4 +133,11 @@ public enum GLAccountType {
         return this.value.equals(GLAccountType.EXPENSE.getValue());
     }
 
+    public boolean isOffBalanceSheetClaimType() {
+        return this.value.equals(GLAccountType.OFF_BALANCE_SHEET_CLAIM.getValue());
+    }
+    
+    public boolean isOffBalanceSheetLiabilityType() {
+        return this.value.equals(GLAccountType.OFF_BALANCE_SHEET_LIABILITY.getValue());
+    }
 }
