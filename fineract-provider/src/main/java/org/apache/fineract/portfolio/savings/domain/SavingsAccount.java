@@ -1489,15 +1489,12 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         final List<Map<String, Object>> newSavingsTransactions = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions() ;
         
-        //new validation for accrual without transaction id
-        if (!(existingTransactionIds.isEmpty() || existingReversedTransactionIds.isEmpty())) {
-	        for (final SavingsAccountTransaction transaction : trans) {
-	            if (transaction.isReversed() && !existingReversedTransactionIds.contains(transaction.getId())) {
-	                newSavingsTransactions.add(transaction.toMapData(currencyData));
-	            } else if (!existingTransactionIds.contains(transaction.getId())) {
-	                newSavingsTransactions.add(transaction.toMapData(currencyData));
-	            }
-	        }
+        for (final SavingsAccountTransaction transaction : trans) {
+            if (transaction.isReversed() && !existingReversedTransactionIds.contains(transaction.getId())) {
+                newSavingsTransactions.add(transaction.toMapData(currencyData));
+            } else if (!existingTransactionIds.contains(transaction.getId())) {
+                newSavingsTransactions.add(transaction.toMapData(currencyData));
+            }
         }
 
         accountingBridgeData.put("newSavingsTransactions", newSavingsTransactions);
