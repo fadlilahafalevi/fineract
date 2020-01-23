@@ -121,6 +121,10 @@ import org.springframework.util.CollectionUtils;
 
 import com.google.gson.JsonArray;
 
+/**
+ * @author USER
+ *
+ */
 @Entity
 @Table(name = "m_savings_account", uniqueConstraints = { @UniqueConstraint(columnNames = { "account_no" }, name = "sa_account_no_UNIQUE"),
         @UniqueConstraint(columnNames = { "external_id" }, name = "sa_external_id_UNIQUE") })
@@ -337,6 +341,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
     @Column(name = "last_accrual_amount", nullable = true)
     protected BigDecimal lastAccrualAmount;
+
+    @Column(name = "total_accrual_amount", nullable = true)
+    protected BigDecimal totalAccrualAmount;
     
     protected SavingsAccount() {
         //
@@ -3140,6 +3147,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
 	public void setLastAccrualAmount(BigDecimal lastAccrualAmount) {
 		this.lastAccrualAmount = lastAccrualAmount;
+	}
+
+	public BigDecimal getTotalAccrualAmount() {
+		return totalAccrualAmount;
+	}
+
+	public void setTotalAccrualAmount(BigDecimal totalAccrualAmount) {
+		this.totalAccrualAmount = totalAccrualAmount;
 	}
 
 }

@@ -43,7 +43,8 @@ public enum SavingsAccountTransactionType {
     WITHHOLD_TAX(18, "savingsAccountTransactionType.withholdTax"),
     ESCHEAT(19, "savingsAccountTransactionType.escheat"),
     AMOUNT_HOLD(20, "savingsAccountTransactionType.onHold"),
-    AMOUNT_RELEASE(21, "savingsAccountTransactionType.release");
+    AMOUNT_RELEASE(21, "savingsAccountTransactionType.release"),
+    SAVINGS_ACCRUAL(22, "savingsAccountTranscationType.accrual");
 
     private final Integer value;
     private final String code;
@@ -120,6 +121,9 @@ public enum SavingsAccountTransactionType {
             break;
             case 21:
                 savingsAccountTransactionType = SavingsAccountTransactionType.AMOUNT_RELEASE;
+            break;
+            case 22:
+                savingsAccountTransactionType = SavingsAccountTransactionType.SAVINGS_ACCRUAL;
             break;
         }
         return savingsAccountTransactionType;
