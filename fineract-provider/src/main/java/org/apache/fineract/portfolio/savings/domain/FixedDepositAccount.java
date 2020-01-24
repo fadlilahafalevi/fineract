@@ -789,7 +789,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final boolean withdrawalFeeApplicableForTransfer = false;
         final String accountNumber = null;
         final boolean withHoldTax = this.withHoldTax;
-        final FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product,
+        FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product,
                 savingsOfficer, accountNumber, externalId, accountType, getClosedOnDate(), closedBy, interestRate, compoundingPeriodType,
                 postingPeriodType, interestCalculationType, daysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure,
@@ -797,6 +797,7 @@ public class FixedDepositAccount extends SavingsAccount {
 
         newAccountTermAndPreClosure.updateAccountReference(reInvestedAccount);
         newChart.updateDepositAccountReference(reInvestedAccount);
+        reInvestedAccount.setInterestCompoundingTypeEnum(this.interestCompoundingTypeEnum);
 
         return reInvestedAccount;
 
