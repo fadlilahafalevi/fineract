@@ -44,11 +44,11 @@ public class PaymentTypeDataValidator {
 
     private final FromJsonHelper fromApiJsonHelper;
 	private static final Set<String> CREATE_PAYMENT_TYPE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-			Arrays.asList(PaymentTypeApiResourceConstants.NAME, PaymentTypeApiResourceConstants.DESCRIPTION,
+			Arrays.asList(PaymentTypeApiResourceConstants.NAME, PaymentTypeApiResourceConstants.DESCRIPTION, PaymentTypeApiResourceConstants.SUBGL,
 					PaymentTypeApiResourceConstants.ISCASHPAYMENT, PaymentTypeApiResourceConstants.POSITION));
 
 	private static final Set<String> UPDATE_PAYMENT_TYPE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-			Arrays.asList(PaymentTypeApiResourceConstants.NAME, PaymentTypeApiResourceConstants.DESCRIPTION,
+			Arrays.asList(PaymentTypeApiResourceConstants.NAME, PaymentTypeApiResourceConstants.DESCRIPTION, PaymentTypeApiResourceConstants.SUBGL,
 					PaymentTypeApiResourceConstants.ISCASHPAYMENT, PaymentTypeApiResourceConstants.POSITION));
 
     @Autowired
