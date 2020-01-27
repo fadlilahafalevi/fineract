@@ -852,7 +852,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final LocalDate closedDate = command.localDateValueOfParameterNamed(SavingsApiConstants.closedOnDateParamName);
         final boolean isPostInterest = command.booleanPrimitiveValueOfParameterNamed(SavingsApiConstants.postInterestValidationOnClosure);
         // postInterest(account,closedDate,flag);
-        if (isPostInterest) {
+        // Comment the validation of PostInterestClosingDateException
+        /*if (isPostInterest) {
             boolean postInterestOnClosingDate = false;
             List<SavingsAccountTransaction> savingTransactions = account.getTransactions();
             for (SavingsAccountTransaction savingTransaction : savingTransactions) {
@@ -863,7 +864,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 }
             }
             if (postInterestOnClosingDate == false) { throw new PostInterestClosingDateException(); }
-        }
+        }*/
 
         final Map<String, Object> changes = new LinkedHashMap<>();
 

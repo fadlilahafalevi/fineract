@@ -428,11 +428,13 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
       
         account.prematureClosure(user, command, tenantsTodayDate, changes);
 
-        this.savingsAccountRepository.save(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
         //reversal accrual
         this.savingsAccountWritePlatformService.postJournalEntriesForReversalAccrual(account, tenantsTodayDate);
+        account.setTotalAccrualAmount(BigDecimal.ZERO);
+        
+        this.savingsAccountRepository.save(account);
         return savingsTransactionId;
     }
 
