@@ -572,7 +572,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             for (SavingsAccountTransaction accountTransaction : transactions) {
                 if (accountTransaction.getId() == null) {
                     this.savingsAccountTransactionRepository.save(accountTransaction);
-                    accruedAmountAfterPosted = account.getTotalAccrualAmount().subtract(accountTransaction.getAmount());
+                    accruedAmountAfterPosted = accruedAmountAfterPosted.subtract(accountTransaction.getAmount());
                 }
             }
 
