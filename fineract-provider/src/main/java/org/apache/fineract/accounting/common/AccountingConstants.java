@@ -109,7 +109,7 @@ public class AccountingConstants {
                 "paymentTypeId"), FEE_INCOME_ACCOUNT_MAPPING("feeToIncomeAccountMappings"), PENALTY_INCOME_ACCOUNT_MAPPING(
                 "penaltyToIncomeAccountMappings"), CHARGE_ID("chargeId"), INCOME_ACCOUNT_ID("incomeAccountId"), INCOME_FROM_RECOVERY(
                 "incomeFromRecoveryAccountId"), ACCRUED_INTEREST_ASSET("accruedInterestAssetId"), ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM("accruedInterestAdministrativeClaimId"),
-        		ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY("accruedAdministrativeLiabilityId");
+        		ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY("accruedInterestAdministrativeLiabilityId");
 
         private final String value;
 
