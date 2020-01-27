@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.loanproduct.domain;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.persistence.Column;
@@ -116,7 +117,7 @@ public class LoanProductMinMaxConstraints {
         final String minInterestRatePerPeriodParamName = "minInterestRatePerPeriod";
         if (command
                 .isChangeInBigDecimalParameterNamedWithNullCheck(minInterestRatePerPeriodParamName, this.minNominalInterestRatePerPeriod)) {
-            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(minInterestRatePerPeriodParamName);
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(minInterestRatePerPeriodParamName, Locale.forLanguageTag("id"));
             actualChanges.put(minInterestRatePerPeriodParamName, newValue);
             actualChanges.put("locale", localeAsInput);
             this.minNominalInterestRatePerPeriod = newValue;
@@ -125,7 +126,7 @@ public class LoanProductMinMaxConstraints {
         final String maxInterestRatePerPeriodParamName = "maxInterestRatePerPeriod";
         if (command
                 .isChangeInBigDecimalParameterNamedWithNullCheck(maxInterestRatePerPeriodParamName, this.maxNominalInterestRatePerPeriod)) {
-            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(maxInterestRatePerPeriodParamName);
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(maxInterestRatePerPeriodParamName, Locale.forLanguageTag("id"));
             actualChanges.put(maxInterestRatePerPeriodParamName, newValue);
             actualChanges.put("locale", localeAsInput);
             this.maxNominalInterestRatePerPeriod = newValue;
