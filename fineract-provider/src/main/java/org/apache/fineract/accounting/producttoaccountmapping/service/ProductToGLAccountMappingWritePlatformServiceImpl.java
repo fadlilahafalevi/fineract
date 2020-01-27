@@ -164,6 +164,18 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 this.loanProductToGLAccountMappingHelper.saveLoanToLiabilityAccountMapping(element,
                         LOAN_PRODUCT_ACCOUNTING_PARAMS.OVERPAYMENT.getValue(), loanProductId,
                         ACCRUAL_ACCOUNTS_FOR_LOAN.OVERPAYMENT.getValue());
+                
+                
+                // administrative
+                this.loanProductToGLAccountMappingHelper
+                		.saveLoanToOffBalanceSheetClaimAccountMapping(element, 
+                		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), loanProductId,
+                		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue());
+                
+                this.loanProductToGLAccountMappingHelper
+		        		.saveLoanToOffBalanceSheetLiabilityAccountMapping(element,
+		        		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), loanProductId,
+		        		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue());
 
                 // advanced accounting mappings
                 this.loanProductToGLAccountMappingHelper.savePaymentChannelToFundSourceMappings(command, element, loanProductId, null);

@@ -72,6 +72,16 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
             final int placeHolderTypeId) {
         saveProductToAccountMapping(element, paramName, productId, placeHolderTypeId, GLAccountType.LIABILITY, PortfolioProductType.LOAN);
     }
+    
+    public void saveLoanToOffBalanceSheetClaimAccountMapping(final JsonElement element, final String paramName, final Long productId,
+            final int placeHolderTypeId) {
+        saveProductToAccountMapping(element, paramName, productId, placeHolderTypeId, GLAccountType.OFF_BALANCE_SHEET_CLAIM, PortfolioProductType.LOAN);
+    }
+    
+    public void saveLoanToOffBalanceSheetLiabilityAccountMapping(final JsonElement element, final String paramName, final Long productId,
+            final int placeHolderTypeId) {
+        saveProductToAccountMapping(element, paramName, productId, placeHolderTypeId, GLAccountType.OFF_BALANCE_SHEET_LIABILITY, PortfolioProductType.LOAN);
+    }
 
     /*** Set of abstractions for merging Savings Products to GL Account Mappings ***/
     public void mergeLoanToAssetAccountMappingChanges(final JsonElement element, final String paramName, final Long productId,
@@ -96,6 +106,18 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
             final int accountTypeId, final String accountTypeName, final Map<String, Object> changes) {
         mergeProductToAccountMappingChanges(element, paramName, productId, accountTypeId, accountTypeName, changes,
                 GLAccountType.LIABILITY, PortfolioProductType.LOAN);
+    }
+    
+    public void mergeLoanToOffBalanceSheetClaimAccountMappingChanges(final JsonElement element, final String paramName, final Long productId,
+            final int accountTypeId, final String accountTypeName, final Map<String, Object> changes) {
+        mergeProductToAccountMappingChanges(element, paramName, productId, accountTypeId, accountTypeName, changes,
+                GLAccountType.OFF_BALANCE_SHEET_CLAIM, PortfolioProductType.LOAN);
+    }
+    
+    public void mergeLoanToOffBalanceSheetLiabilityAccountMappingChanges(final JsonElement element, final String paramName, final Long productId,
+            final int accountTypeId, final String accountTypeName, final Map<String, Object> changes) {
+        mergeProductToAccountMappingChanges(element, paramName, productId, accountTypeId, accountTypeName, changes,
+                GLAccountType.OFF_BALANCE_SHEET_LIABILITY, PortfolioProductType.LOAN);
     }
 
     /*** Abstractions for payments channel related to loan products ***/
@@ -304,6 +326,13 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
                 // liabilities
                 mergeLoanToLiabilityAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.OVERPAYMENT.getValue(), loanProductId,
                         CASH_ACCOUNTS_FOR_LOAN.OVERPAYMENT.getValue(), CASH_ACCOUNTS_FOR_LOAN.OVERPAYMENT.toString(), changes);
+                
+                // admininstrative
+                mergeLoanToOffBalanceSheetClaimAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), loanProductId,
+                		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.toString(), changes);
+                
+                mergeLoanToOffBalanceSheetLiabilityAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), loanProductId,
+                		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.toString(), changes);
             break;
         }
     }

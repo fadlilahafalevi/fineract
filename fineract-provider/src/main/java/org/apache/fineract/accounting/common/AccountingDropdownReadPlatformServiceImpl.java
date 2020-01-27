@@ -82,7 +82,7 @@ public class AccountingDropdownReadPlatformServiceImpl implements AccountingDrop
         boolean includeEquityAccounts = false;
 
         return retrieveAccountMappingOptions(includeAssetAccounts, includeIncomeAccounts, includeExpenseAccounts, includeLiabilityAccounts,
-                includeEquityAccounts);
+                includeEquityAccounts, false, false);
     }
 
     @Override
@@ -92,12 +92,15 @@ public class AccountingDropdownReadPlatformServiceImpl implements AccountingDrop
         boolean includeExpenseAccounts = true;
         boolean includeLiabilityAccounts = true;
         boolean includeEquityAccounts = true;
+        boolean includeOffBalanceSheetClaimAccounts = true;
+        boolean includeOffBalanceSheetLiabilityAccounts = true;
         return retrieveAccountMappingOptions(includeAssetAccounts, includeIncomeAccounts, includeExpenseAccounts, includeLiabilityAccounts,
-                includeEquityAccounts);
+                includeEquityAccounts, includeOffBalanceSheetClaimAccounts, includeOffBalanceSheetLiabilityAccounts);
     }
 
     private Map<String, List<GLAccountData>> retrieveAccountMappingOptions(boolean includeAssetAccounts, boolean includeIncomeAccounts,
-            boolean includeExpenseAccounts, boolean includeLiabilityAccounts, boolean includeEquityAccounts) {
+            boolean includeExpenseAccounts, boolean includeLiabilityAccounts, boolean includeEquityAccounts, boolean includeOffBalanceSheetClaimAccounts, 
+            boolean includeOffBalanceSheetLiabilityAccounts) {
         final Map<String, List<GLAccountData>> accountOptions = new HashMap<>();
 
         if (includeAssetAccounts) {
@@ -144,6 +147,25 @@ public class AccountingDropdownReadPlatformServiceImpl implements AccountingDrop
             }
             accountOptions.put("equityAccountOptions", equityAccountOptions);
         }
+        
+        if (includeOffBalanceSheetClaimAccounts) {
+            List<GLAccountData> offBalanceSheetClaimAccountOptions = this.accountReadPlatformService
+                    .retrieveAllEnabledDetailGLAccounts(GLAccountType.OFF_BALANCE_SHEET_CLAIM);
+            if (offBalanceSheetClaimAccountOptions.isEmpty()) {
+            	offBalanceSheetClaimAccountOptions = null;
+            }
+            accountOptions.put("offBalanceSheetClaimAccountOptions", offBalanceSheetClaimAccountOptions);
+        }
+        
+        if (includeOffBalanceSheetLiabilityAccounts) {
+            List<GLAccountData> offBalanceSheetLiabilityAccountOptions = this.accountReadPlatformService
+                    .retrieveAllEnabledDetailGLAccounts(GLAccountType.OFF_BALANCE_SHEET_LIABILITY);
+            if (offBalanceSheetLiabilityAccountOptions.isEmpty()) {
+            	offBalanceSheetLiabilityAccountOptions = null;
+            }
+            accountOptions.put("offBalanceSheetLiabilityAccountOptions", offBalanceSheetLiabilityAccountOptions);
+        }
+        
         return accountOptions;
     }
 
@@ -155,7 +177,7 @@ public class AccountingDropdownReadPlatformServiceImpl implements AccountingDrop
         boolean includeLiabilityAccounts = true;
         boolean includeEquityAccounts = true;
         return retrieveAccountMappingOptions(includeAssetAccounts, includeIncomeAccounts, includeExpenseAccounts, includeLiabilityAccounts,
-                includeEquityAccounts);
+                includeEquityAccounts, false, false);
     }
 
 }
