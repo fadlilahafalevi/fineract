@@ -473,8 +473,8 @@ public final class LoanProductDataValidator {
                                 "isFloatingInterestRateCalculationAllowed param is not supported when isLinkedToFloatingInterestRates is not supplied or false");
             }
 
-            final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("interestRatePerPeriod",
-                    element);
+            final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed("interestRatePerPeriod",
+                    element, Locale.forLanguageTag("id"));
             baseDataValidator.reset().parameter("interestRatePerPeriod").value(interestRatePerPeriod).notNull().zeroOrPositiveAmount();
 
             final String minInterestRatePerPeriodParameterName = "minInterestRatePerPeriod";
@@ -1343,8 +1343,8 @@ public final class LoanProductDataValidator {
             final String minInterestRatePerPeriodParameterName = "minInterestRatePerPeriod";
             BigDecimal minInterestRatePerPeriod = loanProduct.getMinNominalInterestRatePerPeriod();
             if (this.fromApiJsonHelper.parameterExists(minInterestRatePerPeriodParameterName, element)) {
-                minInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(minInterestRatePerPeriodParameterName,
-                        element);
+                minInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed(minInterestRatePerPeriodParameterName,
+                        element, Locale.forLanguageTag("id"));
             }
             baseDataValidator.reset().parameter(minInterestRatePerPeriodParameterName).value(minInterestRatePerPeriod).ignoreIfNull()
                     .zeroOrPositiveAmount();
@@ -1352,15 +1352,15 @@ public final class LoanProductDataValidator {
             final String maxInterestRatePerPeriodParameterName = "maxInterestRatePerPeriod";
             BigDecimal maxInterestRatePerPeriod = loanProduct.getMaxNominalInterestRatePerPeriod();
             if (this.fromApiJsonHelper.parameterExists(maxInterestRatePerPeriodParameterName, element)) {
-                maxInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(maxInterestRatePerPeriodParameterName,
-                        element);
+                maxInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed(maxInterestRatePerPeriodParameterName,
+                        element, Locale.forLanguageTag("id"));
             }
             baseDataValidator.reset().parameter(maxInterestRatePerPeriodParameterName).value(maxInterestRatePerPeriod).ignoreIfNull()
                     .zeroOrPositiveAmount();
 
             BigDecimal interestRatePerPeriod = loanProduct.getLoanProductRelatedDetail().getNominalInterestRatePerPeriod();
             if (this.fromApiJsonHelper.parameterExists("interestRatePerPeriod", element)) {
-                interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("interestRatePerPeriod", element);
+                interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed("interestRatePerPeriod", element, Locale.forLanguageTag("id"));
             }
             baseDataValidator.reset().parameter("interestRatePerPeriod").value(interestRatePerPeriod).notNull().zeroOrPositiveAmount();
 
@@ -1788,7 +1788,7 @@ public final class LoanProductDataValidator {
         BigDecimal interestRatePerPeriod = null;
 
         if (this.fromApiJsonHelper.parameterExists(interestRatePerPeriodParameterName, element)) {
-            interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(interestRatePerPeriodParameterName, element);
+            interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed(interestRatePerPeriodParameterName, element, Locale.forLanguageTag("en"));
             iRPUpdated = true;
         } else {
             interestRatePerPeriod = loanProduct.getNominalInterestRatePerPeriod();
@@ -1797,8 +1797,8 @@ public final class LoanProductDataValidator {
         final String minInterestRatePerPeriodParameterName = "minInterestRatePerPeriod";
         BigDecimal minInterestRatePerPeriod = null;
         if (this.fromApiJsonHelper.parameterExists(minInterestRatePerPeriodParameterName, element)) {
-            minInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(minInterestRatePerPeriodParameterName,
-                    element);
+            minInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed(minInterestRatePerPeriodParameterName,
+                    element, Locale.forLanguageTag("id"));
             minIRPUpdated = true;
         } else {
             minInterestRatePerPeriod = loanProduct.getMinNominalInterestRatePerPeriod();
@@ -1807,8 +1807,8 @@ public final class LoanProductDataValidator {
         final String maxInterestRatePerPeriodParameterName = "maxInterestRatePerPeriod";
         BigDecimal maxInterestRatePerPeriod = null;
         if (this.fromApiJsonHelper.parameterExists(maxInterestRatePerPeriodParameterName, element)) {
-            maxInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(maxInterestRatePerPeriodParameterName,
-                    element);
+            maxInterestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed(maxInterestRatePerPeriodParameterName,
+                    element, Locale.forLanguageTag("id"));
             maxIRPUpdated = true;
         } else {
             maxInterestRatePerPeriod = loanProduct.getMaxNominalInterestRatePerPeriod();
