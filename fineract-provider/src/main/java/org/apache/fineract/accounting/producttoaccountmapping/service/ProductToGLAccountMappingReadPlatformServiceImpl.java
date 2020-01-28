@@ -186,6 +186,8 @@ public class ProductToGLAccountMappingReadPlatformServiceImpl implements Product
                     accountMappingDetails.put(LOAN_PRODUCT_ACCOUNTING_DATA_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), gLAccountData);
                 } else if (glAccountForLoan.equals(ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY)) {
                     accountMappingDetails.put(LOAN_PRODUCT_ACCOUNTING_DATA_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), gLAccountData);
+                } else if (glAccountForLoan.equals(ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_REVERSE)) {
+                    accountMappingDetails.put(LOAN_PRODUCT_ACCOUNTING_DATA_PARAMS.ACCRUED_REVERSE.getValue(), gLAccountData);
                 } 
             }
 

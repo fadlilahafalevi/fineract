@@ -54,7 +54,13 @@ public enum LoanTransactionType {
     REFUND_FOR_ACTIVE_LOAN(18, "loanTransactionType.refund"), //
     INCOME_POSTING(19,"loanTransactionType.incomePosting"),
 	
-	ACCRUAL_ASSET(20, "loanTransactionType.accrualAsset");
+	ACCRUAL_ASSET(20, "loanTransactionType.accrualAsset"),
+	ACCRUAL_ADMINISTRATIVE(21, "loanTransactionType.accrualAdministrative"),
+	REVERSE_INCOME(22, "loanTransactionType.reverseIncome"),
+	REVERSE_ADMINISTRATIVE_REPAYMENT(23, "loanTransactionType.reverseAccruedInterestAdministrativeRepayment"),
+	REVERSE_ACCRUAL_ASSET(24, "loanTransactionType.reverseAccruedInterestAsset"),
+	REVERSE_ACCRUAL_ADMINISTRATIVE_TO_ASSET(25, "loanTransactionType.reverseAccruedInterestAdministrativeToAsset"),
+	REVERSE_ACCRUAL_ADMINISTRATIVE_TO_RECEIVABLE(26, "loanTransactionType.reverseAccruedInterestAdministrativeToReceivable");
 
     private final Integer value;
     private final String code;
@@ -135,6 +141,24 @@ public enum LoanTransactionType {
             case 20:
             	loanTransactionType = LoanTransactionType.ACCRUAL_ASSET;
             	break;
+            case 21:
+            	loanTransactionType = LoanTransactionType.ACCRUAL_ADMINISTRATIVE;
+            	break;
+            case 22:
+            	loanTransactionType = LoanTransactionType.REVERSE_INCOME;
+            	break;
+            case 23:
+            	loanTransactionType = LoanTransactionType.REVERSE_ADMINISTRATIVE_REPAYMENT;
+            	break;
+            case 24:
+            	loanTransactionType = LoanTransactionType.REVERSE_ACCRUAL_ASSET;
+            	break;
+            case 25:
+            	loanTransactionType = LoanTransactionType.REVERSE_ACCRUAL_ADMINISTRATIVE_TO_ASSET;
+            	break;
+            case 26:
+            	loanTransactionType = LoanTransactionType.REVERSE_ACCRUAL_ADMINISTRATIVE_TO_RECEIVABLE;
+            	break;
             default:
                 loanTransactionType = LoanTransactionType.INVALID;
             break;
@@ -186,5 +210,23 @@ public enum LoanTransactionType {
     }
     public boolean isAccrualAsset() {
         return this.value.equals(LoanTransactionType.ACCRUAL_ASSET.getValue());
+    }
+    public boolean isAccrualAdministrative() {
+    	return this.value.equals(LoanTransactionType.ACCRUAL_ADMINISTRATIVE.getValue());
+    }
+    public boolean isReverseIncome() {
+    	return this.value.equals(LoanTransactionType.REVERSE_INCOME.getValue());
+    }
+    public boolean isReverseAdministrativeRepayment() {
+    	return this.value.equals(LoanTransactionType.REVERSE_ADMINISTRATIVE_REPAYMENT.getValue());
+    }
+    public boolean isReverseAccrualAsset() {
+    	return this.value.equals(LoanTransactionType.REVERSE_ACCRUAL_ASSET.getValue());
+    }
+    public boolean isReverseAccrualAdmToAsset() {
+    	return this.value.equals(LoanTransactionType.REVERSE_ACCRUAL_ADMINISTRATIVE_TO_ASSET.getValue());
+    }
+    public boolean isReverseAccrualAdmToRcv() {
+    	return this.value.equals(LoanTransactionType.REVERSE_ACCRUAL_ADMINISTRATIVE_TO_RECEIVABLE.getValue());
     }
 }

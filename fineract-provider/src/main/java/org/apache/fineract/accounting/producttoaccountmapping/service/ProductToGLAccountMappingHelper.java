@@ -96,7 +96,8 @@ public class ProductToGLAccountMappingHelper {
             if (accountMapping == null) { 
             	if ((portfolioProductType.isLoanProduct()) && (accountTypeId == ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue() || 
             			accountTypeId == ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue() || 
-            			accountTypeId == ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue())) {
+            			accountTypeId == ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue() ||
+            			accountTypeId == ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_REVERSE.getValue())) {
             		accountMapping = new ProductToGLAccountMapping();
             		accountMapping.setFinancialAccountType(accountTypeId);
             		accountMapping.setProductId(productId);

@@ -403,7 +403,31 @@ public class LoanEnumerations {
             break;
             case ACCRUAL_ASSET:
                 optionData = new LoanTransactionEnumData(LoanTransactionType.ACCRUAL_ASSET.getValue().longValue(),
-                        LoanTransactionType.ACCRUAL_ASSET.getCode(), "Accrual Asset");
+                        LoanTransactionType.ACCRUAL_ASSET.getCode(), "Accrual (Asset)");
+            break;
+            case ACCRUAL_ADMINISTRATIVE:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.ACCRUAL_ADMINISTRATIVE.getValue().longValue(),
+                        LoanTransactionType.ACCRUAL_ADMINISTRATIVE.getCode(), "Accrual (Administrative)");
+            break;
+            case REVERSE_INCOME:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.REVERSE_INCOME.getValue().longValue(),
+                        LoanTransactionType.REVERSE_INCOME.getCode(), "Reverse Income");
+            break;
+            case REVERSE_ADMINISTRATIVE_REPAYMENT:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.REVERSE_ADMINISTRATIVE_REPAYMENT.getValue().longValue(),
+                        LoanTransactionType.REVERSE_ADMINISTRATIVE_REPAYMENT.getCode(), "Reverse Administrative (Repayment)");
+            break;
+            case REVERSE_ACCRUAL_ASSET:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.REVERSE_ACCRUAL_ASSET.getValue().longValue(),
+                        LoanTransactionType.REVERSE_ACCRUAL_ASSET.getCode(), "Reverse Accrual (Asset)");
+            break;
+            case REVERSE_ACCRUAL_ADMINISTRATIVE_TO_ASSET:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.REVERSE_ACCRUAL_ADMINISTRATIVE_TO_ASSET.getValue().longValue(),
+                        LoanTransactionType.REVERSE_ACCRUAL_ADMINISTRATIVE_TO_ASSET.getCode(), "Reverse Accrual (Administrative to Asset)");
+            break;
+            case REVERSE_ACCRUAL_ADMINISTRATIVE_TO_RECEIVABLE:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.REVERSE_ACCRUAL_ADMINISTRATIVE_TO_RECEIVABLE.getValue().longValue(),
+                        LoanTransactionType.REVERSE_ACCRUAL_ADMINISTRATIVE_TO_RECEIVABLE.getCode(), "Reverse Accrual (Administrative to Receivable)");
             break;
             default:
             break;
