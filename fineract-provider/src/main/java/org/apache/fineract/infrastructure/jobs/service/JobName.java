@@ -51,7 +51,8 @@ public enum JobName {
     UPDATE_EMAIL_OUTBOUND_WITH_CAMPAIGN_MESSAGE("Update Email Outbound with campaign message"),
     EXECUTE_EMAIL("Execute Email"),
     UPDATE_TRAIL_BALANCE_DETAILS("Update Trial Balance Details"),
-	GENERATE_LOAN_COLLECTIBILITY("Generate Loan Collectibility");
+	GENERATE_LOAN_COLLECTIBILITY("Generate Loan Collectibility"),
+	ACCRUAL_INTEREST_FOR_SAVINGS("Accrual Interest For Savings");
 
     private final String name;
 

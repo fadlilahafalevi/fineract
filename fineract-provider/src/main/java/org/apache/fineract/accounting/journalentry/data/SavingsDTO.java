@@ -18,7 +18,10 @@
  */
 package org.apache.fineract.accounting.journalentry.data;
 
+import java.math.BigDecimal;
 import java.util.List;
+
+import org.joda.time.LocalDate;
 
 public class SavingsDTO {
 
@@ -29,6 +32,8 @@ public class SavingsDTO {
     private boolean cashBasedAccountingEnabled;
     private boolean accrualBasedAccountingEnabled;
     private List<SavingsTransactionDTO> newSavingsTransactions;
+    private BigDecimal interestAccrued;
+    private LocalDate accrualDate;
 
     public SavingsDTO(final Long savingsId, final Long savingsProductId, final Long officeId, final String currencyCode,
             final boolean cashBasedAccountingEnabled, final boolean accrualBasedAccountingEnabled,
@@ -42,7 +47,13 @@ public class SavingsDTO {
         this.currencyCode = currencyCode;
     }
 
-    public Long getSavingsId() {
+    public SavingsDTO() {
+		super();
+	}
+
+
+
+	public Long getSavingsId() {
         return this.savingsId;
     }
 
@@ -97,5 +108,21 @@ public class SavingsDTO {
     public void setCurrencyCode(final String currencyCode) {
         this.currencyCode = currencyCode;
     }
+
+	public BigDecimal getInterestAccrued() {
+		return interestAccrued;
+	}
+
+	public void setInterestAccrued(BigDecimal interestAccrued) {
+		this.interestAccrued = interestAccrued;
+	}
+
+	public LocalDate getAccrualDate() {
+		return accrualDate;
+	}
+
+	public void setAccrualDate(LocalDate accrualDate) {
+		this.accrualDate = accrualDate;
+	}
 
 }
