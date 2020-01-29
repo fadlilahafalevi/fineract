@@ -149,6 +149,9 @@ public final class SavingsHelper {
                 }
                 periodEndDate = periodEndDate.dayOfMonth().withMaximumValue();
             break;
+            case ENDOFPERIOD:
+            	periodEndDate = interestPostingUpToDate;
+            break;
         }   
         // interest posting always occurs on next day after the period end date.
         periodEndDate = periodEndDate.plusDays(1);       

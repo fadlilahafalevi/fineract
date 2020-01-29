@@ -127,6 +127,46 @@ public class JournalEntryCommand {
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
                 "Validation errors exist.", dataValidationErrors); }
     }
+    
+	public void validateForCreating() {
+		final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+		final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("GLJournalEntry");
+		
+		baseDataValidator.reset().parameter("transactionDate").value(this.transactionDate).notBlank();
+		baseDataValidator.reset().parameter("officeId").value(this.officeId).notNull().integerGreaterThanZero();
+		baseDataValidator.reset().parameter(JournalEntryJsonInputParams.CURRENCY_CODE.getValue()).value(this.currencyCode).notBlank();
+		baseDataValidator.reset().parameter("comments").value(this.comments).ignoreIfNull().notExceedingLengthOf(500);
+		baseDataValidator.reset().parameter("referenceNumber").value(this.referenceNumber).ignoreIfNull().notExceedingLengthOf(100);
+		baseDataValidator.reset().parameter("accountingRule").value(this.accountingRuleId).ignoreIfNull().longGreaterThanZero();
+		baseDataValidator.reset().parameter("paymentTypeId").value(this.paymentTypeId).ignoreIfNull().longGreaterThanZero();
+		
+		// validation for credit array elements
+		if (this.credits != null) {
+			if (this.credits.length > 0) {
+				int i = 0;
+				for (final SingleDebitOrCreditEntryCommand credit : this.credits) {
+					validateSingleDebitOrCredit(baseDataValidator, "credits", i, credit);
+					i++;
+				}
+			}
+		}
+		
+		// validation for debit array elements
+		if (this.debits != null) {
+			if (this.debits.length > 0) {
+				int i = 0;
+				for (final SingleDebitOrCreditEntryCommand debit : this.debits) {
+					validateSingleDebitOrCredit(baseDataValidator, "debits", i, debit);
+					i++;
+				}
+			}
+		}
+		baseDataValidator.reset().parameter("amount").value(this.amount).ignoreIfNull().zeroOrPositiveAmount();
+		
+		if (!dataValidationErrors.isEmpty()) {
+			throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors);
+		}
+	}
 
     /**
      * @param baseDataValidator

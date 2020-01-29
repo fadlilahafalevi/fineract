@@ -435,6 +435,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
         final List<JournalEntryData> incomeAccountOpeningBalances = new ArrayList<>();
         final List<JournalEntryData> equityAccountOpeningBalances = new ArrayList<>();
         final List<JournalEntryData> expenseAccountOpeningBalances = new ArrayList<>();
+        final List<JournalEntryData> offBalanceSheetClaimAccountOpeningBalances = new ArrayList<>();
+        final List<JournalEntryData> offBalanceSheetLiabilityAccountOpeningBalances = new ArrayList<>();
 
         for (final JournalEntryData journalEntryData : transactions) {
             final GLAccountType type = GLAccountType.fromInt(journalEntryData.getGlAccountType().getId().intValue());
@@ -448,6 +450,10 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                 incomeAccountOpeningBalances.add(journalEntryData);
             } else if (type.isExpenseType()) {
                 expenseAccountOpeningBalances.add(journalEntryData);
+            } else if (type.isOffBalanceSheetClaimType()) {
+            	offBalanceSheetClaimAccountOpeningBalances.add(journalEntryData);
+            } else if (type.isOffBalanceSheetLiabilityType()) {
+            	offBalanceSheetLiabilityAccountOpeningBalances.add(journalEntryData);
             }
         }
 
@@ -455,7 +461,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
 
         final OfficeOpeningBalancesData officeOpeningBalancesData = OfficeOpeningBalancesData.createNew(officeId, officeData.name(),
                 transactionDate, contraAccount, assetAccountOpeningBalances, liabityAccountOpeningBalances, incomeAccountOpeningBalances,
-                equityAccountOpeningBalances, expenseAccountOpeningBalances);
+                equityAccountOpeningBalances, expenseAccountOpeningBalances, offBalanceSheetClaimAccountOpeningBalances, offBalanceSheetLiabilityAccountOpeningBalances);
         return officeOpeningBalancesData;
     }
 
