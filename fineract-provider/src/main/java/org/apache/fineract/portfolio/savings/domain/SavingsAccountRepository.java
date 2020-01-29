@@ -53,4 +53,7 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
     SavingsAccount findNonClosedAccountByAccountNumber(@Param("accountNumber") String accountNumber);
     
     Page<SavingsAccount> findByStatus(Integer status,Pageable pageable);
+
+    @Query("select sa from SavingsAccount sa where sa.product.isMainProduct = true and sa.client = :clientId")
+    SavingsAccount findMainAccountByClientId(@Param("clientId") Long clientId);
 }

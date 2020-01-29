@@ -67,4 +67,6 @@ public interface SavingsAccountReadPlatformService {
 
 	Boolean checkingMainProduct(Long clientId);
 
+	Boolean isMainProduct(Long savingsId);
+
 }

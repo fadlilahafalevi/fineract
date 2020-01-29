@@ -1321,4 +1321,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 			throw new SavingsAccountNotFoundException(clientId);
 		}
 	}
+
+	@Override
+	public Boolean isMainProduct(Long savingsId) {
+		final String sql = "select sp.is_main_product from m_savings_account sa "
+				+ "left join m_savings_product sp on sa.product_id = sp.id "
+				+ "where sa.id = ? and sp.is_main_product = true";
+		return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, Boolean.class);
+	}
 }
