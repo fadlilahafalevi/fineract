@@ -228,6 +228,10 @@ public class GLAccountsApiResource {
                 .retrieveAllEnabledHeaderGLAccounts(GLAccountType.INCOME));
         final List<GLAccountData> expenseHeaderAccountOptions = defaultIfEmpty(this.glAccountReadPlatformService
                 .retrieveAllEnabledHeaderGLAccounts(GLAccountType.EXPENSE));
+        final List<GLAccountData> offBalanceSheetClaimHeaderAccountOptions = defaultIfEmpty(this.glAccountReadPlatformService
+                .retrieveAllEnabledHeaderGLAccounts(GLAccountType.OFF_BALANCE_SHEET_CLAIM));
+        final List<GLAccountData> offBalanceSheetLiabilityHeaderAccountOptions = defaultIfEmpty(this.glAccountReadPlatformService
+                .retrieveAllEnabledHeaderGLAccounts(GLAccountType.OFF_BALANCE_SHEET_LIABILITY));
         final Collection<CodeValueData> allowedAssetsTagOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(AccountingConstants.ASSESTS_TAG_OPTION_CODE_NAME);
         final Collection<CodeValueData> allowedLiabilitiesTagOptions = this.codeValueReadPlatformService
@@ -238,10 +242,15 @@ public class GLAccountsApiResource {
                 .retrieveCodeValuesByCode(AccountingConstants.INCOME_TAG_OPTION_CODE_NAME);
         final Collection<CodeValueData> allowedExpensesTagOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(AccountingConstants.EXPENSES_TAG_OPTION_CODE_NAME);
+        final Collection<CodeValueData> allowedOffBalanceSheetClaimTagOptions = this.codeValueReadPlatformService
+                .retrieveCodeValuesByCode(AccountingConstants.OFFBALANCESHEET_CLAIM_TAG_OPTION_CODE_NAME);
+        final Collection<CodeValueData> allowedOffBalanceSheetLiabilityTagOptions = this.codeValueReadPlatformService
+                .retrieveCodeValuesByCode(AccountingConstants.OFFBALANCESHEET_LIABILITY_TAG_OPTION_CODE_NAME);
 
         return new GLAccountData(glAccountData, accountTypeOptions, usageOptions, assetHeaderAccountOptions, liabilityHeaderAccountOptions,
-                equityHeaderAccountOptions, incomeHeaderAccountOptions, expenseHeaderAccountOptions, allowedAssetsTagOptions,
-                allowedLiabilitiesTagOptions, allowedEquityTagOptions, allowedIncomeTagOptions, allowedExpensesTagOptions);
+                equityHeaderAccountOptions, incomeHeaderAccountOptions, expenseHeaderAccountOptions, offBalanceSheetClaimHeaderAccountOptions,
+                offBalanceSheetLiabilityHeaderAccountOptions, allowedAssetsTagOptions, allowedLiabilitiesTagOptions, allowedEquityTagOptions, 
+                allowedIncomeTagOptions, allowedExpensesTagOptions, allowedOffBalanceSheetClaimTagOptions, allowedOffBalanceSheetLiabilityTagOptions);
     }
 
     private List<GLAccountData> defaultIfEmpty(final List<GLAccountData> list) {
