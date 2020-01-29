@@ -145,7 +145,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     public CommandProcessingResult createJournalEntry(final JsonCommand command) {
         try {
             final JournalEntryCommand journalEntryCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
-            journalEntryCommand.validateForCreate();
+            journalEntryCommand.validateForCreating();
 
             // check office is valid
             final Long officeId = command.longValueOfParameterNamed(JournalEntryJsonInputParams.OFFICE_ID.getValue());
@@ -153,7 +153,19 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final Long accountRuleId = command.longValueOfParameterNamed(JournalEntryJsonInputParams.ACCOUNTING_RULE.getValue());
             final String currencyCode = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.CURRENCY_CODE.getValue());
 
-            validateBusinessRulesForJournalEntries(journalEntryCommand);
+            List<GLAccount> glCredits = new ArrayList<GLAccount>();
+			List<GLAccount> glDebits = new ArrayList<GLAccount>();
+			
+			for (SingleDebitOrCreditEntryCommand data : journalEntryCommand.getCredits()) {
+				GLAccount credit = this.glAccountRepository.findOne(data.getGlAccountId());
+				glCredits.add(credit);
+			}
+			
+			for (SingleDebitOrCreditEntryCommand data : journalEntryCommand.getDebits()) {
+				GLAccount debit = this.glAccountRepository.findOne(data.getGlAccountId());
+				glDebits.add(debit);
+			}
+			validateBusinessRulesForCreatingJournalEntries(journalEntryCommand, glCredits, glDebits);
 
             /** Capture payment details **/
             final Map<String, Object> changes = new LinkedHashMap<>();
@@ -223,6 +235,160 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             return null;
         }
     }
+    
+	private void validateBusinessRulesForCreatingJournalEntries(final JournalEntryCommand command, final List<GLAccount> glCredits, final List<GLAccount> glDebits) {
+		/** check if date of Journal entry is valid ***/
+		final LocalDate entryLocalDate = command.getTransactionDate();
+		final Date transactionDate = entryLocalDate.toDateTimeAtStartOfDay().toDate();
+		
+		Boolean amountShouldBalance = null;
+		if (glCredits.size() > 0 || glDebits.size() > 0) {
+			amountShouldBalance = false;
+		}
+		
+		// shouldn't be in the future
+		final Date todaysDate = new Date();
+		if (transactionDate.after(todaysDate)) {
+			throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.FUTURE_DATE, transactionDate, null, null);
+		}
+		
+		// shouldn't be before an accounting closure
+		final GLClosure latestGLClosure = this.glClosureRepository.getLatestGLClosureByBranch(command.getOfficeId());
+		if (latestGLClosure != null) {
+			if (latestGLClosure.getClosingDate().after(transactionDate) || latestGLClosure.getClosingDate().equals(transactionDate)) {
+				throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.ACCOUNTING_CLOSED, latestGLClosure.getClosingDate(), null, null);
+			}
+		}
+		
+		for (GLAccount data : glCredits) {
+			if (!(GLAccountType.fromInt(data.getType()).isOffBalanceSheetClaimType() || GLAccountType.fromInt(data.getType()).isOffBalanceSheetLiabilityType())) {
+				amountShouldBalance = true;
+			}
+		}
+		
+		for (GLAccount data : glDebits) {
+			if (!(GLAccountType.fromInt(data.getType()).isOffBalanceSheetClaimType() || GLAccountType.fromInt(data.getType()).isOffBalanceSheetLiabilityType())) {
+				amountShouldBalance = true;
+			}
+		}
+		
+		/*** check if credits and debits are valid **/
+		final SingleDebitOrCreditEntryCommand[] credits = command.getCredits();
+		final SingleDebitOrCreditEntryCommand[] debits = command.getDebits();
+		
+		// atleast one debit and/or credit must be present
+		if (amountShouldBalance == null && (credits == null || credits.length <= 0) && (debits == null || debits.length <= 0)) {
+			throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.NO_DEBITS_OR_CREDITS, null, null, null);
+		} else if ((amountShouldBalance) && ((credits == null || credits.length <= 0) || (debits == null || debits.length <= 0))) {
+			throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.NO_DEBITS_AND_CREDITS, null, null, null);
+		}
+		
+		checkDebitAndCreditAmountsForCreating(credits, debits, amountShouldBalance);
+	}
+	
+	private Boolean validateBusinessRulesForMigratingJournalEntries(final JournalEntryCommand command, final List<GLAccount> glCredits, final List<GLAccount> glDebits) {
+		/** check if date of Journal entry is valid ***/
+		final LocalDate entryLocalDate = command.getTransactionDate();
+		final Date transactionDate = entryLocalDate.toDateTimeAtStartOfDay().toDate();
+		
+		Boolean amountShouldBalance = null;
+		if (glCredits.size() > 0 || glDebits.size() > 0) {
+			amountShouldBalance = false;
+		}
+		
+		// shouldn't be in the future
+		final Date todaysDate = new Date();
+		if (transactionDate.after(todaysDate)) {
+			throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.FUTURE_DATE, transactionDate, null, null);
+		}
+		
+		// shouldn't be before an accounting closure
+		final GLClosure latestGLClosure = this.glClosureRepository.getLatestGLClosureByBranch(command.getOfficeId());
+		if (latestGLClosure != null) {
+			if (latestGLClosure.getClosingDate().after(transactionDate) || latestGLClosure.getClosingDate().equals(transactionDate)) {
+				throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.ACCOUNTING_CLOSED, latestGLClosure.getClosingDate(), null, null);
+			}
+		}
+		
+		for (GLAccount data : glCredits) {
+			if (!(GLAccountType.fromInt(data.getType()).isOffBalanceSheetClaimType() || GLAccountType.fromInt(data.getType()).isOffBalanceSheetLiabilityType())) {
+				amountShouldBalance = true;
+			}
+		}
+		
+		for (GLAccount data : glDebits) {
+			if (!(GLAccountType.fromInt(data.getType()).isOffBalanceSheetClaimType() || GLAccountType.fromInt(data.getType()).isOffBalanceSheetLiabilityType())) {
+				amountShouldBalance = true;
+			}
+		}
+		
+		/*** check if credits and debits are valid **/
+		final SingleDebitOrCreditEntryCommand[] credits = command.getCredits();
+		final SingleDebitOrCreditEntryCommand[] debits = command.getDebits();
+		
+		// atleast one debit and/or credit must be present
+		if (amountShouldBalance == null && (credits == null || credits.length <= 0) && (debits == null || debits.length <= 0)) {
+			throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.NO_DEBITS_OR_CREDITS, null, null, null);
+		} else if ((amountShouldBalance) && ((credits == null || credits.length <= 0) || (debits == null || debits.length <= 0))) {
+			throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.NO_DEBITS_AND_CREDITS, null, null, null);
+		}
+//		credits, debits, amountShouldBalance
+		checkDebitAndCreditAmountsForMigrating(credits, debits, glCredits, glDebits, amountShouldBalance);
+		return amountShouldBalance;
+	}
+	
+	private void checkDebitAndCreditAmountsForCreating(final SingleDebitOrCreditEntryCommand[] credits, final SingleDebitOrCreditEntryCommand[] debits, final Boolean amountShouldBalance) {
+		// sum of all debits must be = sum of all credits
+		BigDecimal creditsSum = BigDecimal.ZERO;
+		BigDecimal debitsSum = BigDecimal.ZERO;
+		for (final SingleDebitOrCreditEntryCommand creditEntryCommand : credits) {
+			if (creditEntryCommand.getAmount() == null || creditEntryCommand.getGlAccountId() == null) {
+				throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.DEBIT_CREDIT_ACCOUNT_OR_AMOUNT_EMPTY, null, null, null);
+			}
+			creditsSum = creditsSum.add(creditEntryCommand.getAmount());
+		}
+		for (final SingleDebitOrCreditEntryCommand debitEntryCommand : debits) {
+			if (debitEntryCommand.getAmount() == null || debitEntryCommand.getGlAccountId() == null) {
+				throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.DEBIT_CREDIT_ACCOUNT_OR_AMOUNT_EMPTY, null, null, null);
+			}
+			debitsSum = debitsSum.add(debitEntryCommand.getAmount());
+		}
+		if (amountShouldBalance) {
+			if (creditsSum.compareTo(debitsSum) != 0) {
+				throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.DEBIT_CREDIT_SUM_MISMATCH, null, null, null);
+			}
+		}
+	}
+	
+	private void checkDebitAndCreditAmountsForMigrating(final SingleDebitOrCreditEntryCommand[] credits, final SingleDebitOrCreditEntryCommand[] debits, final List<GLAccount> glCredits, final List<GLAccount> glDebits, final Boolean amountShouldBalance) {
+		// sum of all debits must be = sum of all credits
+		BigDecimal creditsSum = BigDecimal.ZERO;
+		BigDecimal debitsSum = BigDecimal.ZERO;
+		
+		for (int i = 0; i < credits.length; i++) {
+			if (credits[i].getAmount() == null || credits[i].getGlAccountId() == null) {
+				throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.DEBIT_CREDIT_ACCOUNT_OR_AMOUNT_EMPTY, null, null, null);
+			}
+			if (!(GLAccountType.fromInt(glCredits.get(i).getType()).isOffBalanceSheetClaimType() || GLAccountType.fromInt(glCredits.get(i).getType()).isOffBalanceSheetLiabilityType())) {
+				creditsSum = creditsSum.add(credits[i].getAmount());
+			}
+		}
+		
+		for (int j = 0; j < debits.length; j++) {
+			if (debits[j].getAmount() == null || debits[j].getGlAccountId() == null) {
+				throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.DEBIT_CREDIT_ACCOUNT_OR_AMOUNT_EMPTY, null, null, null);
+			}
+			if (!(GLAccountType.fromInt(glCredits.get(j).getType()).isOffBalanceSheetClaimType() || GLAccountType.fromInt(glCredits.get(j).getType()).isOffBalanceSheetLiabilityType())) {
+				debitsSum = debitsSum.add(debits[j].getAmount());
+			}
+		}
+		
+		if (amountShouldBalance) {
+			if (creditsSum.compareTo(debitsSum) != 0) {
+				throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.DEBIT_CREDIT_SUM_MISMATCH, null, null, null);
+			}
+		}
+	}
 
     private void validateDebitOrCreditArrayForExistingGLAccount(final GLAccount glaccount,
             final SingleDebitOrCreditEntryCommand[] creditOrDebits) {
@@ -655,7 +821,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     public CommandProcessingResult defineOpeningBalance(final JsonCommand command) {
         try {
             final JournalEntryCommand journalEntryCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
-            journalEntryCommand.validateForCreate();
+            journalEntryCommand.validateForCreating();
 
             final FinancialActivityAccount financialActivityAccountId = this.financialActivityAccountRepositoryWrapper
                     .findByFinancialActivityTypeWithNotFoundDetection(300);
@@ -671,7 +837,20 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final Office office = this.officeRepositoryWrapper.findOneWithNotFoundDetection(officeId);
             final String currencyCode = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.CURRENCY_CODE.getValue());
 
-            validateBusinessRulesForJournalEntries(journalEntryCommand);
+			
+			List<GLAccount> glCredits = new ArrayList<GLAccount>();
+			List<GLAccount> glDebits = new ArrayList<GLAccount>();
+			
+			for (SingleDebitOrCreditEntryCommand data : journalEntryCommand.getCredits()) {
+				GLAccount credit = this.glAccountRepository.findOne(data.getGlAccountId());
+				glCredits.add(credit);
+			}
+			
+			for (SingleDebitOrCreditEntryCommand data : journalEntryCommand.getDebits()) {
+				GLAccount debit = this.glAccountRepository.findOne(data.getGlAccountId());
+				glDebits.add(debit);
+			}
+			Boolean amountShouldBalance = validateBusinessRulesForMigratingJournalEntries(journalEntryCommand, glCredits, glDebits);
 
             /**
              * revert old journal entries
@@ -688,11 +867,8 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final Date transactionDate = command.DateValueOfParameterNamed(JournalEntryJsonInputParams.TRANSACTION_DATE.getValue());
             final String transactionId = generateTransactionId(officeId);
 
-            saveAllDebitOrCreditOpeningBalanceEntries(journalEntryCommand, office, currencyCode, transactionDate,
-                    journalEntryCommand.getDebits(), transactionId, JournalEntryType.DEBIT, contraId);
-
-            saveAllDebitOrCreditOpeningBalanceEntries(journalEntryCommand, office, currencyCode, transactionDate,
-                    journalEntryCommand.getCredits(), transactionId, JournalEntryType.CREDIT, contraId);
+            saveAllDebitOrCreditOpeningBalanceEntriesForMigrating(journalEntryCommand, office, currencyCode, transactionDate, journalEntryCommand.getDebits(), transactionId, JournalEntryType.DEBIT, contraId, amountShouldBalance);
+			saveAllDebitOrCreditOpeningBalanceEntriesForMigrating(journalEntryCommand, office, currencyCode, transactionDate, journalEntryCommand.getCredits(), transactionId, JournalEntryType.CREDIT, contraId, amountShouldBalance);
 
             return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withOfficeId(officeId)
                     .withTransactionId(transactionId).build();
@@ -701,6 +877,59 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             return null;
         }
     }
+    
+	private void saveAllDebitOrCreditOpeningBalanceEntriesForMigrating(final JournalEntryCommand command, final Office office,
+			final String currencyCode, final Date transactionDate,
+			final SingleDebitOrCreditEntryCommand[] singleDebitOrCreditEntryCommands, final String transactionId,
+			final JournalEntryType type, final Long contraAccountId, final Boolean amountShouldBalance) {
+		final boolean manualEntry = true;
+		
+		GLAccount contraAccount = null; 
+		if (amountShouldBalance) {
+			contraAccount = this.glAccountRepository.findOne(contraAccountId);
+			if (contraAccount == null) {
+				throw new GLAccountNotFoundException(contraAccountId);
+			}
+			if (!GLAccountType.fromInt(contraAccount.getType()).isEquityType()) {
+				throw new GeneralPlatformDomainRuleException("error.msg.configuration.opening.balance.contra.account.value.is.invalid.account.type", "Global configuration 'office-opening-balances-contra-account' value is not an equity type account", contraAccountId);
+			}
+			validateGLAccountForTransaction(contraAccount);
+		}
+		
+		final JournalEntryType contraType = getContraType(type);
+		String comments = command.getComments();
+		
+		/** Validate current code is appropriate **/
+		this.organisationCurrencyRepository.findOneWithNotFoundDetection(currencyCode);
+		
+		for (final SingleDebitOrCreditEntryCommand singleDebitOrCreditEntryCommand : singleDebitOrCreditEntryCommands) {
+			final GLAccount glAccount = this.glAccountRepository.findOne(singleDebitOrCreditEntryCommand.getGlAccountId());
+			if (glAccount == null) {
+				throw new GLAccountNotFoundException(singleDebitOrCreditEntryCommand.getGlAccountId());
+			}
+			
+			validateGLAccountForTransaction(glAccount);
+			
+			if (!StringUtils.isBlank(singleDebitOrCreditEntryCommand.getComments())) {
+				comments = singleDebitOrCreditEntryCommand.getComments();
+			}
+			
+			final ClientTransaction clientTransaction = null;
+			final Long shareTransactionId = null;
+			final JournalEntry glJournalEntry = JournalEntry.createNew(office, null, glAccount, currencyCode,
+					transactionId, manualEntry, transactionDate, type, singleDebitOrCreditEntryCommand.getAmount(),
+					comments, null, null, null, null, null, clientTransaction, shareTransactionId);
+			this.glJournalEntryRepository.saveAndFlush(glJournalEntry);
+			
+			if (!(GLAccountType.fromInt(glAccount.getType()).isOffBalanceSheetClaimType() || GLAccountType.fromInt(glAccount.getType()).isOffBalanceSheetLiabilityType())) {
+				final JournalEntry contraEntry = JournalEntry.createNew(office, null, contraAccount, currencyCode,
+						transactionId, manualEntry, transactionDate, contraType,
+						singleDebitOrCreditEntryCommand.getAmount(), comments, null, null, null, null, null,
+						clientTransaction, shareTransactionId);
+				this.glJournalEntryRepository.saveAndFlush(contraEntry);
+			}
+		}
+	}
 
     private void saveAllDebitOrCreditOpeningBalanceEntries(final JournalEntryCommand command, final Office office,
             final String currencyCode, final Date transactionDate,

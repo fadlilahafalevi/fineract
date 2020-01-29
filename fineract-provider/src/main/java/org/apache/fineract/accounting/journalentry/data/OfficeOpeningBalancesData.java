@@ -43,11 +43,16 @@ public class OfficeOpeningBalancesData {
     private final List<JournalEntryData> equityAccountOpeningBalances;
     @SuppressWarnings("unused")
     private final List<JournalEntryData> expenseAccountOpeningBalances;
+    @SuppressWarnings("unused")
+    private final List<JournalEntryData> offBalanceSheetClaimAccountOpeningBalances;
+    @SuppressWarnings("unused")
+    private final List<JournalEntryData> offBalanceSheetLiabilityAccountOpeningBalances;
 
     private OfficeOpeningBalancesData(final Long officeId, final String officeName, final LocalDate transactionDate,
             final GLAccountData contraAccount, final List<JournalEntryData> assetAccountOpeningBalances,
             final List<JournalEntryData> liabityAccountOpeningBalances, final List<JournalEntryData> incomeAccountOpeningBalances,
-            final List<JournalEntryData> equityAccountOpeningBalances, final List<JournalEntryData> expenseAccountOpeningBalances) {
+            final List<JournalEntryData> equityAccountOpeningBalances, final List<JournalEntryData> expenseAccountOpeningBalances,
+            final List<JournalEntryData> offBalanceSheetClaimAccountOpeningBalances, final List<JournalEntryData> offBalanceSheetLiabilityAccountOpeningBalances) {
         this.officeId = officeId;
         this.officeName = officeName;
         this.transactionDate = transactionDate;
@@ -57,13 +62,17 @@ public class OfficeOpeningBalancesData {
         this.incomeAccountOpeningBalances = incomeAccountOpeningBalances;
         this.equityAccountOpeningBalances = equityAccountOpeningBalances;
         this.expenseAccountOpeningBalances = expenseAccountOpeningBalances;
+        this.offBalanceSheetClaimAccountOpeningBalances = offBalanceSheetClaimAccountOpeningBalances;
+        this.offBalanceSheetLiabilityAccountOpeningBalances = offBalanceSheetLiabilityAccountOpeningBalances;
     }
 
     public static OfficeOpeningBalancesData createNew(final Long officeId, final String officeName, final LocalDate transactionDate,
             final GLAccountData contraAccount, final List<JournalEntryData> assetAccountOpeningBalances,
             final List<JournalEntryData> liabityAccountOpeningBalances, final List<JournalEntryData> incomeAccountOpeningBalances,
-            final List<JournalEntryData> equityAccountOpeningBalances, final List<JournalEntryData> expenseAccountOpeningBalances) {
+            final List<JournalEntryData> equityAccountOpeningBalances, final List<JournalEntryData> expenseAccountOpeningBalances,
+            final List<JournalEntryData> offBalanceSheetClaimAccountOpeningBalances, final List<JournalEntryData> offBalanceSheetLiabilityAccountOpeningBalances) {
         return new OfficeOpeningBalancesData(officeId, officeName, transactionDate, contraAccount, assetAccountOpeningBalances,
-                liabityAccountOpeningBalances, incomeAccountOpeningBalances, equityAccountOpeningBalances, expenseAccountOpeningBalances);
+                liabityAccountOpeningBalances, incomeAccountOpeningBalances, equityAccountOpeningBalances, expenseAccountOpeningBalances,
+                offBalanceSheetClaimAccountOpeningBalances, offBalanceSheetLiabilityAccountOpeningBalances);
     }
 }

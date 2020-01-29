@@ -44,11 +44,11 @@ public class PaymentTypeDataValidator {
 
     private final FromJsonHelper fromApiJsonHelper;
 	private static final Set<String> CREATE_PAYMENT_TYPE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-			Arrays.asList(PaymentTypeApiResourceConstants.NAME, PaymentTypeApiResourceConstants.DESCRIPTION,
+			Arrays.asList(PaymentTypeApiResourceConstants.NAME, PaymentTypeApiResourceConstants.DESCRIPTION, PaymentTypeApiResourceConstants.SUBGL,
 					PaymentTypeApiResourceConstants.ISCASHPAYMENT, PaymentTypeApiResourceConstants.POSITION));
 
 	private static final Set<String> UPDATE_PAYMENT_TYPE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-			Arrays.asList(PaymentTypeApiResourceConstants.NAME, PaymentTypeApiResourceConstants.DESCRIPTION,
+			Arrays.asList(PaymentTypeApiResourceConstants.NAME, PaymentTypeApiResourceConstants.DESCRIPTION, PaymentTypeApiResourceConstants.SUBGL,
 					PaymentTypeApiResourceConstants.ISCASHPAYMENT, PaymentTypeApiResourceConstants.POSITION));
 
     @Autowired
@@ -77,6 +77,11 @@ public class PaymentTypeDataValidator {
         if (this.fromApiJsonHelper.parameterExists(PaymentTypeApiResourceConstants.DESCRIPTION, element)) {
             final String description = this.fromApiJsonHelper.extractStringNamed(PaymentTypeApiResourceConstants.DESCRIPTION, element);
             baseDataValidator.reset().parameter(PaymentTypeApiResourceConstants.DESCRIPTION).value(description).ignoreIfNull().notExceedingLengthOf(500);
+        }
+        
+        if (this.fromApiJsonHelper.parameterExists(PaymentTypeApiResourceConstants.SUBGL, element)) {
+            final String subGl = this.fromApiJsonHelper.extractStringNamed(PaymentTypeApiResourceConstants.SUBGL, element);
+            baseDataValidator.reset().parameter(PaymentTypeApiResourceConstants.SUBGL).value(subGl).ignoreIfNull().notExceedingLengthOf(50);
         }
 
         if (this.fromApiJsonHelper.parameterExists(PaymentTypeApiResourceConstants.ISCASHPAYMENT, element)) {
@@ -123,6 +128,11 @@ public class PaymentTypeDataValidator {
         if (this.fromApiJsonHelper.parameterExists(PaymentTypeApiResourceConstants.DESCRIPTION, element)) {
             final String description = this.fromApiJsonHelper.extractStringNamed(PaymentTypeApiResourceConstants.DESCRIPTION, element);
             baseDataValidator.reset().parameter(PaymentTypeApiResourceConstants.DESCRIPTION).value(description).ignoreIfNull().notExceedingLengthOf(500);
+        }
+        
+        if (this.fromApiJsonHelper.parameterExists(PaymentTypeApiResourceConstants.SUBGL, element)) {
+            final String subGl = this.fromApiJsonHelper.extractStringNamed(PaymentTypeApiResourceConstants.SUBGL, element);
+            baseDataValidator.reset().parameter(PaymentTypeApiResourceConstants.SUBGL).value(subGl).ignoreIfNull().notExceedingLengthOf(50);
         }
 
         if (this.fromApiJsonHelper.parameterExists(PaymentTypeApiResourceConstants.ISCASHPAYMENT, element)) {

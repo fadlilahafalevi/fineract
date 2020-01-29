@@ -84,7 +84,8 @@ public class SavingsDropdownReadPlatformServiceImpl implements SavingsDropdownRe
                 SavingsEnumerations.interestPostingPeriodType(SavingsPostingInterestPeriodType.MONTHLY), //
                 SavingsEnumerations.interestPostingPeriodType(SavingsPostingInterestPeriodType.QUATERLY), //
                 SavingsEnumerations.interestPostingPeriodType(SavingsPostingInterestPeriodType.BIANNUAL), //
-                SavingsEnumerations.interestPostingPeriodType(SavingsPostingInterestPeriodType.ANNUAL) //
+                SavingsEnumerations.interestPostingPeriodType(SavingsPostingInterestPeriodType.ANNUAL), //
+                SavingsEnumerations.interestPostingPeriodType(SavingsPostingInterestPeriodType.ENDOFPERIOD)
                 );
 
         return allowedOptions;
