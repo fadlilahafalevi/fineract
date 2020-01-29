@@ -19,11 +19,13 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -73,10 +75,13 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactioninqNotFoundException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionsHistoryNotFoundException;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -797,6 +802,31 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         
         return transactionData;
     }
+    
+    @Override
+    public Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistory(final String accountNo, final String startdate, final String enddate, DepositAccountType depositAccountType, final Long lastId, final Long pageSize) {
+    	
+    	Collection<SavingsAccountTransactionData> transactionDataHistory = null;
+        try {       	
+        	if(lastId != null)
+            {
+            	final String sql = "select " + this.transactionsMapper.schema()
+                + "where sa.account_no = ? and tr.transaction_date between ? and ? and sa.deposit_type_enum = ? and tr.id < ? order by tr.id desc limit ?"; // 
+            	transactionDataHistory = this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { accountNo, startdate, enddate, depositAccountType.getValue(), lastId, pageSize});
+            }
+        	else
+            {
+            	final String sql = "select " + this.transactionsMapper.schema()
+                + "where sa.account_no = ? and tr.transaction_date between ? and ? and sa.deposit_type_enum = ? order by tr.id desc limit ?"; // 
+            	transactionDataHistory = this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { accountNo, startdate, enddate, depositAccountType.getValue(), pageSize});
+            }
+        } catch (EmptyResultDataAccessException e) {
+        	throw new SavingsAccountTransactionsHistoryNotFoundException(accountNo, startdate, enddate, depositAccountType, lastId, pageSize);
+        }
+        
+        return transactionDataHistory;
+        
+    }
 
     /*
      * @Override public Collection<SavingsAccountAnnualFeeData>
@@ -860,7 +890,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final SavingsAccountTransactionEnumData transactionType = SavingsEnumerations.transactionType(transactionTypeInt);
 
             final LocalDate date = JdbcSupport.getLocalDate(rs, "transactionDate");
-            final LocalDate submittedOnDate = JdbcSupport.getLocalDate(rs, "submittedOnDate");
+            final Date submittedOnDate = JdbcSupport.getDate(rs, "submittedOnDate");
             final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "transactionAmount");
             final BigDecimal outstandingChargeAmount = null;
             final BigDecimal runningBalance = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "runningBalance");
@@ -924,6 +954,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         }
     }
 
+    
+    
+    
     private static final class SavingsAccountTransactionTemplateMapper implements RowMapper<SavingsAccountTransactionData> {
 
         private final String schemaSql;

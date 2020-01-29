@@ -13,3 +13,4 @@ gradle
 fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/boot/db/DataSourceProperties.java
 
 fineract-provider/src/test/resources/META-INF/context.xml
+/.metadata/

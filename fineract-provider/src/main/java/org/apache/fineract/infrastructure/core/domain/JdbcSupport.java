@@ -26,6 +26,7 @@ import java.util.Date;
 
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 import org.springframework.jdbc.support.JdbcUtils;
 
@@ -43,7 +44,25 @@ public class JdbcSupport {
         }
         return dateTime;
     }
-
+    
+    public static Date getDate(final ResultSet rs, final String columnName) throws SQLException {
+        Date date = null;
+        final Timestamp dateTimeValue = rs.getTimestamp(columnName);
+        if (dateTimeValue != null) {
+            date = new Date(dateTimeValue.getTime());
+        }
+        return date;
+    }
+    
+    public static LocalDateTime getLocalDateTime(final ResultSet rs, final String columnName) throws SQLException {
+        LocalDateTime localDateTime = null;
+        final Timestamp localDateValue = rs.getTimestamp(columnName);
+        if (localDateValue != null) {
+            localDateTime = new LocalDateTime(localDateValue.getTime());
+        }
+        return localDateTime;
+    }
+    
     public static LocalDate getLocalDate(final ResultSet rs, final String columnName) throws SQLException {
         LocalDate localDate = null;
         final Date dateValue = rs.getDate(columnName);

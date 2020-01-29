@@ -18,7 +18,9 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.math.BigInteger;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.fineract.infrastructure.core.service.Page;
@@ -64,5 +66,9 @@ public interface SavingsAccountReadPlatformService {
 
 	SavingsAccountTransactionData retrieveSavingsTransactionByRecipt(Long savingsId, String receiptNumber,
 			DepositAccountType depositAccountType);
+
+	Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistory(String accountNo, String startdate,
+			String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize);
+
 
 }
