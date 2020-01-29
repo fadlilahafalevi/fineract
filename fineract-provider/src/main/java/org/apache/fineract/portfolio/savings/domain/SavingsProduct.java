@@ -614,6 +614,12 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
 			actualChanges.put(SavingsApiConstants.interestCompoundingTypeParamName, newValue);
 			this.interestCompoundingTypeEnum = newValue;
 		}
+        
+        if (command.isChangeInBooleanParameterNamed(SavingsApiConstants.isMainProduct, this.isMainProduct)) {
+			final Boolean newValue = command.booleanObjectValueOfParameterNamed(SavingsApiConstants.isMainProduct);
+			actualChanges.put(SavingsApiConstants.isMainProduct, newValue);
+			this.isMainProduct = newValue;
+		}
 
         validateLockinDetails();
         esnureOverdraftLimitsSetForOverdraftAccounts();
