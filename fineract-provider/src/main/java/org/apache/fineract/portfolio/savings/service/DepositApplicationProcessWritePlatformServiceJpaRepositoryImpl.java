@@ -88,6 +88,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargeAssemble
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
 import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -125,6 +126,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     private final ConfigurationDomainService configurationDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
     public DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -140,7 +142,8 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             final AccountAssociationsRepository accountAssociationsRepository, final FromJsonHelper fromJsonHelper,
             final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+            final BusinessEventNotifierService businessEventNotifierService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.depositAccountAssembler = depositAccountAssembler;
@@ -161,6 +164,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         this.configurationDomainService = configurationDomainService;
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
     /*
@@ -223,6 +227,10 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             if (savingsAccountId != null) {
                 final SavingsAccount savingsAccount = this.depositAccountAssembler.assembleFrom(savingsAccountId,
                         DepositAccountType.SAVINGS_DEPOSIT);
+                final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(savingsAccountId);
+            	if (!isMainAccount) {
+            		throw new MainSavingsAccountException(savingsAccount.getAccountNumber());
+            	}
                 this.depositAccountDataValidator.validatelinkedSavingsAccount(savingsAccount, account);
                 boolean isActive = true;
                 final AccountAssociations accountAssociations = AccountAssociations.associateSavingsAccount(account, savingsAccount,
@@ -504,6 +512,10 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                 if (isModified) {
                     final SavingsAccount savingsAccount = this.depositAccountAssembler.assembleFrom(savingsAccountId,
                             DepositAccountType.SAVINGS_DEPOSIT);
+                    final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(savingsAccountId);
+                	if (!isMainAccount) {
+                		throw new MainSavingsAccountException(savingsAccount.getAccountNumber());
+                	}
                     this.depositAccountDataValidator.validatelinkedSavingsAccount(savingsAccount, account);
                     if (accountAssociations == null) {
                         boolean isActive = true;

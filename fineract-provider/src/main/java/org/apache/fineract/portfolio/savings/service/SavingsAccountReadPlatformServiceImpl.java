@@ -156,6 +156,16 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     }
 
     @Override
+    public Collection<SavingsAccountData> retrieveActiveMainForLookup(final Long clientId, DepositAccountType depositAccountType) {
+
+        final StringBuilder sqlBuilder = new StringBuilder("select " + this.savingAccountMapper.schema());
+        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and sa.deposit_type_enum = ? and sp.is_main_product = true");
+
+        final Object[] queryParameters = new Object[] { clientId, depositAccountType.getValue() };
+        return this.jdbcTemplate.query(sqlBuilder.toString(), this.savingAccountMapper, queryParameters);
+    }
+
+    @Override
     public Collection<SavingsAccountData> retrieveActiveForLookup(final Long clientId, DepositAccountType depositAccountType, String currencyCode) {
         final StringBuilder sqlBuilder = new StringBuilder("select " + this.savingAccountMapper.schema());
         sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and sa.deposit_type_enum = ? and sa.currency_code = ? ");
@@ -1326,7 +1336,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 	public Boolean isMainProduct(Long savingsId) {
 		final String sql = "select sp.is_main_product from m_savings_account sa "
 				+ "left join m_savings_product sp on sa.product_id = sp.id "
-				+ "where sa.id = ? and sp.is_main_product = true";
+				+ "where sa.id = ?";
 		return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, Boolean.class);
 	}
 }

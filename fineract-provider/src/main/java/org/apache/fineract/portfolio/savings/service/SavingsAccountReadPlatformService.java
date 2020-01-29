@@ -69,4 +69,6 @@ public interface SavingsAccountReadPlatformService {
 
 	Boolean isMainProduct(Long savingsId);
 
+	Collection<SavingsAccountData> retrieveActiveMainForLookup(Long clientId, DepositAccountType depositAccountType);
+
 }

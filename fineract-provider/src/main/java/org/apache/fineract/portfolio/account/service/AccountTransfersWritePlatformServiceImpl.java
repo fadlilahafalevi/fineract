@@ -58,6 +58,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
 import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountNotMatchException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
@@ -184,6 +185,10 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             //
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
+            final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(fromSavingsAccountId);
+        	if (!isMainAccount) {
+        		throw new MainSavingsAccountException(fromSavingsAccount.getAccountNumber());
+        	}
 
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                     isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
