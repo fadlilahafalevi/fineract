@@ -852,7 +852,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final LocalDate closedDate = command.localDateValueOfParameterNamed(SavingsApiConstants.closedOnDateParamName);
         final boolean isPostInterest = command.booleanPrimitiveValueOfParameterNamed(SavingsApiConstants.postInterestValidationOnClosure);
         // postInterest(account,closedDate,flag);
-        if (isPostInterest) {
+        // Comment the validation of PostInterestClosingDateException
+        /*if (isPostInterest) {
             boolean postInterestOnClosingDate = false;
             List<SavingsAccountTransaction> savingTransactions = account.getTransactions();
             for (SavingsAccountTransaction savingTransaction : savingTransactions) {
@@ -863,7 +864,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 }
             }
             if (postInterestOnClosingDate == false) { throw new PostInterestClosingDateException(); }
-        }
+        }*/
 
         final Map<String, Object> changes = new LinkedHashMap<>();
 
@@ -882,6 +883,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
             this.savingsAccountDomainService.handleWithdrawal(account, fmt, closedDate, transactionAmount, paymentDetail,
                     transactionBooleanValues);
+            //reversal accrual
+            this.postJournalEntriesForReversalAccrual(account, closedDate);
+            account.setTotalAccrualAmount(BigDecimal.ZERO);
+            this.savingAccountRepositoryWrapper.save(account);
 
         }
 
@@ -1337,9 +1342,25 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final MonetaryCurrency currency = savingsAccount.getCurrency();
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
         boolean isAccountTransfer = false;
+        final boolean isReversal = false;
 		final Map<String, Object> accountingBridgeData = savingsAccount
 				.deriveAccountingBridgeDataForAccrual(applicationCurrency.toData(), isAccountTransfer, interestAccrued, accrualDate);
-        this.journalEntryWritePlatformService.createJournalEntriesForSavingsAccrual(accountingBridgeData);
+        this.journalEntryWritePlatformService.createJournalEntriesForSavingsAccrual(accountingBridgeData, isReversal);
+    }
+
+    @Override
+    public void postJournalEntriesForReversalAccrual(final SavingsAccount savingsAccount, final LocalDate accrualDate) {
+
+        final MonetaryCurrency currency = savingsAccount.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
+        boolean isAccountTransfer = false;
+        final boolean isReversal = true;
+        final BigDecimal interestAccrued = savingsAccount.getTotalAccrualAmount();
+        if (interestAccrued.compareTo(BigDecimal.ZERO) > 0) {
+			final Map<String, Object> accountingBridgeData = savingsAccount
+					.deriveAccountingBridgeDataForAccrual(applicationCurrency.toData(), isAccountTransfer, interestAccrued, accrualDate);
+	        this.journalEntryWritePlatformService.createJournalEntriesForSavingsAccrual(accountingBridgeData, isReversal);
+        }
     }
 
     @Override

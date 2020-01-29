@@ -696,7 +696,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
 
     @Transactional
     @Override
-    public void createJournalEntriesForSavingsAccrual(final Map<String, Object> accountingBridgeData) {
+    public void createJournalEntriesForSavingsAccrual(final Map<String, Object> accountingBridgeData, final Boolean isReversal) {
 
         final boolean cashBasedAccountingEnabled = (Boolean) accountingBridgeData.get("cashBasedAccountingEnabled");
         final boolean accrualBasedAccountingEnabled = (Boolean) accountingBridgeData.get("accrualBasedAccountingEnabled");
@@ -706,7 +706,11 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                     accrualBasedAccountingEnabled);
             final AccountingProcessorForSavingsAccrual accountingProcessorForSavings = this.accountingProcessorForSavingsAccrualFactory
                     .determineProcessor(savingsDTO);
-            accountingProcessorForSavings.createJournalEntriesForSavingsAccrual(savingsDTO);
+            if (!isReversal) {
+            	accountingProcessorForSavings.createJournalEntriesForSavingsAccrual(savingsDTO);
+            } else {
+            	accountingProcessorForSavings.createJournalEntriesForSavingsAccrualReversal(savingsDTO);
+            }
         }
 
     }
