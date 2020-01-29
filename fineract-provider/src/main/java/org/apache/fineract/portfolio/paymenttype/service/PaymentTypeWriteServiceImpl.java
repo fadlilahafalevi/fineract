@@ -54,10 +54,12 @@ public class PaymentTypeWriteServiceImpl implements PaymentTypeWriteService {
         this.fromApiJsonDeserializer.validateForCreate(command.json());
         String name = command.stringValueOfParameterNamed(PaymentTypeApiResourceConstants.NAME);
         String description = command.stringValueOfParameterNamed(PaymentTypeApiResourceConstants.DESCRIPTION);
+        String subGl = command.stringValueOfParameterNamed(PaymentTypeApiResourceConstants.SUBGL);
         Boolean isCashPayment = command.booleanObjectValueOfParameterNamed(PaymentTypeApiResourceConstants.ISCASHPAYMENT);
         Long position = command.longValueOfParameterNamed(PaymentTypeApiResourceConstants.POSITION);
 
         PaymentType newPaymentType = PaymentType.create(name, description, isCashPayment, position);
+        newPaymentType.setSubGL(subGl);
         this.repository.save(newPaymentType);
         return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(newPaymentType.getId()).build();
     }

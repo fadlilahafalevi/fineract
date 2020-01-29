@@ -27,6 +27,8 @@ public class PaymentTypeData {
     @SuppressWarnings("unused")
     private String description;
     @SuppressWarnings("unused")
+    private String subGl;
+    @SuppressWarnings("unused")
     private Boolean isCashPayment;
     @SuppressWarnings("unused")
     private Long position;
@@ -58,4 +60,18 @@ public class PaymentTypeData {
     public String getName() {
         return name;
     }
+
+	/**
+	 * @return the subGl
+	 */
+	public String getSubGl() {
+		return subGl;
+	}
+
+	/**
+	 * @param subGl the subGl to set
+	 */
+	public void setSubGl(String subGl) {
+		this.subGl = subGl;
+	}
 }
