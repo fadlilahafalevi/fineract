@@ -129,4 +129,17 @@ public class AccountingRuleData {
         return this.debitTags;
     }
 
+	/**
+	 * @return the creditAccounts
+	 */
+	public List<GLAccountDataForLookup> getCreditAccounts() {
+		return creditAccounts;
+	}
+
+	/**
+	 * @return the debitAccounts
+	 */
+	public List<GLAccountDataForLookup> getDebitAccounts() {
+		return debitAccounts;
+	}
 }

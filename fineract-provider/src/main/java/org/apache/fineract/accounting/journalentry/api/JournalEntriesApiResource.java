@@ -182,6 +182,21 @@ public class JournalEntriesApiResource {
         }
         return this.apiJsonSerializerService.serialize(result);
     }
+    
+    @POST
+    @Path("freqjournalentries")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    @ApiOperation(value = "Create \"Balanced\" Frequent Journal Entries", notes = "Note: A Balanced (simple) Journal entry would have atleast one \"Debit\" and one \"Credit\" entry whose amounts are equal \n" + "Compound Journal entries may have \"n\" debits and \"m\" credits where both \"m\" and \"n\" are greater than 0 and the net sum or all debits and credits are equal \n\n" + "\n" + "Mandatory Fields\n" + "officeId, transactionDate\n\n" + "\ncredits- glAccountId, amount, comments\n\n " + "\ndebits-  glAccountId, amount, comments\n\n " + "\n" + "Optional Fields\n" + "paymentTypeId, accountNumber, checkNumber, routingCode, receiptNumber, bankNumber")
+    @ApiImplicitParams({@ApiImplicitParam(paramType = "body", value = "body", dataType = "body", dataTypeClass = JournalEntryCommand.class)})
+    @ApiResponses({@ApiResponse(code = 200, message = "", response = JournalEntriesApiResourceSwagger.PostJournalEntriesResponse.class)})
+    public String createFrequentGLJournalEntry(@ApiParam(hidden = true) final String jsonRequestBody) {
+
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().createFrequentJournalEntry().withJson(jsonRequestBody).build();
+        CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+        return this.apiJsonSerializerService.serialize(result);
+    }
 
     @POST
     @Path("{transactionId}")

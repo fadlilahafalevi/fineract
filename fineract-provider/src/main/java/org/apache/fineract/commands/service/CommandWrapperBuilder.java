@@ -1076,6 +1076,14 @@ public class CommandWrapperBuilder {
         this.href = "/journalentries/template";
         return this;
     }
+    
+    public CommandWrapperBuilder createFrequentJournalEntry() {
+        this.actionName = "CREATE";
+        this.entityName = "FREQUENTJOURNALENTRY";
+        this.entityId = null;
+        this.href = "/journalentries/freqjournalentries";
+        return this;
+    }
 
     public CommandWrapperBuilder reverseJournalEntry(final String transactionId) {
         this.actionName = "REVERSE";
