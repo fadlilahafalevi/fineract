@@ -40,6 +40,7 @@ import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepos
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.organisation.office.domain.Office;
+import org.apache.fineract.portfolio.loanaccount.data.LoanAccountData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanChargeData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanInstallmentChargeData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanScheduleAccrualData;
@@ -221,10 +222,15 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 		}
     }
 
-	public void doAccrualAccounting(final LocalDate tilldate, final LoanScheduleAccrualData accrualData,
+	public void doAccrualAccounting(LocalDate tilldate, LoanScheduleAccrualData accrualData,
 			BigDecimal amount, BigDecimal totalAccInterest, BigDecimal interestportion, BigDecimal feeportion,
 			BigDecimal penaltyportion, BigDecimal totalAccPenalty, BigDecimal totalAccFee)
 			throws DataAccessException {
+		
+		// update loanScheduleAccrualData
+		LoanAccountData loanAccountData = this.loanReadPlatformService.retrieveOne(accrualData.getLoanId());
+		accrualData.setAccrualType(loanAccountData.getAccrualType());
+		
 		// administrative
 		if ((interestportion != null) 
 				&& accrualData.getIsNPL() || 
@@ -234,9 +240,11 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 			if (accrualData.getAccrualType().equals(LoanAccrualTransactionType.ACCRUAL.getValue())) {
 				maintainAccrualToAssetAccrualAccounting(accrualData);
 				maintainAssetToAdmAccrualAccounting(accrualData);
+				tilldate = accrualData.getDueDateAsLocaldate().plusDays(1);
 			} 
 			else if (accrualData.getAccrualType().equals(LoanAccrualTransactionType.ACCRUAL_ASSET.getValue())) {
 				maintainAssetToAdmAccrualAccounting(accrualData);
+				tilldate = accrualData.getDueDateAsLocaldate().plusDays(1);
 			}
 			
 			addAdministrativeAccrualAccounting(accrualData, amount, interestportion, totalAccInterest, feeportion, totalAccFee,
@@ -250,6 +258,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 			//maintain previous accrual type
 			if (accrualData.getAccrualType().equals(LoanAccrualTransactionType.ACCRUAL.getValue())) {
 				maintainAccrualToAssetAccrualAccounting(accrualData);
+				tilldate = accrualData.getDueDateAsLocaldate().plusDays(1);
 			}
 			
 			addAssetAccrualAccounting(accrualData, amount, interestportion, totalAccInterest, feeportion, totalAccFee,
@@ -412,7 +421,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
         String transactionSql = "INSERT INTO m_loan_transaction  (loan_id,office_id,is_reversed,transaction_type_enum,transaction_date,amount,interest_portion_derived,"
                 + "fee_charges_portion_derived,penalty_charges_portion_derived, submitted_on_date) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?)";
         this.jdbcTemplate.update(transactionSql, scheduleAccrualData.getLoanId(), scheduleAccrualData.getOfficeId(),
-                LoanTransactionType.ACCRUAL_ASSET.getValue(), scheduleAccrualData.getFromDateAsLocaldate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
+                LoanTransactionType.ACCRUAL_ASSET.getValue(), scheduleAccrualData.getDueDateAsLocaldate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
                 scheduleAccrualData.getAccrualAmount(), BigDecimal.ZERO, BigDecimal.ZERO,
                 DateUtils.getDateOfTenant());
         @SuppressWarnings("deprecation")
@@ -425,7 +434,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
         this.helper.createJournalEntriesForReclass(office, scheduleAccrualData.getCurrencyData().code(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.INTEREST_RECEIVABLE.getValue(), scheduleAccrualData.getLoanProductId(), null,
-				scheduleAccrualData.getLoanId(), transactionId, scheduleAccrualData.getFromDateAsLocaldate().plusDays(1).toDate(),
+				scheduleAccrualData.getLoanId(), transactionId, scheduleAccrualData.getDueDateAsLocaldate().plusDays(1).toDate(),
 				scheduleAccrualData.getAccrualAmount(), scheduleAccrualData.getLoanAccountNumber(), Long.valueOf(scheduleAccrualData.getInstallmentNumber()));
     }
     
@@ -433,7 +442,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
         String transactionSql = "INSERT INTO m_loan_transaction  (loan_id,office_id,is_reversed,transaction_type_enum,transaction_date,amount,interest_portion_derived,"
                 + "fee_charges_portion_derived,penalty_charges_portion_derived, submitted_on_date) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?)";
         this.jdbcTemplate.update(transactionSql, scheduleAccrualData.getLoanId(), scheduleAccrualData.getOfficeId(),
-                LoanTransactionType.ACCRUAL.getValue(), scheduleAccrualData.getFromDateAsLocaldate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
+                LoanTransactionType.ACCRUAL.getValue(), scheduleAccrualData.getDueDateAsLocaldate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
                 scheduleAccrualData.getAccrualAmount(), BigDecimal.ZERO, BigDecimal.ZERO,
                 DateUtils.getDateOfTenant());
         @SuppressWarnings("deprecation")
@@ -446,7 +455,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
         this.helper.createJournalEntriesForReclass(office, scheduleAccrualData.getCurrencyData().code(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.INTEREST_RECEIVABLE.getValue(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue(), scheduleAccrualData.getLoanProductId(), null,
-				scheduleAccrualData.getLoanId(), transactionId, scheduleAccrualData.getFromDateAsLocaldate().plusDays(1).toDate(),
+				scheduleAccrualData.getLoanId(), transactionId, scheduleAccrualData.getDueDateAsLocaldate().plusDays(1).toDate(),
 				scheduleAccrualData.getAccrualAmount(), scheduleAccrualData.getLoanAccountNumber(), Long.valueOf(scheduleAccrualData.getInstallmentNumber()));
     }
     
@@ -488,7 +497,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
     	String transactionSql = "INSERT INTO m_loan_transaction  (loan_id,office_id,is_reversed,transaction_type_enum,transaction_date,amount,interest_portion_derived,"
                 + "fee_charges_portion_derived,penalty_charges_portion_derived, submitted_on_date) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?)";
         this.jdbcTemplate.update(transactionSql, scheduleAccrualData.getLoanId(), scheduleAccrualData.getOfficeId(),
-                LoanTransactionType.REVERSE_INCOME.getValue(), scheduleAccrualData.getFromDateAsLocaldate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
+                LoanTransactionType.REVERSE_INCOME.getValue(), scheduleAccrualData.getDueDateAsLocaldate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
                 scheduleAccrualData.getAccrualAmount(), BigDecimal.ZERO, BigDecimal.ZERO,
                 DateUtils.getDateOfTenant());
         @SuppressWarnings("deprecation")
@@ -501,14 +510,14 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
         this.helper.createJournalEntriesForReclass(office, scheduleAccrualData.getCurrencyData().code(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_REVERSE.getValue(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue(), scheduleAccrualData.getLoanProductId(), null,
-				scheduleAccrualData.getLoanId(), transactionId, scheduleAccrualData.getFromDateAsLocaldate().plusDays(1).toDate(),
+				scheduleAccrualData.getLoanId(), transactionId, scheduleAccrualData.getDueDateAsLocaldate().plusDays(1).toDate(),
 				scheduleAccrualData.getAccrualAmount(), scheduleAccrualData.getLoanAccountNumber(), Long.valueOf(scheduleAccrualData.getInstallmentNumber()));
         
         // adm transaction
         String transactionAdmSql = "INSERT INTO m_loan_transaction  (loan_id,office_id,is_reversed,transaction_type_enum,transaction_date,amount,interest_portion_derived,"
                 + "fee_charges_portion_derived,penalty_charges_portion_derived, submitted_on_date) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?)";
         this.jdbcTemplate.update(transactionAdmSql, scheduleAccrualData.getLoanId(), scheduleAccrualData.getOfficeId(),
-                LoanTransactionType.ACCRUAL_ADMINISTRATIVE.getValue(), scheduleAccrualData.getFromDateAsLocaldate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
+                LoanTransactionType.ACCRUAL_ADMINISTRATIVE.getValue(), scheduleAccrualData.getDueDateAsLocaldate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
                 scheduleAccrualData.getAccrualAmount(), BigDecimal.ZERO, BigDecimal.ZERO,
                 DateUtils.getDateOfTenant());
         @SuppressWarnings("deprecation")

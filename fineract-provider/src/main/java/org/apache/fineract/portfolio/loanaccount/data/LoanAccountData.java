@@ -234,6 +234,9 @@ public class LoanAccountData {
     private String categoryNameByLoan;
     private String categoryNameByCif;
     private BigDecimal reservedAmount;
+    
+    private Integer accrualType;
+    private BigDecimal accrualAmount;
 
     public static LoanAccountData importInstanceIndividual(EnumOptionData loanTypeEnumOption,Long clientId,Long productId,
             Long loanOfficerId,LocalDate submittedOnDate,
@@ -1953,11 +1956,38 @@ public class LoanAccountData {
 		return reservedAmount;
 	}
 
-
 	/**
 	 * @param reservedAmount the reservedAmount to set
 	 */
 	public void setReservedAmount(BigDecimal reservedAmount) {
 		this.reservedAmount = reservedAmount;
+	}
+
+	/**
+	 * @return the accrualType
+	 */
+	public Integer getAccrualType() {
+		return accrualType;
+	}
+
+	/**
+	 * @param accrualType the accrualType to set
+	 */
+	public void setAccrualType(Integer accrualType) {
+		this.accrualType = accrualType;
+	}
+
+	/**
+	 * @return the accrualAmount
+	 */
+	public BigDecimal getAccrualAmount() {
+		return accrualAmount;
+	}
+
+	/**
+	 * @param accrualAmount the accrualAmount to set
+	 */
+	public void setAccrualAmount(BigDecimal accrualAmount) {
+		this.accrualAmount = accrualAmount;
 	}
 }

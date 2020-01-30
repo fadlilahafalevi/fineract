@@ -647,7 +647,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 					+ " pc1.category_name as categoryNameByLoan, " 
 					+ " pcd2.category_id as categoryByCif, "
 					+ " pc2.category_name as  categoryNameByCif, " 
-					+ " lape.reserved_amount_by_cif as reservedAmount "
+					+ " lape.reserved_amount_by_cif as reservedAmount,"
+					+ " l.accrual_amount as accrualAmount,"
+					+ " l.accrual_type as accrualType "
                     + " from m_loan l" //
                     + " join m_product_loan lp on lp.id = l.product_id" //
                     + " left join m_loan_recalculation_details lir on lir.loan_id = l.id "
@@ -1001,6 +1003,12 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 			loanAccountData.setCategoryNameByLoan(categoryNameByLoan);
 			loanAccountData.setCategoryNameByCif(categoryNameByCif);
 			loanAccountData.setReservedAmount(reservedAmount);
+			
+			final Integer accrualType = rs.getInt("accrualType");
+			final BigDecimal accrualAmount = rs.getBigDecimal("accrualAmount");
+			
+			loanAccountData.setAccrualType(accrualType);
+			loanAccountData.setAccrualAmount(accrualAmount);
 			
             return loanAccountData;
         }
