@@ -261,7 +261,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.close(user, command, tenantsTodayDate, changes);
         this.savingsAccountRepository.save(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+//        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
 
         return savingsTransactionId;
     }
@@ -429,7 +429,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.prematureClosure(user, command, tenantsTodayDate, changes);
 
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+//        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
         //reversal accrual
         this.savingsAccountWritePlatformService.postJournalEntriesForReversalAccrual(account, tenantsTodayDate);
         account.setTotalAccrualAmount(BigDecimal.ZERO);
