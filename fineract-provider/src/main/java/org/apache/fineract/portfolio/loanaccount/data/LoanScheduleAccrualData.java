@@ -57,6 +57,8 @@ public class LoanScheduleAccrualData {
     private Integer accrualType;
     private BigDecimal accrualAmount;
     private String loanAccountNumber;
+    private LocalDate arrearsDate;
+    private LocalDate arrearsAdministrativeDate;
 
     public LoanScheduleAccrualData(final Long loanId, final Long officeId, final Integer installmentNumber, final LocalDate accruedTill,
             final PeriodFrequencyType repaymentFrequency, final Integer repayEvery, final LocalDate dueDate, final LocalDate fromDate,
@@ -263,5 +265,33 @@ public class LoanScheduleAccrualData {
 	 */
 	public void setLoanAccountNumber(String loanAccountNumber) {
 		this.loanAccountNumber = loanAccountNumber;
+	}
+
+	/**
+	 * @return the arrearsDate
+	 */
+	public LocalDate getArrearsDate() {
+		return arrearsDate;
+	}
+
+	/**
+	 * @param arrearsDate the arrearsDate to set
+	 */
+	public void setArrearsDate(LocalDate arrearsDate) {
+		this.arrearsDate = arrearsDate;
+	}
+
+	/**
+	 * @return the arrearsAdministrativeDate
+	 */
+	public LocalDate getArrearsAdministrativeDate() {
+		return arrearsAdministrativeDate;
+	}
+
+	/**
+	 * @param arrearsAdministrativeDate the arrearsAdministrativeDate to set
+	 */
+	public void setArrearsAdministrativeDate(LocalDate arrearsAdministrativeDate) {
+		this.arrearsAdministrativeDate = arrearsAdministrativeDate;
 	}
 }

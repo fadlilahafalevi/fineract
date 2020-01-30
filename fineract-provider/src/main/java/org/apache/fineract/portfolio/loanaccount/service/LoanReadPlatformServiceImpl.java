@@ -1702,7 +1702,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     .append("ls.accrual_interest_derived as accinterest,ls.accrual_fee_charges_derived as accfeecharege,ls.accrual_penalty_charges_derived as accpenalty,")
                     .append(" loan.currency_code as currencyCode,loan.currency_digits as currencyDigits,loan.currency_multiplesof as inMultiplesOf,")
                     .append("curr.display_symbol as currencyDisplaySymbol,curr.name as currencyName,curr.internationalized_name_code as currencyNameCode, ")
-                    .append(" la.overdue_since_date_derived as overdueSinceDate, loan.is_npa as isNPL, loan.accrual_amount as accrualAmount, ifnull(loan.accrual_type, 0) as accrualType ")
+                    .append(" la.overdue_since_date_derived as overdueSinceDate, loan.is_npa as isNPL, loan.accrual_amount as accrualAmount, ifnull(loan.accrual_type, 0) as accrualType, loan.npl_date as nplDate ")
                     .append(" from m_loan_repayment_schedule ls ")
                     .append(" left join m_loan loan on loan.id=ls.loan_id ")
                     .append(" left join m_product_loan mpl on mpl.id = loan.product_id")
@@ -1749,6 +1749,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     currencyDisplaySymbol, currencyNameCode);
             
             final LocalDate overdueSinceDate = JdbcSupport.getLocalDate(rs, "overdueSinceDate");
+            final LocalDate nplDate = JdbcSupport.getLocalDate(rs, "nplDate");
             final Boolean isNPL = rs.getBoolean("isNPL");
             final BigDecimal accrualAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "accrualAmount");
             final Integer accrualType = JdbcSupport.getInteger(rs, "accrualType");
@@ -1766,6 +1767,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             loanScheduleAccrualData.setAccrualAmount(accrualAmount);
             loanScheduleAccrualData.setAccrualType(accrualType);
             loanScheduleAccrualData.setLoanAccountNumber(accountNo);
+            loanScheduleAccrualData.setArrearsDate(overdueSinceDate);
+            loanScheduleAccrualData.setArrearsAdministrativeDate(nplDate);
 
             return loanScheduleAccrualData;
         }

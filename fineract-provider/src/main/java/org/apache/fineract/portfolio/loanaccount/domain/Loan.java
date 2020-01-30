@@ -394,6 +394,10 @@ public class Loan extends AbstractPersistableCustom<Long> {
     
     @Column(name = "accrual_amount", scale = 6, precision = 19, nullable = true)
     private BigDecimal accrualAmount;
+    
+    @Temporal(TemporalType.DATE)
+    @Column(name = "npl_date")
+    private Date nplDate;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "loan", optional = true, orphanRemoval = true, fetch=FetchType.EAGER)
     private LoanTopupDetails loanTopupDetails;
@@ -6561,5 +6565,19 @@ public class Loan extends AbstractPersistableCustom<Long> {
 	 */
 	public void setAccrualAmount(BigDecimal accrualAmount) {
 		this.accrualAmount = accrualAmount;
+	}
+
+	/**
+	 * @return the nplDate
+	 */
+	public Date getNplDate() {
+		return nplDate;
+	}
+
+	/**
+	 * @param nplDate the nplDate to set
+	 */
+	public void setNplDate(Date nplDate) {
+		this.nplDate = nplDate;
 	}
 }

@@ -328,7 +328,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         
         final StringBuilder resetNPASqlBuilder = new StringBuilder(900);
         resetNPASqlBuilder.append("update m_loan ");
-        resetNPASqlBuilder.append("set is_npa = '0'");
+        resetNPASqlBuilder.append("set is_npa = '0', npl_date = null");
 
         jdbcTemplate.update(resetNPASqlBuilder.toString());
         
@@ -344,7 +344,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         updateSqlBuilder.append("LEFT JOIN m_group mgroup ON mgroup.id = l.group_id ");
         updateSqlBuilder.append("where l.loan_status_id=300 and sch.duedate = (select MIN(sch1.duedate) from m_loan_repayment_schedule sch1 where sch1.loan_id=l.id and sch1.completed_derived=false) ");
         updateSqlBuilder.append("and pcd1.is_npl = true) as sl ");
-        updateSqlBuilder.append("SET is_npa = '1' ");
+        updateSqlBuilder.append("SET is_npa = '1', npl_date = CURDATE() ");
         updateSqlBuilder.append("where ml.id=sl.loanId ");
         
         final int result = jdbcTemplate.update(updateSqlBuilder.toString());
