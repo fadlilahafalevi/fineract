@@ -112,4 +112,8 @@ public interface SavingsAccountWritePlatformService {
     CommandProcessingResult unblockDebits(Long savingsId);
 
     CommandProcessingResult releaseAmount(Long savingsId, Long transactionId);
+
+	void accrualPosting(SavingsAccount account);
+
+	void postJournalEntriesForReversalAccrual(SavingsAccount savingsAccount, LocalDate accrualDate);
 }

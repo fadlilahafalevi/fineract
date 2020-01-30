@@ -161,8 +161,9 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                             CASH_ACCOUNTS_FOR_SAVINGS.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
                             transactionId, transactionDate, overdraftAmount, isReversal);
                     if (amount.subtract(overdraftAmount).compareTo(BigDecimal.ZERO) == 1) {
+                    	// afad - change SAVINGS_ACCRUAL to SAVINGS_CONTROL after acrual update
                         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
-                                CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(),
+                                CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue(),
                                 CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(), savingsProductId, paymentTypeId, savingsId,
                                 transactionId, transactionDate, amount.subtract(overdraftAmount), isReversal);
                     }
@@ -174,7 +175,7 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                 // zero
                 if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
-                            CASH_ACCOUNTS_FOR_SAVINGS.INTEREST_ON_SAVINGS.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
+                            CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
                             savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
                 }
             }
