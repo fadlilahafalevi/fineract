@@ -820,11 +820,16 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                 + "where sa.account_no = ? and tr.transaction_date between ? and ? and sa.deposit_type_enum = ? order by tr.id desc limit ?"; // 
             	transactionDataHistory = this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { accountNo, startdate, enddate, depositAccountType.getValue(), pageSize});
             }
+        	if(transactionDataHistory ==null  || transactionDataHistory.isEmpty())
+        	{
+        		throw new SavingsAccountTransactionsHistoryNotFoundException(accountNo, startdate, enddate, depositAccountType, lastId, pageSize);
+        	}
         } catch (EmptyResultDataAccessException e) {
         	throw new SavingsAccountTransactionsHistoryNotFoundException(accountNo, startdate, enddate, depositAccountType, lastId, pageSize);
         }
-        
         return transactionDataHistory;
+        
+        
         
     }
 
