@@ -1320,7 +1320,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 		try {
 			final String sql = "select count(*) from m_savings_account sa "
 					+ "left join m_savings_product sp on sa.product_id = sp.id "
-					+ "where sa.client_id = ? and sp.is_main_product = true";
+					+ "where sa.client_id = ? and sp.is_main_product = true and sa.status_enum = 300";
 			Integer result = this.jdbcTemplate.queryForObject(sql, new Object[] { clientId }, Integer.class);
 			Boolean isMainCreated = false;
 			if (result > 0) {
