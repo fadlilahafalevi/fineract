@@ -519,14 +519,14 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
         this.helper.createJournalEntriesForReclass(office, scheduleAccrualData.getCurrencyData().code(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_REVERSE.getValue(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue(), scheduleAccrualData.getLoanProductId(), null,
-				scheduleAccrualData.getLoanId(), transactionId, scheduleAccrualData.getArrearsAdministrativeDate().plusDays(1).toDate(),
+				scheduleAccrualData.getLoanId(), transactionId, scheduleAccrualData.getArrearsAdministrativeDate().toDate(),
 				scheduleAccrualData.getAccrualAmount(), scheduleAccrualData.getLoanAccountNumber(), Long.valueOf(scheduleAccrualData.getInstallmentNumber()));
         
         // adm transaction
         String transactionAdmSql = "INSERT INTO m_loan_transaction  (loan_id,office_id,is_reversed,transaction_type_enum,transaction_date,amount,interest_portion_derived,"
                 + "fee_charges_portion_derived,penalty_charges_portion_derived, submitted_on_date) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?)";
         this.jdbcTemplate.update(transactionAdmSql, scheduleAccrualData.getLoanId(), scheduleAccrualData.getOfficeId(),
-                LoanTransactionType.ACCRUAL_ADMINISTRATIVE.getValue(), scheduleAccrualData.getArrearsAdministrativeDate().plusDays(1).toDate(), scheduleAccrualData.getAccrualAmount(), 
+                LoanTransactionType.ACCRUAL_ADMINISTRATIVE.getValue(), scheduleAccrualData.getArrearsAdministrativeDate().toDate(), scheduleAccrualData.getAccrualAmount(), 
                 scheduleAccrualData.getAccrualAmount(), BigDecimal.ZERO, BigDecimal.ZERO,
                 DateUtils.getDateOfTenant());
         @SuppressWarnings("deprecation")
@@ -535,7 +535,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
         this.helper.createJournalEntriesForReclass(office, scheduleAccrualData.getCurrencyData().code(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(),
 				ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), scheduleAccrualData.getLoanProductId(), null,
-				scheduleAccrualData.getLoanId(), transactionAdmId, scheduleAccrualData.getFromDateAsLocaldate().plusDays(1).toDate(),
+				scheduleAccrualData.getLoanId(), transactionAdmId, scheduleAccrualData.getArrearsAdministrativeDate().toDate(),
 				scheduleAccrualData.getAccrualAmount(), scheduleAccrualData.getLoanAccountNumber(), Long.valueOf(scheduleAccrualData.getInstallmentNumber()));
     }
 
