@@ -261,8 +261,12 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 			//maintain previous accrual type
 			if (accrualData.getAccrualType().equals(LoanAccrualTransactionType.ACCRUAL.getValue())) {
 				tilldate = accrualData.getArrearsDate().plusDays(1);
-				accrualData.setArrearsDate(tilldate);
 				
+				if (!accrualData.getArrearsDate().equals(accrualData.getDueDateAsLocaldate())) {
+					tilldate = DateUtils.getLocalDateOfTenant();
+				}
+				
+				accrualData.setArrearsDate(accrualData.getArrearsDate().plusDays(1));
 				maintainAccrualToAssetAccrualAccounting(accrualData);
 			}
 			
@@ -417,7 +421,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                 scheduleAccrualData.getRepaymentScheduleId());
 
         String updateLoan = "UPDATE m_loan  SET accrued_till=?, accrual_type=?, accrual_amount= ifnull(accrual_amount,0) + ?  WHERE id=?";
-        this.jdbcTemplate.update(updateLoan, accruedTill.toDate(), LoanAccrualTransactionType.ACCRUAL_ASSET.getValue(), totalAccInterest, scheduleAccrualData.getLoanId());
+        this.jdbcTemplate.update(updateLoan, accruedTill.toDate(), LoanAccrualTransactionType.ACCRUAL_ASSET.getValue(), interestportion, scheduleAccrualData.getLoanId());
         final Map<String, Object> accountingBridgeData = deriveAccountingBridgeData(scheduleAccrualData, transactionMap);
         this.journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
     }
@@ -492,7 +496,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
                 scheduleAccrualData.getRepaymentScheduleId());
 
         String updateLoan = "UPDATE m_loan  SET accrued_till=?, accrual_type=?, accrual_amount= ifnull(accrual_amount,0) + ?  WHERE id=?";
-        this.jdbcTemplate.update(updateLoan, accruedTill.toDate(), LoanAccrualTransactionType.ACCRUAL_ADMINSTRATIVE.getValue(), totalAccInterest, scheduleAccrualData.getLoanId());
+        this.jdbcTemplate.update(updateLoan, accruedTill.toDate(), LoanAccrualTransactionType.ACCRUAL_ADMINSTRATIVE.getValue(), interestportion, scheduleAccrualData.getLoanId());
         final Map<String, Object> accountingBridgeData = deriveAccountingBridgeData(scheduleAccrualData, transactionMap);
         this.journalEntryWritePlatformService.createJournalEntriesForLoan(accountingBridgeData);
     }
