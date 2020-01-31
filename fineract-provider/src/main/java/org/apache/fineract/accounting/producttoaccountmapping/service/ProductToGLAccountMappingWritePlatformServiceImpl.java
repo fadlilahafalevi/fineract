@@ -232,6 +232,9 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_ACCRUAL.getValue(), savingProductId,
                         CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue());
+                this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
+                        SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_TAX.getValue(), savingProductId,
+                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_TAX.getValue());
                 
                 final Boolean isDormancyTrackingActive = this.fromApiJsonHelper.extractBooleanNamed(isDormancyTrackingActiveParamName, element);
                 if(null != isDormancyTrackingActive && isDormancyTrackingActive){

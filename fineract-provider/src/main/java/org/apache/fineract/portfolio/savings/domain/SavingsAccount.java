@@ -583,7 +583,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     private boolean isWithHoldTaxApplicableForInterestPosting() {
-        return this.withHoldTax() && this.depositAccountType().isSavingsDeposit();
+        return this.withHoldTax();
     }
 
     protected SavingsAccountTransaction findInterestPostingTransactionFor(final LocalDate postingDate) {

@@ -234,6 +234,8 @@ public class ProductToGLAccountMappingReadPlatformServiceImpl implements Product
                     accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.SAVINGS_ACCRUAL.getValue(), gLAccountData);
                 } else if (glAccountForSavings.equals(CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST_ACCRUAL)) {
                     accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.INCOME_FROM_INTEREST_ACCRUAL.getValue(), gLAccountData);
+                } else if (glAccountForSavings.equals(CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_TAX)) {
+                    accountMappingDetails.put(SAVINGS_PRODUCT_ACCOUNTING_DATA_PARAMS.SAVINGS_TAX.getValue(), gLAccountData);
                 }
             }
         }

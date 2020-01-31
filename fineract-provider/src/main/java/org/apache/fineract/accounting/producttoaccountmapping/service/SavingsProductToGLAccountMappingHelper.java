@@ -162,6 +162,8 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                 SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_ACCRUAL.getValue(), element);
         final Long incomeFromInterestAccrualId = this.fromApiJsonHelper.extractLongNamed(
                 SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST_ACCRUAL.getValue(), element);
+        final Long savingsTaxId = this.fromApiJsonHelper.extractLongNamed(
+                SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_TAX.getValue(), element);
         switch (accountingRuleType) {
             case NONE:
             break;
@@ -177,6 +179,7 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                 changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.LOSSES_WRITTEN_OFF.getValue(), writeOffId);
                 changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_ACCRUAL.getValue(), savingsAccrualId);
                 changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST_ACCRUAL.getValue(), incomeFromInterestAccrualId);
+                changes.put(SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_TAX.getValue(), savingsTaxId);
             break;
             case ACCRUAL_PERIODIC:
             break;
@@ -246,6 +249,9 @@ public class SavingsProductToGLAccountMappingHelper extends ProductToGLAccountMa
                         CASH_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.toString(), changes);
                 createOrmergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_ACCRUAL.getValue(),
                         savingsProductId, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue(),
+                        changes);
+                createOrmergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_TAX.getValue(),
+                        savingsProductId, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_TAX.getValue(),
                         changes);
                 createOrmergeSavingsToLiabilityAccountMappingChanges(element, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.ESCHEAT_LIABILITY.getValue(),
                         savingsProductId, CASH_ACCOUNTS_FOR_SAVINGS.ESCHEAT_LIABILITY.getValue(),
