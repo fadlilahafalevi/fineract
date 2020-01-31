@@ -1355,7 +1355,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
         boolean isAccountTransfer = false;
         final boolean isReversal = true;
-        final BigDecimal interestAccrued = savingsAccount.getTotalAccrualAmount();
+        BigDecimal interestAccrued = BigDecimal.ZERO;
+        if (savingsAccount.getTotalAccrualAmount() != null) {
+        	interestAccrued = savingsAccount.getTotalAccrualAmount();
+        }
         if (interestAccrued.compareTo(BigDecimal.ZERO) > 0) {
 			final Map<String, Object> accountingBridgeData = savingsAccount
 					.deriveAccountingBridgeDataForAccrual(applicationCurrency.toData(), isAccountTransfer, interestAccrued, accrualDate);
