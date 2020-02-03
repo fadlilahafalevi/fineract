@@ -40,6 +40,9 @@ public class PaymentType extends AbstractPersistableCustom<Long> {
 
     @Column(name = "description")
     private String description;
+    
+    @Column(name = "sub_gl")
+    private String subGl;
 
     @Column(name = "is_cash_payment")
     private Boolean isCashPayment;
@@ -75,6 +78,12 @@ public class PaymentType extends AbstractPersistableCustom<Long> {
             actualChanges.put(PaymentTypeApiResourceConstants.DESCRIPTION, newDescription);
             this.description = StringUtils.defaultIfEmpty(newDescription, null);
         }
+        
+        if (command.isChangeInStringParameterNamed(PaymentTypeApiResourceConstants.SUBGL, this.subGl)) {
+            final String newSubGl = command.stringValueOfParameterNamed(PaymentTypeApiResourceConstants.SUBGL);
+            actualChanges.put(PaymentTypeApiResourceConstants.SUBGL, newSubGl);
+            this.subGl = StringUtils.defaultIfEmpty(newSubGl, null);
+        }
 
         if (command.isChangeInBooleanParameterNamed(PaymentTypeApiResourceConstants.ISCASHPAYMENT, this.isCashPayment)) {
             final Boolean newCashPaymentType = command.booleanObjectValueOfParameterNamed(PaymentTypeApiResourceConstants.ISCASHPAYMENT);
@@ -98,5 +107,18 @@ public class PaymentType extends AbstractPersistableCustom<Long> {
 	public Boolean isCashPayment() {
 		return isCashPayment;
 	}
-	
+
+	/**
+	 * @return the subGL
+	 */
+	public String getSubGL() {
+		return subGl;
+	}
+
+	/**
+	 * @param subGL the subGL to set
+	 */
+	public void setSubGL(String subGL) {
+		this.subGl = subGL;
+	}
 }

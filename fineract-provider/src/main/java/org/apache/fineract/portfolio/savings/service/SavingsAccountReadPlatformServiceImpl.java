@@ -856,6 +856,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("tr.created_date as submittedOnDate,");
             sqlBuilder.append(" au.username as submittedByUsername, ");
             sqlBuilder.append(" nt.note as transactionNote, ") ;
+            sqlBuilder.append(" sat.account_no AS fromSavingsAccount, ") ;
+            sqlBuilder.append(" saf.account_no AS toSavingsAccount, ") ;
             sqlBuilder.append("tr.running_balance_derived as runningBalance, tr.is_reversed as reversed,");
             sqlBuilder.append("fromtran.id as fromTransferId, fromtran.is_reversed as fromTransferReversed,");
             sqlBuilder.append("fromtran.transaction_date as fromTransferDate, fromtran.amount as fromTransferAmount,");
@@ -866,8 +868,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.id as savingsId, sa.account_no as accountNo,");
             sqlBuilder.append("pd.payment_type_id as paymentType,pd.account_number as accountNumber,pd.check_number as checkNumber, ");
             sqlBuilder.append("pd.receipt_number as receiptNumber, pd.bank_number as bankNumber,pd.routing_code as routingCode, ");
-            sqlBuilder
-                    .append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, sa.currency_multiplesof as inMultiplesOf, ");
+            sqlBuilder.append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits, sa.currency_multiplesof as inMultiplesOf, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
             sqlBuilder.append("pt.value as paymentTypeName, ");
@@ -875,12 +876,16 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_account_transaction tr on tr.savings_account_id = sa.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
-            sqlBuilder.append("left join m_account_transfer_transaction fromtran on fromtran.from_savings_transaction_id = tr.id ");
-            sqlBuilder.append("left join m_account_transfer_transaction totran on totran.to_savings_transaction_id = tr.id ");
-            sqlBuilder.append("left join m_payment_detail pd on tr.payment_detail_id = pd.id ");
-            sqlBuilder.append("left join m_payment_type pt on pd.payment_type_id = pt.id ");
+            sqlBuilder.append(" left join m_account_transfer_transaction fromtran on fromtran.from_savings_transaction_id = tr.id ");
+            sqlBuilder.append(" LEFT JOIN m_savings_account_transaction from_at ON from_at.id = fromtran.to_savings_transaction_id ");
+            sqlBuilder.append(" left join m_account_transfer_transaction totran on totran.to_savings_transaction_id = tr.id ");
+            sqlBuilder.append(" LEFT JOIN m_savings_account_transaction to_at ON to_at.id = totran.from_savings_transaction_id ");
+            sqlBuilder.append(" left join m_payment_detail pd on tr.payment_detail_id = pd.id ");
+            sqlBuilder.append(" left join m_payment_type pt on pd.payment_type_id = pt.id ");
             sqlBuilder.append(" left join m_appuser au on au.id=tr.appuser_id ");
             sqlBuilder.append(" left join m_note nt ON nt.savings_account_transaction_id=tr.id ") ;
+            sqlBuilder.append(" left join m_savings_account saf ON saf.id = from_at.savings_account_id ") ;
+            sqlBuilder.append(" left join m_savings_account sat ON sat.id = to_at.savings_account_id ") ;
             this.schemaSql = sqlBuilder.toString();
         }
 
@@ -934,22 +939,24 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final Long fromTransferId = JdbcSupport.getLong(rs, "fromTransferId");
             final Long toTransferId = JdbcSupport.getLong(rs, "toTransferId");
             if (fromTransferId != null) {
-                final LocalDate fromTransferDate = JdbcSupport.getLocalDate(rs, "fromTransferDate");
+            	final String toSavingsAccount = rs.getString("toSavingsAccount");
+            	final LocalDate fromTransferDate = JdbcSupport.getLocalDate(rs, "fromTransferDate");
                 final BigDecimal fromTransferAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "fromTransferAmount");
                 final boolean fromTransferReversed = rs.getBoolean("fromTransferReversed");
                 final String fromTransferDescription = rs.getString("fromTransferDescription");
 
-                transfer = AccountTransferData.transferBasicDetails(fromTransferId, currency, fromTransferAmount, fromTransferDate,
+                transfer = AccountTransferData.transferBasicDetails(toSavingsAccount,fromTransferId, currency, fromTransferAmount, fromTransferDate,
                         fromTransferDescription, fromTransferReversed);
             } else if (toTransferId != null) {
-                final LocalDate toTransferDate = JdbcSupport.getLocalDate(rs, "toTransferDate");
+                final String fromSavingsAccount = rs.getString("fromSavingsAccount");
+            	final LocalDate toTransferDate = JdbcSupport.getLocalDate(rs, "toTransferDate");
                 final BigDecimal toTransferAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "toTransferAmount");
                 final boolean toTransferReversed = rs.getBoolean("toTransferReversed");
                 final String toTransferDescription = rs.getString("toTransferDescription");
 
                 
 
-                transfer = AccountTransferData.transferBasicDetails(toTransferId, currency, toTransferAmount, toTransferDate,
+                transfer = AccountTransferData.transferBasicDetails(fromSavingsAccount,toTransferId, currency, toTransferAmount, toTransferDate,
                         toTransferDescription, toTransferReversed);
             }
             final String submittedByUsername = rs.getString("submittedByUsername");
