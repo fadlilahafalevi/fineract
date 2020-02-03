@@ -149,6 +149,15 @@ public class SavingsAccountTransactionData {
                 interestedPostedAsOn, submittedByUsername, note);
     }
     
+    public static SavingsAccountTransactionData create(final String savingsAccount,final Long id, final SavingsAccountTransactionEnumData transactionType,
+            final PaymentDetailData paymentDetailData, final Long savingsId, final String savingsAccountNo, final LocalDate date,
+            final CurrencyData currency, final BigDecimal amount, final BigDecimal outstandingChargeAmount,final BigDecimal runningBalance, final boolean reversed,
+            final AccountTransferData transfer, final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
+        final Collection<PaymentTypeData> paymentTypeOptions = null;
+        return new SavingsAccountTransactionData(id, transactionType, paymentDetailData, savingsId, savingsAccountNo, date, currency,
+                amount, outstandingChargeAmount,runningBalance, reversed, transfer, paymentTypeOptions, interestedPostedAsOn, submittedByUsername, note);
+    }
+    
     
     public static SavingsAccountTransactionData template(final Long savingsId, final String savingsAccountNo,
             final LocalDate defaultLocalDate, final CurrencyData currency) {
