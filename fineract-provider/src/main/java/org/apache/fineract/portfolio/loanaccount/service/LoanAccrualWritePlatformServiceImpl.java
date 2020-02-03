@@ -238,7 +238,7 @@ public class LoanAccrualWritePlatformServiceImpl implements LoanAccrualWritePlat
 			
 			// maintain previous accrual type 
 			if (accrualData.getAccrualType().equals(LoanAccrualTransactionType.ACCRUAL.getValue())) {
-				tilldate = accrualData.getArrearsAdministrativeDate();
+				tilldate = accrualData.getDueDateAsLocaldate();
 				accrualData.setArrearsDate(tilldate);
 				
 				maintainAccrualToAssetAccrualAccounting(accrualData);
