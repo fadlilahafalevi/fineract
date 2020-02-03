@@ -34,6 +34,7 @@ import org.apache.fineract.portfolio.address.data.AddressData;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+import org.apache.fineract.portfolio.savings.data.SavingsSummaryTaxData;
 import org.joda.time.LocalDate;
 
 /**
@@ -119,6 +120,7 @@ final public class ClientData implements Comparable<ClientData> {
     private LocalDate submittedOnDate;
     
     private String a;
+    private SavingsSummaryTaxData savingsSummaryTaxData;
 
     public static ClientData importClientEntityInstance(Long legalFormId,Integer rowIndex,String fullname,Long officeId, Long clientTypeId,
             Long clientClassificationId,Long staffId,Boolean active,LocalDate activationDate,LocalDate submittedOnDate,
@@ -270,7 +272,7 @@ final public class ClientData implements Comparable<ClientData> {
 
     public static ClientData templateOnTop(final ClientData clientData, final ClientData templateData) {
 
-        return new ClientData(clientData.accountNo, clientData.status, clientData.subStatus, clientData.officeId, clientData.officeName,
+       ClientData newClientData = new ClientData(clientData.accountNo, clientData.status, clientData.subStatus, clientData.officeId, clientData.officeName,
                 clientData.transferToOfficeId, clientData.transferToOfficeName, clientData.id, clientData.firstname, clientData.middlename,
                 clientData.lastname, clientData.fullname, clientData.displayName, clientData.externalId, clientData.mobileNo, clientData.emailAddress,
                 clientData.dateOfBirth, clientData.gender, clientData.activationDate, clientData.imageId, clientData.staffId,
@@ -280,13 +282,15 @@ final public class ClientData implements Comparable<ClientData> {
                 clientData.clientClassification, templateData.clientTypeOptions, templateData.clientClassificationOptions,
                 templateData.clientNonPersonConstitutionOptions, templateData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails,
                 templateData.clientLegalFormOptions,templateData.familyMemberOptions, clientData.legalForm, clientData.address,clientData.isAddressEnabled, null, clientData.isStaff);
+       newClientData.setSavingsSummaryTaxData(clientData.savingsSummaryTaxData);
+       return newClientData;
 
     }
 
     public static ClientData templateWithSavingAccountOptions(final ClientData clientData,
             final Collection<SavingsAccountData> savingAccountOptions) {
 
-        return new ClientData(clientData.accountNo, clientData.status, clientData.subStatus, clientData.officeId, clientData.officeName,
+        ClientData newClientData = new ClientData(clientData.accountNo, clientData.status, clientData.subStatus, clientData.officeId, clientData.officeName,
                 clientData.transferToOfficeId, clientData.transferToOfficeName, clientData.id, clientData.firstname, clientData.middlename,
                 clientData.lastname, clientData.fullname, clientData.displayName, clientData.externalId, clientData.mobileNo, clientData.emailAddress,
                 clientData.dateOfBirth, clientData.gender, clientData.activationDate, clientData.imageId, clientData.staffId,
@@ -296,6 +300,8 @@ final public class ClientData implements Comparable<ClientData> {
                 clientData.clientClassification, clientData.clientTypeOptions, clientData.clientClassificationOptions,
                 clientData.clientNonPersonConstitutionOptions, clientData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails,
                 clientData.clientLegalFormOptions,clientData.familyMemberOptions, clientData.legalForm,clientData.address, clientData.isAddressEnabled, null, clientData.isStaff);
+        newClientData.setSavingsSummaryTaxData(clientData.savingsSummaryTaxData);
+        return  newClientData;
 
     }
 
@@ -618,5 +624,13 @@ final public class ClientData implements Comparable<ClientData> {
 
 	public void setA(String a) {
 		this.a = a;
+	}
+
+	public SavingsSummaryTaxData getSavingsSummaryTaxData() {
+		return savingsSummaryTaxData;
+	}
+
+	public void setSavingsSummaryTaxData(SavingsSummaryTaxData savingsSummaryTaxData) {
+		this.savingsSummaryTaxData = savingsSummaryTaxData;
 	}
 }

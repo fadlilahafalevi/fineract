@@ -808,4 +808,8 @@ public class SavingsAccountData {
 	public void setInterestCompoundingTypeOptions(Collection<EnumOptionData> interestCompoundingTypeOptions) {
 		this.interestCompoundingTypeOptions = interestCompoundingTypeOptions;
 	}
+
+	public SavingsAccountSummaryData getSummary() {
+		return summary;
+	}
 }

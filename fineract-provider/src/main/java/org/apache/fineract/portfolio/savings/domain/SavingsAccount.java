@@ -487,13 +487,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return SavingsAccountStatusType.fromInt(this.status).isClosed();
     }
     public void postInterest(final MathContext mc, final LocalDate interestPostingUpToDate, final boolean isInterestTransfer,
-            final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate) {
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate,
+            final Boolean isTaxApplicable) {
         final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer,
                 isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
         Money interestPostedToDate = Money.zero(this.currency);
 
         boolean recalucateDailyBalanceDetails = false;
-        boolean applyWithHoldTax = isWithHoldTaxApplicableForInterestPosting();
+        boolean applyWithHoldTax = isWithHoldTaxApplicableForInterestPosting(isTaxApplicable);
         final List<SavingsAccountTransaction> withholdTransactions = new ArrayList<>();
         withholdTransactions.addAll(findWithHoldTransactions());
 
@@ -582,8 +583,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         return withholdTransactions;
     }
 
-    private boolean isWithHoldTaxApplicableForInterestPosting() {
-        return this.withHoldTax() && this.depositAccountType().isSavingsDeposit();
+    private boolean isWithHoldTaxApplicableForInterestPosting(Boolean isTaxApplicable) {
+        return this.withHoldTax() && isTaxApplicable;
     }
 
     protected SavingsAccountTransaction findInterestPostingTransactionFor(final LocalDate postingDate) {
@@ -2188,7 +2189,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     public void processAccountUponActivation(final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-            final Integer financialYearBeginningMonth, final AppUser user) {
+            final Integer financialYearBeginningMonth, final AppUser user, final Boolean isTaxApplicable) {
 
         // update annual fee due date
         for (SavingsAccountCharge charge : this.charges()) {
@@ -2196,7 +2197,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         // auto pay the activation time charges
-        this.payActivationCharges(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user);
+        this.payActivationCharges(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user, isTaxApplicable);
         // TODO : AA add activation charges to actual changes list
     }
 
@@ -2220,7 +2221,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     private void payActivationCharges(final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-            final AppUser user) {
+            final AppUser user, final Boolean isTaxApplicable) {
         boolean isSavingsChargeApplied = false;
         for (SavingsAccountCharge savingsAccountCharge : this.charges()) {
             if (savingsAccountCharge.isSavingsActivation()) {
@@ -2236,7 +2237,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             if (this.isBeforeLastPostingPeriod(getActivationLocalDate())) {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
                 this.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                        postInterestAsOnDate);
+                        postInterestAsOnDate, isTaxApplicable);
             } else {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
                 this.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
