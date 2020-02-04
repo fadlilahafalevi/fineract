@@ -27,6 +27,7 @@ public class PortfolioAccountDTO {
     private final long[] accountStatus;
     private final Integer depositType;
     private final boolean excludeOverDraftAccounts;
+    private Boolean isMainSavings = false;
 
     public PortfolioAccountDTO(final Integer accountTypeId, final Long clientId, final String currencyCode, final long[] accountStatus,
             final Integer depositType, final boolean excludeOverDraftAccounts) {
@@ -88,5 +89,13 @@ public class PortfolioAccountDTO {
     public void setGroupId(final Long groupId) {
         this.groupId = groupId;
     }
+
+	public Boolean getIsMainSavings() {
+		return isMainSavings;
+	}
+
+	public void setIsMainSavings(Boolean isMainSavings) {
+		this.isMainSavings = isMainSavings;
+	}
 
 }

@@ -330,7 +330,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         if (clientId != null) {
             client = this.clientReadPlatformService.retrieveOne(clientId);
             officeId = client.officeId();
-            savingsAccountDatas = this.savingsAccountReadPlatformService.retrieveActiveForLookup(clientId,
+            savingsAccountDatas = this.savingsAccountReadPlatformService.retrieveActiveMainForLookup(clientId,
                     DepositAccountType.SAVINGS_DEPOSIT);
         }
 
