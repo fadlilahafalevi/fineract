@@ -26,7 +26,8 @@ public class PaymentTypeNotFoundException extends AbstractPlatformResourceNotFou
     public PaymentTypeNotFoundException(final Long id) {
         super("error.msg.payment.type.invalid", "PaymentType with " + id + " does not exist", id);
     }
-} 
     
-
-
+    public PaymentTypeNotFoundException(final String value) {
+        super("error.msg.payment.type.invalid", "PaymentType with " + value + " does not exist", value);
+    }
+}

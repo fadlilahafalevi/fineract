@@ -37,5 +37,11 @@ public class PaymentTypeRepositoryWrapper {
         if (paymentType == null) { throw new PaymentTypeNotFoundException(id); }
         return paymentType;
     }
+    
+    public PaymentType findOneWithNotFoundDetection(final String value) {
+        final PaymentType paymentType = this.repository.findByValue(value);
+        if (paymentType == null) { throw new PaymentTypeNotFoundException(value); }
+        return paymentType;
+    }
 
 }
