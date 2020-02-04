@@ -1429,7 +1429,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 			final Integer newValue = command.integerValueOfParameterNamed(SavingsApiConstants.interestCompoundingTypeParamName);
 			actualChanges.put(SavingsApiConstants.interestCompoundingTypeParamName, newValue);
 			this.setInterestCompoundingTypeEnum(newValue);
-				
+			if (newValue.equals(CompoundingType.NON_COMPOUNDING.getValue())) {
+	        	this.setInterestCompoundingPeriodType(SavingsCompoundingInterestPeriodType.NON_COMPOUNDING.getValue());
+	        }
 		}
         
         validateLockinDetails(baseDataValidator);
@@ -3161,6 +3163,14 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
 	public void setTotalAccrualAmount(BigDecimal totalAccrualAmount) {
 		this.totalAccrualAmount = totalAccrualAmount;
+	}
+
+	public Integer getInterestCompoundingPeriodType() {
+		return interestCompoundingPeriodType;
+	}
+
+	public void setInterestCompoundingPeriodType(Integer interestCompoundingPeriodType) {
+		this.interestCompoundingPeriodType = interestCompoundingPeriodType;
 	}
 
 }
