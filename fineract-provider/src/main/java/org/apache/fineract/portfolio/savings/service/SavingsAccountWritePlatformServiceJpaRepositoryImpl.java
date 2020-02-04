@@ -1333,8 +1333,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 	private Boolean getIsTaxApplicable(final SavingsAccount account) {
 		SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
 		Boolean isTaxApplicable = false;
-		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
-			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+		if (savingsSummaryTaxData != null) {
+			if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+				isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+			}
 		}
 		return isTaxApplicable;
 	}
