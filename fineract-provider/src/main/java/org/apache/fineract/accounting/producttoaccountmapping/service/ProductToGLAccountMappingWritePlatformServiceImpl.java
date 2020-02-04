@@ -201,6 +201,10 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_PENALTIES.getValue(), savingProductId,
                         CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_PENALTIES.getValue());
 
+                this.savingsProductToGLAccountMappingHelper.saveSavingsToIncomeAccountMapping(element,
+                        SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST_ACCRUAL.getValue(), savingProductId,
+                        CASH_ACCOUNTS_FOR_SAVINGS.INCOME_FROM_INTEREST_ACCRUAL.getValue());
+
                 if (!accountType.equals(DepositAccountType.RECURRING_DEPOSIT) && !accountType.equals(DepositAccountType.FIXED_DEPOSIT)) {
                     this.savingsProductToGLAccountMappingHelper.saveSavingsToIncomeAccountMapping(element,
                             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST.getValue(), savingProductId,
@@ -225,6 +229,9 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
                         SAVINGS_PRODUCT_ACCOUNTING_PARAMS.TRANSFERS_SUSPENSE.getValue(), savingProductId,
                         CASH_ACCOUNTS_FOR_SAVINGS.TRANSFERS_SUSPENSE.getValue());
+                this.savingsProductToGLAccountMappingHelper.saveSavingsToLiabilityAccountMapping(element,
+                        SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_ACCRUAL.getValue(), savingProductId,
+                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue());
                 
                 final Boolean isDormancyTrackingActive = this.fromApiJsonHelper.extractBooleanNamed(isDormancyTrackingActiveParamName, element);
                 if(null != isDormancyTrackingActive && isDormancyTrackingActive){

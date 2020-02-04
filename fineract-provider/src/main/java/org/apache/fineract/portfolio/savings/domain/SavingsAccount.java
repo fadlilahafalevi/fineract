@@ -121,6 +121,10 @@ import org.springframework.util.CollectionUtils;
 
 import com.google.gson.JsonArray;
 
+/**
+ * @author USER
+ *
+ */
 @Entity
 @Table(name = "m_savings_account", uniqueConstraints = { @UniqueConstraint(columnNames = { "account_no" }, name = "sa_account_no_UNIQUE"),
         @UniqueConstraint(columnNames = { "external_id" }, name = "sa_external_id_UNIQUE") })
@@ -331,6 +335,15 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     
     @Column(name = "interest_compounding_type_enum", nullable = true)
 	protected Integer interestCompoundingTypeEnum;
+
+    @Column(name = "last_accrual_date", nullable = true)
+    protected Date lastAccrualDate;
+
+    @Column(name = "last_accrual_amount", nullable = true)
+    protected BigDecimal lastAccrualAmount;
+
+    @Column(name = "total_accrual_amount", nullable = true)
+    protected BigDecimal totalAccrualAmount;
     
     protected SavingsAccount() {
         //
@@ -775,6 +788,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
 
         return allPostingPeriods;
+    }   
+    
+    //afad
+    //this method is using for passing the fixed deposit accrual
+    public List<PostingPeriod> calculateInterestUsingFixedDepositAccrual(final MathContext mc, final LocalDate upToInterestCalculationDate,
+            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate) {
+    	return this.calculateInterestUsing(mc, upToInterestCalculationDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
     }
 
     private BigDecimal getEffectiveOverdraftInterestRateAsFraction(MathContext mc) {
@@ -1468,6 +1488,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         final List<Map<String, Object>> newSavingsTransactions = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions() ;
+        
         for (final SavingsAccountTransaction transaction : trans) {
             if (transaction.isReversed() && !existingReversedTransactionIds.contains(transaction.getId())) {
                 newSavingsTransactions.add(transaction.toMapData(currencyData));
@@ -1477,6 +1498,22 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         accountingBridgeData.put("newSavingsTransactions", newSavingsTransactions);
+        return accountingBridgeData;
+    }
+
+    public Map<String, Object> deriveAccountingBridgeDataForAccrual(final CurrencyData currencyData, boolean isAccountTransfer, final BigDecimal interestAccrued,
+    		final LocalDate accrualDate) {
+
+        final Map<String, Object> accountingBridgeData = new LinkedHashMap<>();
+        accountingBridgeData.put("savingsId", getId());
+        accountingBridgeData.put("savingsProductId", productId());
+        accountingBridgeData.put("currency", currencyData);
+        accountingBridgeData.put("officeId", officeId());
+        accountingBridgeData.put("cashBasedAccountingEnabled", isCashBasedAccountingEnabledOnSavingsProduct());
+        accountingBridgeData.put("accrualBasedAccountingEnabled", isAccrualBasedAccountingEnabledOnSavingsProduct());
+        accountingBridgeData.put("isAccountTransfer", isAccountTransfer);
+        accountingBridgeData.put("interestAccrued", interestAccrued);
+        accountingBridgeData.put("accrualDate", accrualDate);
         return accountingBridgeData;
     }
 
@@ -2680,45 +2717,48 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     public void validateInterestPostingAndCompoundingPeriodTypes(final DataValidatorBuilder baseDataValidator) {
-        Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.MONTHLY,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY }));
-
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.QUATERLY,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
-
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.BIANNUAL,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
-
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.ANNUAL,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
-
-        postingtoCompoundMap.put(
-                SavingsPostingInterestPeriodType.ENDOFPERIOD,
-                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
-                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
-                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
-
-        SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
-                .fromInt(interestPostingPeriodType);
-        SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
-                .fromInt(interestCompoundingPeriodType);
-
-        if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
-            baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
-                    savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
-
-        }
+    	CompoundingType interestCompoundingTypeEnum = CompoundingType.fromInt(this.interestCompoundingTypeEnum);
+    	if (interestCompoundingTypeEnum.getValue().equals(CompoundingType.COMPOUNDING.getValue())) {
+	        Map<SavingsPostingInterestPeriodType, List<SavingsCompoundingInterestPeriodType>> postingtoCompoundMap = new HashMap<>();
+	        postingtoCompoundMap.put(
+	                SavingsPostingInterestPeriodType.MONTHLY,
+	                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+	                        SavingsCompoundingInterestPeriodType.MONTHLY }));
+	
+	        postingtoCompoundMap.put(
+	                SavingsPostingInterestPeriodType.QUATERLY,
+	                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+	                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY }));
+	
+	        postingtoCompoundMap.put(
+	                SavingsPostingInterestPeriodType.BIANNUAL,
+	                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+	                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+	                        SavingsCompoundingInterestPeriodType.BI_ANNUAL }));
+	
+	        postingtoCompoundMap.put(
+	                SavingsPostingInterestPeriodType.ANNUAL,
+	                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+	                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+	                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+	
+	        postingtoCompoundMap.put(
+	                SavingsPostingInterestPeriodType.ENDOFPERIOD,
+	                Arrays.asList(new SavingsCompoundingInterestPeriodType[] { SavingsCompoundingInterestPeriodType.DAILY,
+	                        SavingsCompoundingInterestPeriodType.MONTHLY, SavingsCompoundingInterestPeriodType.QUATERLY,
+	                        SavingsCompoundingInterestPeriodType.BI_ANNUAL, SavingsCompoundingInterestPeriodType.ANNUAL }));
+	
+	        SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
+	                .fromInt(interestPostingPeriodType);
+	        SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
+	                .fromInt(interestCompoundingPeriodType);
+	
+	        if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
+	            baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
+	                    savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
+	
+	        }
+    	}
     }
 
     public boolean allowDeposit() {
@@ -3097,6 +3137,30 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
 	public void setInterestCompoundingTypeEnum(Integer interestCompoundingTypeEnum) {
 		this.interestCompoundingTypeEnum = interestCompoundingTypeEnum;
+	}
+
+	public Date getLastAccrualDate() {
+		return lastAccrualDate;
+	}
+
+	public void setLastAccrualDate(Date lastAccrualDate) {
+		this.lastAccrualDate = lastAccrualDate;
+	}
+
+	public BigDecimal getLastAccrualAmount() {
+		return lastAccrualAmount;
+	}
+
+	public void setLastAccrualAmount(BigDecimal lastAccrualAmount) {
+		this.lastAccrualAmount = lastAccrualAmount;
+	}
+
+	public BigDecimal getTotalAccrualAmount() {
+		return totalAccrualAmount;
+	}
+
+	public void setTotalAccrualAmount(BigDecimal totalAccrualAmount) {
+		this.totalAccrualAmount = totalAccrualAmount;
 	}
 
 }

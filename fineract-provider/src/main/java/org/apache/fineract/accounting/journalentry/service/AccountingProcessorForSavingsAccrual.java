@@ -16,17 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.savings.service;
+package org.apache.fineract.accounting.journalentry.service;
 
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+import org.apache.fineract.accounting.journalentry.data.SavingsDTO;
 
+public interface AccountingProcessorForSavingsAccrual {
 
-public interface SavingsSchedularService {
+    void createJournalEntriesForSavingsAccrual(SavingsDTO sharesDTO);
 
-    void postInterestForAccounts() throws JobExecutionException;
-    
-    void updateSavingsDormancyStatus() throws JobExecutionException;
-
-	void accrualInterestForAccounts() throws JobExecutionException;
+	void createJournalEntriesForSavingsAccrualReversal(SavingsDTO savingsDTO);
 
 }

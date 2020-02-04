@@ -53,6 +53,7 @@ import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
+import org.apache.fineract.portfolio.savings.CompoundingType;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.PreClosurePenalInterestOnType;
@@ -292,8 +293,16 @@ public class FixedDepositAccount extends SavingsAccount {
 
         final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
 
-        final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
-                .fromInt(this.interestCompoundingPeriodType);
+        final CompoundingType compoundingType = CompoundingType.fromInt(this.interestCompoundingTypeEnum);
+        
+        SavingsCompoundingInterestPeriodType compoundingPeriodType = null;
+        
+        if (compoundingType.getValue() == 1) {
+        	compoundingPeriodType = SavingsCompoundingInterestPeriodType.fromInt(this.interestCompoundingPeriodType);
+        } else if (compoundingType.getValue() == 2) {
+        	compoundingPeriodType = SavingsCompoundingInterestPeriodType.NON_COMPOUNDING;
+        }
+
 
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
@@ -553,14 +562,14 @@ public class FixedDepositAccount extends SavingsAccount {
         boolean recalucateDailyBalance = false;
 
         // post remaining interest
-        final Money remainigInterestToBePosted = interestOnMaturity.minus(interestPostedToDate);
-        if (!remainigInterestToBePosted.isZero()) {
-            final boolean postInterestAsOn = false;
-            final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
-                    accountCloseDate, remainigInterestToBePosted, postInterestAsOn);
-            this.transactions.add(newPostingTransaction);
-            recalucateDailyBalance = true;
-        }
+        //final Money remainigInterestToBePosted = interestOnMaturity.minus(interestPostedToDate);
+        //if (!remainigInterestToBePosted.isZero()) {
+        //    final boolean postInterestAsOn = false;
+        //    final SavingsAccountTransaction newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
+        //            accountCloseDate, remainigInterestToBePosted, postInterestAsOn);
+        //    this.transactions.add(newPostingTransaction);
+        //    recalucateDailyBalance = true;
+        //}
 
         recalucateDailyBalance = applyWithholdTaxForDepositAccounts(accountCloseDate, recalucateDailyBalance);
 
@@ -780,7 +789,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final boolean withdrawalFeeApplicableForTransfer = false;
         final String accountNumber = null;
         final boolean withHoldTax = this.withHoldTax;
-        final FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product,
+        FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product,
                 savingsOfficer, accountNumber, externalId, accountType, getClosedOnDate(), closedBy, interestRate, compoundingPeriodType,
                 postingPeriodType, interestCalculationType, daysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure,
@@ -788,6 +797,7 @@ public class FixedDepositAccount extends SavingsAccount {
 
         newAccountTermAndPreClosure.updateAccountReference(reInvestedAccount);
         newChart.updateDepositAccountReference(reInvestedAccount);
+        reInvestedAccount.setInterestCompoundingTypeEnum(this.interestCompoundingTypeEnum);
 
         return reInvestedAccount;
 

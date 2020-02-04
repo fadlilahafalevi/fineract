@@ -61,6 +61,7 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
@@ -85,6 +86,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final CalendarInstanceRepository calendarInstanceRepository;
+    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;  
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
@@ -96,6 +98,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final ConfigurationDomainService configurationDomainService,
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
             final CalendarInstanceRepository calendarInstanceRepository,
+            final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
         this.context = context;
         this.savingsAccountRepository = savingsAccountRepository;
@@ -108,6 +111,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.configurationDomainService = configurationDomainService;
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.calendarInstanceRepository = calendarInstanceRepository;
+        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
@@ -437,9 +441,13 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
       
         account.prematureClosure(user, command, tenantsTodayDate, changes);
 
-        this.savingsAccountRepository.save(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        //reversal accrual
+        this.savingsAccountWritePlatformService.postJournalEntriesForReversalAccrual(account, tenantsTodayDate);
+        account.setTotalAccrualAmount(BigDecimal.ZERO);
+        
+        this.savingsAccountRepository.save(account);
         return savingsTransactionId;
     }
 
