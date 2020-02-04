@@ -63,6 +63,7 @@ public class SavingsProductData {
     private final TaxGroupData taxGroup;
     private String depositAccountType = null;
     protected EnumOptionData interestCompoundingType;
+    private Boolean isMainProduct;
 
     // accounting
     private final EnumOptionData accountingRule;
@@ -162,6 +163,7 @@ public class SavingsProductData {
                 product.taxGroup, product.taxGroupOptions, product.isDormancyTrackingActive, product.daysToInactive, 
                 product.daysToDormancy, product.daysToEscheat);
         savingsProductData.setInterestCompoundingType(product.interestCompoundingType);
+        savingsProductData.setIsMainProduct(product.isMainProduct);
         return savingsProductData;
     }
 
@@ -235,6 +237,7 @@ public class SavingsProductData {
                 existingProduct.taxGroupOptions, existingProduct.isDormancyTrackingActive, existingProduct.daysToInactive, 
                 existingProduct.daysToDormancy, existingProduct.daysToEscheat);
         savingsProductData.setInterestCompoundingType(existingProduct.interestCompoundingType);
+        savingsProductData.setIsMainProduct(existingProduct.isMainProduct);
         return savingsProductData;
     }
 
@@ -522,5 +525,13 @@ public class SavingsProductData {
 
 	public void setInterestCompoundingTypeOptions(Collection<EnumOptionData> interestCompoundingTypeOptions) {
 		this.interestCompoundingTypeOptions = interestCompoundingTypeOptions;
+	}
+
+	public Boolean getIsMainProduct() {
+		return isMainProduct;
+	}
+
+	public void setIsMainProduct(Boolean isMainProduct) {
+		this.isMainProduct = isMainProduct;
 	}
 }

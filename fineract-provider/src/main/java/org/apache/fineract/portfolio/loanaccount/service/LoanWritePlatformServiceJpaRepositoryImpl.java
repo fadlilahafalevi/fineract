@@ -150,7 +150,6 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.loanaccount.exception.DateMismatchException;
 import org.apache.fineract.portfolio.loanaccount.exception.ExceedingTrancheCountException;
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidPaidInAdvanceAmountException;
-import org.apache.fineract.portfolio.loanaccount.exception.LoanDisbursalException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanForeclosureException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanMultiDisbursementException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
@@ -177,7 +176,10 @@ import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.transfer.api.TransferApiConstants;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -189,8 +191,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
@@ -238,6 +238,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanRepaymentScheduleTransactionProcessorFactory transactionProcessingStrategy;
     private final CodeValueRepositoryWrapper codeValueRepository;
     private final CashierTransactionDataValidator cashierTransactionDataValidator;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final SavingsAccountRepositoryWrapper savingsAccountRepository;
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -268,7 +270,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final LoanRepaymentScheduleTransactionProcessorFactory transactionProcessingStrategy,
             final CodeValueRepositoryWrapper codeValueRepository,
             final LoanRepositoryWrapper loanRepositoryWrapper,
-            final CashierTransactionDataValidator cashierTransactionDataValidator) {
+            final CashierTransactionDataValidator cashierTransactionDataValidator,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final SavingsAccountRepositoryWrapper savingsAccountRepository) {
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
         this.loanAssembler = loanAssembler;
@@ -307,6 +311,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.codeValueRepository = codeValueRepository;
         this.cashierTransactionDataValidator = cashierTransactionDataValidator;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.savingsAccountRepository = savingsAccountRepository;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -1768,6 +1774,11 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final String errorMessage = "Disburse Loan with id:" + loan.getId() + " requires linked savings account for payment";
             throw new LinkedAccountRequiredException("loan.disburse.to.savings", errorMessage, loan.getId());
         }
+        final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(portfolioAccountData.accountId());
+        final SavingsAccount account = this.savingsAccountRepository.findOneWithNotFoundDetection(portfolioAccountData.accountId());
+    	if (!isMainAccount) {
+    		throw new MainSavingsAccountException(account.getAccountNumber());
+    	}
         final SavingsAccount fromSavingsAccount = null;
         final boolean isExceptionForBalanceCheck = false;
         final boolean isRegularTransaction = true;

@@ -276,6 +276,7 @@ public class SavingsProductsApiResource {
                     lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions, accountingRuleOptions,
                     accountingMappingOptions, chargeOptions, penaltyOptions, taxGroupOptions);
             savingsProductToReturn.setInterestCompoundingType(savingsProduct.getInterestCompoundingType());
+            savingsProductToReturn.setIsMainProduct(savingsProduct.getIsMainProduct());
         } else {
             savingsProductToReturn = SavingsProductData.template(currency, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
