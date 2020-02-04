@@ -152,7 +152,7 @@ public class AccountingConstants {
     public static enum CASH_ACCOUNTS_FOR_SAVINGS {
         SAVINGS_REFERENCE(1), SAVINGS_CONTROL(2), INTEREST_ON_SAVINGS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), TRANSFERS_SUSPENSE(
                 10), OVERDRAFT_PORTFOLIO_CONTROL(11), INCOME_FROM_INTEREST(12), LOSSES_WRITTEN_OFF(13), ESCHEAT_LIABILITY(14), SAVINGS_ACCRUAL(15),
-        		INCOME_FROM_INTEREST_ACCRUAL(16);
+        		INCOME_FROM_INTEREST_ACCRUAL(16), SAVINGS_TAX(17);
 
         private final Integer value;
 
@@ -194,7 +194,7 @@ public class AccountingConstants {
                 "feeToIncomeAccountMappings"), PENALTY_INCOME_ACCOUNT_MAPPING("penaltyToIncomeAccountMappings"), CHARGE_ID("chargeId"), INCOME_ACCOUNT_ID(
                 "incomeAccountId"), OVERDRAFT_PORTFOLIO_CONTROL("overdraftPortfolioControlId"), INCOME_FROM_INTEREST("incomeFromInterestId"), LOSSES_WRITTEN_OFF(
                 "writeOffAccountId"), ESCHEAT_LIABILITY("escheatLiabilityId"), SAVINGS_ACCRUAL("savingsAccrualAccountId"), INCOME_FROM_INTEREST_ACCRUAL(
-                "incomeFromInterestAccrualId");
+                "incomeFromInterestAccrualId"), SAVINGS_TAX("savingsTaxAccountId");
 
         private final String value;
 
@@ -219,7 +219,7 @@ public class AccountingConstants {
                 "penaltyToIncomeAccountMappings"), CHARGE_ID("charge"), INCOME_ACCOUNT_ID("incomeAccount"), OVERDRAFT_PORTFOLIO_CONTROL(
                 "overdraftPortfolioControl"), INCOME_FROM_INTEREST("incomeFromInterest"), LOSSES_WRITTEN_OFF("writeOffAccount"),
                 ESCHEAT_LIABILITY("escheatLiabilityAccount"), SAVINGS_ACCRUAL("savingsAccrualAccount"), INCOME_FROM_INTEREST_ACCRUAL(
-                "incomeFromInterestAccrualAccount");
+                "incomeFromInterestAccrualAccount"), SAVINGS_TAX("savingsTaxAccount");
 
         private final String value;
 

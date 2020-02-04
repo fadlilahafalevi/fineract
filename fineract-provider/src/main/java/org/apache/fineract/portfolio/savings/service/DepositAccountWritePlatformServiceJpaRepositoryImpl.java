@@ -1354,6 +1354,24 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             ((RecurringDepositAccount) account).updateMaturityStatus(isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth);
         }
+        List<SavingsAccountTransaction> transactions = account.getTransactions();
+        for (SavingsAccountTransaction accountTransaction : transactions) {
+            if (accountTransaction.getId() == null) {
+                this.savingsAccountTransactionRepository.saveAndFlush(accountTransaction);
+            }
+        }
+        // Tax transaction
+        LocalDate interestPostingUpToDate = ((FixedDepositAccount) account).maturityDate();
+        Boolean recalucateDailyBalanceDetails = false;
+        ((FixedDepositAccount) account).recalculateDailyBalanceDetailsAfterTax(interestPostingUpToDate, recalucateDailyBalanceDetails);
+        transactions = account.getTransactions();
+        for (SavingsAccountTransaction accountTransaction : transactions) {
+            if (accountTransaction.getId() == null) {
+                this.savingsAccountTransactionRepository.saveAndFlush(accountTransaction);
+            }
+        }
+        
+        account.setTotalAccrualAmount(BigDecimal.ZERO);
         this.savingAccountRepositoryWrapper.saveAndFlush(account) ;
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
     }
