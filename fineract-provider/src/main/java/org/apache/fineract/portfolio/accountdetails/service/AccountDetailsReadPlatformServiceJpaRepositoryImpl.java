@@ -21,8 +21,12 @@ package org.apache.fineract.portfolio.accountdetails.service;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
@@ -39,9 +43,11 @@ import org.apache.fineract.portfolio.group.service.GroupReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.data.LoanApplicationTimelineData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountApplicationTimelineData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountStatusEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSubStatusEnumData;
+import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountApplicationTimelineData;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountStatusEnumData;
@@ -59,15 +65,18 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
     private final ClientReadPlatformService clientReadPlatformService;
     private final GroupReadPlatformService groupReadPlatformService;
     private final ColumnValidator columnValidator;
+    private final DepositAccountReadPlatformService depositAccountReadPlatformService;
 
     @Autowired
     public AccountDetailsReadPlatformServiceJpaRepositoryImpl(final ClientReadPlatformService clientReadPlatformService,
             final RoutingDataSource dataSource, final GroupReadPlatformService groupReadPlatformService,
+            final DepositAccountReadPlatformService depositAccountReadPlatformService,
             final ColumnValidator columnValidator) {
         this.clientReadPlatformService = clientReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.groupReadPlatformService = groupReadPlatformService;
         this.columnValidator = columnValidator;
+        this.depositAccountReadPlatformService = depositAccountReadPlatformService;
     }
 
     @Override
@@ -79,7 +88,18 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
         final String guarantorWhereClause = " where g.entity_id = ? and g.is_active = 1 order by l.account_no ASC";
 
         final List<LoanAccountSummaryData> loanAccounts = retrieveLoanAccountDetails(loanwhereClause, new Object[] { clientId });
-        final List<SavingsAccountSummaryData> savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[] { clientId });
+        List<SavingsAccountSummaryData> savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[] { clientId });
+        for (SavingsAccountSummaryData fixedDepositAccounts : savingsAccounts) {
+			if (fixedDepositAccounts.getDepositType().getId().toString()
+					.equals(DepositAccountType.FIXED_DEPOSIT.getValue().toString())) {
+				Date maturityDate = this.depositAccountReadPlatformService.findMaturityDate(fixedDepositAccounts.getId());
+				SimpleDateFormat sdf;
+				sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+				sdf.setTimeZone(TimeZone.getDefault());
+				String maturityDateString = sdf.format(maturityDate);
+				fixedDepositAccounts.setMaturityDate(maturityDateString);
+			}
+        }
         final List<ShareAccountSummaryData> shareAccounts = retrieveShareAccountDetails(clientId) ;
         final List<GuarantorAccountSummaryData> guarantorloanAccounts = retrieveGuarantorLoanAccountDetails(
 				guarantorWhereClause, new Object[] { clientId });
