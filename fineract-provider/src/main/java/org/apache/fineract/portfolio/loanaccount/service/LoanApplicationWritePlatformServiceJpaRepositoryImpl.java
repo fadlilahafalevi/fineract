@@ -98,6 +98,8 @@ import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -151,6 +153,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     private final FineractEntityToEntityMappingRepository repository;
     private final FineractEntityRelationRepository fineractEntityRelationRepository;
     private final LoanProductReadPlatformService loanProductReadPlatformService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
     public LoanApplicationWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final FromJsonHelper fromJsonHelper,
@@ -173,7 +176,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final LoanScheduleAssembler loanScheduleAssembler, final LoanUtilService loanUtilService, 
             final CalendarReadPlatformService calendarReadPlatformService, final GlobalConfigurationRepositoryWrapper globalConfigurationRepository,
             final FineractEntityToEntityMappingRepository repository, final FineractEntityRelationRepository fineractEntityRelationRepository,
-            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, final LoanProductReadPlatformService loanProductReadPlatformService) {
+            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, final LoanProductReadPlatformService loanProductReadPlatformService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
         this.context = context;
         this.fromJsonHelper = fromJsonHelper;
         this.loanApplicationTransitionApiJsonValidator = loanApplicationTransitionApiJsonValidator;
@@ -209,6 +213,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         this.repository = repository;
         this.fineractEntityRelationRepository = fineractEntityRelationRepository;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
 
     }
 
@@ -432,6 +437,10 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 		final Long savingsAccountId = command.longValueOfParameterNamed("linkAccountId");
 		if (savingsAccountId != null) {
 		    final SavingsAccount savingsAccount = this.savingsAccountAssembler.assembleFrom(savingsAccountId);
+		    final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(savingsAccountId);
+        	if (!isMainAccount) {
+        		throw new MainSavingsAccountException(savingsAccount.getAccountNumber());
+        	}
 		    this.fromApiJsonDeserializer.validatelinkedSavingsAccount(savingsAccount, newLoanApplication);
 		    boolean isActive = true;
 		    final AccountAssociations accountAssociations = AccountAssociations.associateSavingsAccount(newLoanApplication,
@@ -995,6 +1004,10 @@ public void checkForProductMixRestrictions(final Loan loan) {
                 }
                 if (isModified) {
                     final SavingsAccount savingsAccount = this.savingsAccountAssembler.assembleFrom(savingsAccountId);
+        		    final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(savingsAccountId);
+                	if (!isMainAccount) {
+                		throw new MainSavingsAccountException(savingsAccount.getAccountNumber());
+                	}
                     this.fromApiJsonDeserializer.validatelinkedSavingsAccount(savingsAccount, existingLoanApplication);
                     if (accountAssociations == null) {
                         boolean isActive = true;

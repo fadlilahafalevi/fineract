@@ -16,26 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.savings.service;
+package org.apache.fineract.portfolio.savings.exception;
 
-import java.util.Collection;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 
-import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+public class MainSavingsAccountNotMatchException extends AbstractPlatformResourceNotFoundException {
 
-public interface SavingsProductReadPlatformService {
-
-    Collection<SavingsProductData> retrieveAll();
-
-    Collection<SavingsProductData> retrieveAllForLookup();
-
-    Collection<SavingsProductData> retrieveAllForLookupByType(Boolean isOverdraftType);
-
-    Collection<SavingsProductData> retrieveAllForCurrency(String currencyCode);
-
-    SavingsProductData retrieveOne(Long productId);
-
-	Collection<SavingsProductData> retrieveAllMainProductForLookup();
-
-	Collection<SavingsProductData> retrieveAllSubProductForLookup();
-
+    public MainSavingsAccountNotMatchException() {
+        super("error.msg.main.account.not.match", "Main Account and Sub Account of Savings Account is not match, please check the account.");
+    }
 }

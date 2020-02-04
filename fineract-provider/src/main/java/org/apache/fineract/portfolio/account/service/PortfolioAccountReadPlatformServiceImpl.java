@@ -160,7 +160,9 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                     sql += " and sa.group_id = ? ";
                     sqlParams.add(portfolioAccountDTO.getGroupId());
                 }
-                
+                if(portfolioAccountDTO.getIsMainSavings()) {
+                	sql += " and sp.is_main_product = true ";
+                }
                 accounts = this.jdbcTemplate.query(sql, this.savingsAccountMapper, sqlParams.toArray());
             break;
             default:

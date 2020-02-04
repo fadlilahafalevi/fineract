@@ -56,7 +56,11 @@ import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountNotMatchException;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -78,6 +82,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final AccountTransferDetailRepository accountTransferDetailRepository;
     private final LoanReadPlatformService loanReadPlatformService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper;
 
     @Autowired
     public AccountTransfersWritePlatformServiceImpl(final AccountTransfersDataValidator accountTransfersDataValidator,
@@ -86,7 +92,9 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final LoanAssembler loanAssembler, final LoanAccountDomainService loanAccountDomainService,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
             final AccountTransferDetailRepository accountTransferDetailRepository,
-            final LoanReadPlatformService loanReadPlatformService) {
+            final LoanReadPlatformService loanReadPlatformService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper) {
         this.accountTransfersDataValidator = accountTransfersDataValidator;
         this.accountTransferAssembler = accountTransferAssembler;
         this.accountTransferRepository = accountTransferRepository;
@@ -97,6 +105,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.accountTransferDetailRepository = accountTransferDetailRepository;
         this.loanReadPlatformService = loanReadPlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.savingsAccountRepositoryWrapper = savingsAccountRepositoryWrapper;
     }
 
     @Transactional
@@ -127,9 +137,11 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         boolean isWithdrawBalance = false;
 
         if (isSavingsToSavingsAccountTransfer(fromAccountType, toAccountType)) {
+        	
 
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
+        	final Boolean isFromSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(fromSavingsAccountId);
 
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                     isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
@@ -138,6 +150,28 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             final Long toSavingsId = command.longValueOfParameterNamed(toAccountIdParamName);
             final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsId);
+        	final Boolean isToSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(toSavingsId);
+        	
+        	Boolean processTransfer = false;
+        	
+        	if (isFromSavingsMainAccount && isToSavingsMainAccount) {
+        		processTransfer = true;
+        	} else if (isFromSavingsMainAccount && !isToSavingsMainAccount) {
+        		final SavingsAccount savingsAccountMainAccount = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(toSavingsAccount.getClient().getId());
+        		if (savingsAccountMainAccount.getAccountNumber() == fromSavingsAccount.getAccountNumber()) {
+        			processTransfer = true;
+        		}
+        	} else if (!isFromSavingsMainAccount && isToSavingsMainAccount) {
+        		final SavingsAccount savingsAccountMainAccount = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(toSavingsAccount.getClient().getId());
+        		if (savingsAccountMainAccount.getAccountNumber() == toSavingsAccount.getAccountNumber()) {
+        			processTransfer = true;
+        		}
+        	}
+        	
+        	//throw error when cant processing transfer
+        	if (!processTransfer) {
+        		throw new MainSavingsAccountNotMatchException();
+        	}
 
             final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount, fmt,
                     transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
@@ -151,6 +185,10 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             //
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
+            final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(fromSavingsAccountId);
+        	if (!isMainAccount) {
+        		throw new MainSavingsAccountException(fromSavingsAccount.getAccountNumber());
+        	}
 
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                     isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
