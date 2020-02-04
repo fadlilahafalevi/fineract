@@ -63,6 +63,8 @@ import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.data.SavingsSummaryTaxData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsSummaryTaxReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -86,7 +88,8 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final CalendarInstanceRepository calendarInstanceRepository;
-    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
+    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;  
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
 
     @Autowired
@@ -99,6 +102,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
             final CalendarInstanceRepository calendarInstanceRepository,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
             final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService) {
         this.context = context;
         this.savingsAccountRepository = savingsAccountRepository;
@@ -112,6 +116,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.calendarInstanceRepository = calendarInstanceRepository;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
     }
 
@@ -255,6 +260,10 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final String transferDescription = command.stringValueOfParameterNamed(transferDescriptionParamName);
             final SavingsAccount toSavingsAccount = this.depositAccountAssembler.assembleFrom(toSavingsId,
                     DepositAccountType.SAVINGS_DEPOSIT);
+            final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(toSavingsId);
+        	if (!isMainAccount) {
+        		throw new MainSavingsAccountException(toSavingsAccount.getAccountNumber());
+        	}
             final boolean isExceptionForBalanceCheck = false;
             final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(closedDate, account.getAccountBalance(),
                     PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, null, null, transferDescription, locale, fmt, null, null,
@@ -271,7 +280,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.close(user, command, tenantsTodayDate, changes);
         this.savingsAccountRepository.save(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+//        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
 
         return savingsTransactionId;
     }
@@ -423,6 +432,10 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final String transferDescription = command.stringValueOfParameterNamed(transferDescriptionParamName);
             final SavingsAccount toSavingsAccount = this.depositAccountAssembler.assembleFrom(toSavingsId,
                     DepositAccountType.SAVINGS_DEPOSIT);
+            final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(toSavingsId);
+        	if (!isMainAccount) {
+        		throw new MainSavingsAccountException(toSavingsAccount.getAccountNumber());
+        	}
             final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(closedDate, account.getAccountBalance(),
                     PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, null, null, transferDescription, locale, fmt, null, null,
                     null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, toSavingsAccount, account,
@@ -439,7 +452,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         account.prematureClosure(user, command, tenantsTodayDate, changes);
 
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+//        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
         //reversal accrual
         this.savingsAccountWritePlatformService.postJournalEntriesForReversalAccrual(account, tenantsTodayDate);
         account.setTotalAccrualAmount(BigDecimal.ZERO);

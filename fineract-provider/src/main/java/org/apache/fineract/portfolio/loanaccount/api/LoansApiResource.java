@@ -380,6 +380,7 @@ public class LoansApiResource {
         if (groupId != null) {
             portfolioAccountDTO.setGroupId(groupId);
         }
+        portfolioAccountDTO.setIsMainSavings(true);
         return this.portfolioAccountReadPlatformService.retrieveAllForLookup(portfolioAccountDTO);
     }
     

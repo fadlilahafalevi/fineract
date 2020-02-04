@@ -156,6 +156,16 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     }
 
     @Override
+    public Collection<SavingsAccountData> retrieveActiveMainForLookup(final Long clientId, DepositAccountType depositAccountType) {
+
+        final StringBuilder sqlBuilder = new StringBuilder("select " + this.savingAccountMapper.schema());
+        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and sa.deposit_type_enum = ? and sp.is_main_product = true");
+
+        final Object[] queryParameters = new Object[] { clientId, depositAccountType.getValue() };
+        return this.jdbcTemplate.query(sqlBuilder.toString(), this.savingAccountMapper, queryParameters);
+    }
+
+    @Override
     public Collection<SavingsAccountData> retrieveActiveForLookup(final Long clientId, DepositAccountType depositAccountType, String currencyCode) {
         final StringBuilder sqlBuilder = new StringBuilder("select " + this.savingAccountMapper.schema());
         sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300 and sa.deposit_type_enum = ? and sa.currency_code = ? ");
@@ -639,7 +649,18 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             officeId = group.officeId();
         }
 
-        final Collection<SavingsProductData> productOptions = this.savingsProductReadPlatformService.retrieveAllForLookup();
+        Collection<SavingsProductData> productOptions = new ArrayList<>();
+        final Collection<SavingsProductData> mainProductOptions = this.savingsProductReadPlatformService.retrieveAllMainProductForLookup();
+        final Collection<SavingsProductData> subProductOptions = this.savingsProductReadPlatformService.retrieveAllSubProductForLookup();
+        
+        Boolean isMainCreated = this.checkingMainProduct(clientId);
+        
+        if (isMainCreated) {
+        	productOptions = subProductOptions;
+        } else {
+        	productOptions = mainProductOptions;
+        }
+        
         SavingsAccountData template = null;
         if (productId != null) {
 
@@ -1304,5 +1325,30 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 		} catch (final EmptyResultDataAccessException e) {
 			throw new SavingsAccountNotFoundException(accountId);
 		}
+	}
+
+	@Override
+	public Boolean checkingMainProduct(Long clientId) {
+		try {
+			final String sql = "select count(*) from m_savings_account sa "
+					+ "left join m_savings_product sp on sa.product_id = sp.id "
+					+ "where sa.client_id = ? and sp.is_main_product = true and sa.status_enum = 300";
+			Integer result = this.jdbcTemplate.queryForObject(sql, new Object[] { clientId }, Integer.class);
+			Boolean isMainCreated = false;
+			if (result > 0) {
+				isMainCreated = true;
+			}
+			return isMainCreated;
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNotFoundException(clientId);
+		}
+	}
+
+	@Override
+	public Boolean isMainProduct(Long savingsId) {
+		final String sql = "select sp.is_main_product from m_savings_account sa "
+				+ "left join m_savings_product sp on sa.product_id = sp.id "
+				+ "where sa.id = ?";
+		return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, Boolean.class);
 	}
 }

@@ -65,6 +65,12 @@ public interface SavingsAccountReadPlatformService {
 	SavingsAccountTransactionData retrieveSavingsTransactionByRecipt(Long savingsId, String receiptNumber,
 			DepositAccountType depositAccountType);
 
+	Boolean checkingMainProduct(Long clientId);
+
+	Boolean isMainProduct(Long savingsId);
+
+	Collection<SavingsAccountData> retrieveActiveMainForLookup(Long clientId, DepositAccountType depositAccountType);
+
 	List<SavingsAccountData> retrieveByClientId(Long clientId);
 
 }

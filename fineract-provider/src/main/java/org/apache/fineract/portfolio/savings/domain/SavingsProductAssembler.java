@@ -184,6 +184,7 @@ public class SavingsProductAssembler {
         final Long daysToDormancy = command.longValueOfParameterNamed(daysToDormancyParamName);
         final Long daysToEscheat = command.longValueOfParameterNamed(daysToEscheatParamName);
         final Integer interestCompoundingType = command.integerValueOfParameterNamed(SavingsApiConstants.interestCompoundingTypeParamName);
+        final Boolean isMainProduct = command.booleanObjectValueOfParameterNamed(SavingsApiConstants.isMainProduct);
 
         SavingsProduct savingsProduct = SavingsProduct.createNew(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
@@ -192,6 +193,7 @@ public class SavingsProductAssembler {
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup,
                 isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat);
         savingsProduct.setInterestCompoundingTypeEnum(interestCompoundingType);
+        savingsProduct.setIsMainProduct(isMainProduct);
         return savingsProduct;
     }
 

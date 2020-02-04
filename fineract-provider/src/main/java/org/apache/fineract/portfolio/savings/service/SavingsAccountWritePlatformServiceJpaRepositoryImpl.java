@@ -105,6 +105,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.interest.PostingPeriod;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException.PostInterestAsOnException_TYPE;
 import org.apache.fineract.portfolio.savings.exception.PostInterestClosingDateException;
@@ -152,6 +153,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final AppUserRepositoryWrapper appuserRepository;
     private final StandingInstructionRepository standingInstructionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
 
     @Autowired
@@ -175,6 +177,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
             final AppUserRepositoryWrapper appuserRepository, final StandingInstructionRepository standingInstructionRepository,
             final BusinessEventNotifierService businessEventNotifierService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
             final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
@@ -201,6 +204,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.appuserRepository = appuserRepository;
         this.standingInstructionRepository = standingInstructionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
     }
 
@@ -277,11 +281,17 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     @Override
     public CommandProcessingResult deposit(final Long savingsId, final JsonCommand command) {
 
+    	//Validate main account or not
+    	final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(savingsId);
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+    	if (!isMainAccount) {
+    		throw new MainSavingsAccountException(account.getAccountNumber());
+    	}
+    	
         this.context.authenticatedUser();
 
         this.savingsAccountTransactionDataValidator.validate(command);
 
-        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         checkClientOrGroupActive(account);
         final Locale locale = command.extractLocale();
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
@@ -368,7 +378,13 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     @Transactional
     @Override
     public CommandProcessingResult withdrawal(final Long savingsId, final JsonCommand command) {
-
+    	//Validate main account or not
+    	final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(savingsId);
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
+    	if (!isMainAccount) {
+    		throw new MainSavingsAccountException(account.getAccountNumber()); 
+    	}
+    	
         this.savingsAccountTransactionDataValidator.validate(command);
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
@@ -379,8 +395,6 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final Map<String, Object> changes = new LinkedHashMap<>();
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
-
-        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         checkClientOrGroupActive(account);
         final boolean isAccountTransfer = false;
         final boolean isRegularTransaction = true;
@@ -1376,7 +1390,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
         boolean isAccountTransfer = false;
         final boolean isReversal = true;
-        final BigDecimal interestAccrued = savingsAccount.getTotalAccrualAmount();
+        BigDecimal interestAccrued = BigDecimal.ZERO;
+        if (savingsAccount.getTotalAccrualAmount() != null) {
+        	interestAccrued = savingsAccount.getTotalAccrualAmount();
+        }
         if (interestAccrued.compareTo(BigDecimal.ZERO) > 0) {
 			final Map<String, Object> accountingBridgeData = savingsAccount
 					.deriveAccountingBridgeDataForAccrual(applicationCurrency.toData(), isAccountTransfer, interestAccrued, accrualDate);
