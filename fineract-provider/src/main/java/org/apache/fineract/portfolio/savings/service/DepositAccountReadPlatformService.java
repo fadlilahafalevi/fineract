@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 import org.apache.fineract.infrastructure.core.data.PaginationParameters;
@@ -27,6 +28,7 @@ import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
+import org.joda.time.LocalDate;
 
 public interface DepositAccountReadPlatformService {
 
@@ -54,4 +56,6 @@ public interface DepositAccountReadPlatformService {
     Collection<AccountTransferDTO> retrieveDataForInterestTransfer();
 
     Collection<Map<String, Object>> retriveDataForRDScheduleCreation();
+
+	Date findMaturityDate(Long savingsId);
 }
