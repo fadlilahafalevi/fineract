@@ -105,6 +105,35 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
         return new JournalEntryCommand(officeId, currencyCode, transactionDate, comments, credits, debits, referenceNumber,
                 accountingRuleId, amount, paymentTypeId, accountNumber, checkNumber, receiptNumber, bankNumber, routingCode);
     }
+    
+    public JournalEntryCommand commandFromApiJsonForFreqPosting(final String json) {
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        final Set<String> supportedParameters = JournalEntryJsonInputParams.getAllValues();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, supportedParameters);
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        final Long officeId = this.fromApiJsonHelper.extractLongNamed(JournalEntryJsonInputParams.OFFICE_ID.getValue(), element);
+        final String currencyCode = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.CURRENCY_CODE.getValue(), element);
+        final String comments = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.COMMENTS.getValue(), element);
+        final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(JournalEntryJsonInputParams.TRANSACTION_DATE.getValue(), element);
+        final String referenceNumber = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue(), element);
+        
+        final JsonObject topLevelJsonElement = element.getAsJsonObject();
+        final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(topLevelJsonElement);
+        final Long paymentTypeId = this.fromApiJsonHelper.extractLongNamed(JournalEntryJsonInputParams.PAYMENT_TYPE_ID.getValue(), element);
+        final String accountNumber = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.ACCOUNT_NUMBER.getValue(), element);
+        final String checkNumber = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.CHECK_NUMBER.getValue(), element);
+        final String receiptNumber = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.RECEIPT_NUMBER.getValue(), element);
+        final String bankNumber = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.BANK_NUMBER.getValue(), element);
+        final String routingCode = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.ROUTING_CODE.getValue(), element);
+
+        JournalEntryCommand journalEntryCommand = new JournalEntryCommand(officeId, currencyCode, transactionDate, comments, null, null, referenceNumber,
+                null, null, paymentTypeId, accountNumber, checkNumber, receiptNumber, bankNumber, routingCode);
+        return journalEntryCommand;
+    }
 
     /**
      * @param comments

@@ -52,8 +52,8 @@ public class JournalEntryCommand {
     @SuppressWarnings("unused")
     private final String routingCode;
 
-    private final SingleDebitOrCreditEntryCommand[] credits;
-    private final SingleDebitOrCreditEntryCommand[] debits;
+    private SingleDebitOrCreditEntryCommand[] credits;
+    private SingleDebitOrCreditEntryCommand[] debits;
 
     public JournalEntryCommand(final Long officeId, final String currencyCode, final LocalDate transactionDate, final String comments,
             final SingleDebitOrCreditEntryCommand[] credits, final SingleDebitOrCreditEntryCommand[] debits, final String referenceNumber,
@@ -167,6 +167,23 @@ public class JournalEntryCommand {
 			throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors);
 		}
 	}
+	
+	public void validateForCreatingFreqPosting() {
+		final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+		final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("GLJournalEntry");
+		
+		baseDataValidator.reset().parameter("transactionDate").value(this.transactionDate).notBlank();
+		baseDataValidator.reset().parameter("officeId").value(this.officeId).notNull().integerGreaterThanZero();
+		baseDataValidator.reset().parameter(JournalEntryJsonInputParams.CURRENCY_CODE.getValue()).value(this.currencyCode).notBlank();
+		baseDataValidator.reset().parameter("comments").value(this.comments).ignoreIfNull().notExceedingLengthOf(500);
+		baseDataValidator.reset().parameter("referenceNumber").value(this.referenceNumber).ignoreIfNull().notExceedingLengthOf(100);
+		baseDataValidator.reset().parameter("accountingRule").value(this.accountingRuleId).ignoreIfNull().longGreaterThanZero();
+		baseDataValidator.reset().parameter("paymentTypeId").value(this.paymentTypeId).ignoreIfNull().longGreaterThanZero();
+		
+		if (!dataValidationErrors.isEmpty()) {
+			throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors);
+		}
+	}
 
     /**
      * @param baseDataValidator
@@ -209,4 +226,24 @@ public class JournalEntryCommand {
         return this.accountingRuleId;
     }
 
+	/**
+	 * @param credits the credits to set
+	 */
+	public void setCredits(SingleDebitOrCreditEntryCommand[] credits) {
+		this.credits = credits;
+	}
+
+	/**
+	 * @param debits the debits to set
+	 */
+	public void setDebits(SingleDebitOrCreditEntryCommand[] debits) {
+		this.debits = debits;
+	}
+
+	/**
+	 * @return the currencyCode
+	 */
+	public String getCurrencyCode() {
+		return currencyCode;
+	}
 }
