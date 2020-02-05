@@ -34,4 +34,8 @@ public interface SavingsProductReadPlatformService {
 
     SavingsProductData retrieveOne(Long productId);
 
+	Collection<SavingsProductData> retrieveAllMainProductForLookup();
+
+	Collection<SavingsProductData> retrieveAllSubProductForLookup();
+
 }

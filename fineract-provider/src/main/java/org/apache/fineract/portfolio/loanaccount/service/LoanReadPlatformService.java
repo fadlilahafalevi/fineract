@@ -136,5 +136,4 @@ public interface LoanReadPlatformService {
 	Long retrieveLoanIdByAccountNumber(String loanAccountNumber);
 	
 	String retrieveAccountNumberByAccountId(Long accountId);
-
 }

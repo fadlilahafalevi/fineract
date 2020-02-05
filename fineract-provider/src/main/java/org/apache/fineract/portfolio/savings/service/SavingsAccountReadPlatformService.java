@@ -70,5 +70,10 @@ public interface SavingsAccountReadPlatformService {
 	Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistory(String accountNo, String startdate,
 			String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize);
 
+	Boolean checkingMainProduct(Long clientId);
+
+	Boolean isMainProduct(Long savingsId);
+
+	Collection<SavingsAccountData> retrieveActiveMainForLookup(Long clientId, DepositAccountType depositAccountType);
 
 }

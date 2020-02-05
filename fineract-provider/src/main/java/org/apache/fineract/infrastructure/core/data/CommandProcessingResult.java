@@ -21,6 +21,7 @@ package org.apache.fineract.infrastructure.core.data;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +40,7 @@ public class CommandProcessingResult implements Serializable {
     private final Long resourceId;
     private final Long subResourceId;
     private final String transactionId;
+    private final List<String> transactionIds;
     private final String accountNumber;
     private final Map<String, Object> changes;
     @SuppressWarnings("unused")
@@ -48,9 +50,9 @@ public class CommandProcessingResult implements Serializable {
 
     public static CommandProcessingResult fromDetails(Date createdDate, final Long commandId, String accountNumber, final Long officeId, final Long groupId, final Long clientId,
             final Long loanId, final Long savingsId, final String resourceIdentifier, final Long entityId, final String transactionId,
-            final Map<String, Object> changes, final Long productId, final Boolean rollbackTransaction, final Long subResourceId) {
+            final Map<String, Object> changes, final Long productId, final Boolean rollbackTransaction, final Long subResourceId, final List<String> transactionIds) {
         return new CommandProcessingResult(createdDate, commandId, accountNumber, officeId, groupId, clientId, loanId, savingsId, resourceIdentifier, entityId,
-                transactionId, changes, productId, rollbackTransaction, subResourceId);
+                transactionId, changes, productId, rollbackTransaction, subResourceId, transactionIds);
     }
 
     public static CommandProcessingResult commandOnlyResult(final Long commandId) {
@@ -103,12 +105,13 @@ public class CommandProcessingResult implements Serializable {
         this.productId = null;
         this.subResourceId = null;
         this.accountNumber = null;
+        this.transactionIds = null;
     }
 
     private CommandProcessingResult(Date createdDate, final Long commandId, final String accountNumber, final Long officeId, final Long groupId, final Long clientId, final Long loanId,
             final Long savingsId, final String resourceIdentifier, final Long resourceId, final String transactionId,
-            final Map<String, Object> changesOnly, final Long productId, Boolean rollbackTransaction, final Long subResourceId) {
-		this.setCreatedDate(createdDate);
+            final Map<String, Object> changesOnly, final Long productId, Boolean rollbackTransaction, final Long subResourceId, final List<String> transactionIds) {
+		this.createdDate = createdDate;
 		this.commandId = commandId;
         this.accountNumber = accountNumber;
         this.officeId = officeId;
@@ -123,6 +126,7 @@ public class CommandProcessingResult implements Serializable {
         this.productId = productId;
         this.rollbackTransaction = rollbackTransaction;
         this.subResourceId = subResourceId;
+        this.transactionIds = transactionIds;
     }
 
     private CommandProcessingResult(final Long resourceId,  final Long officeId, final Long commandId, final Map<String, Object> changesOnly) {
@@ -144,6 +148,7 @@ public class CommandProcessingResult implements Serializable {
         this.productId = null;
         this.subResourceId = null;
         this.accountNumber = null;
+        this.transactionIds = null;
     }
 
     public Long commandId() {

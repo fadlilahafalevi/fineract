@@ -253,6 +253,27 @@ public class AccountingProcessorHelper {
         return new SavingsDTO(loanId, loanProductId, officeId, currencyData.code(), cashBasedAccountingEnabled,
                 accrualBasedAccountingEnabled, newSavingsTransactions);
     }
+    
+    public SavingsDTO populateSavingsAccrualDtoFromMap(final Map<String, Object> accountingBridgeData, final boolean cashBasedAccountingEnabled,
+            final boolean accrualBasedAccountingEnabled) {
+        final Long savingsId = (Long) accountingBridgeData.get("savingsId");
+        final Long savingsProductId = (Long) accountingBridgeData.get("savingsProductId");
+        final Long officeId = (Long) accountingBridgeData.get("officeId");
+        final CurrencyData currencyData = (CurrencyData) accountingBridgeData.get("currency");
+        final BigDecimal interestAccrued = (BigDecimal) accountingBridgeData.get("interestAccrued");
+        final LocalDate accrualDate = (LocalDate) accountingBridgeData.get("accrualDate");
+        SavingsDTO savingsDTO = new SavingsDTO();
+        savingsDTO.setSavingsId(savingsId);
+        savingsDTO.setSavingsProductId(savingsProductId);
+        savingsDTO.setOfficeId(officeId);
+        savingsDTO.setCurrencyCode(currencyData.code());
+        savingsDTO.setInterestAccrued(interestAccrued);
+        savingsDTO.setAccrualDate(accrualDate);
+        savingsDTO.setCashBasedAccountingEnabled(cashBasedAccountingEnabled);
+        savingsDTO.setAccrualBasedAccountingEnabled(accrualBasedAccountingEnabled);
+        
+        return savingsDTO;
+    }
 
     public SharesDTO populateSharesDtoFromMap(final Map<String, Object> accountingBridgeData, final boolean cashBasedAccountingEnabled,
             final boolean accrualBasedAccountingEnabled) {
@@ -1317,5 +1338,46 @@ public class AccountingProcessorHelper {
 
     private GLAccount getGLAccountById(final Long accountId) {
         return this.accountRepositoryWrapper.findOneWithNotFoundDetection(accountId);
+    }
+    
+    public void createJournalEntriesForReclass(final Office office, final String currencyCode, final int accountTypeToDebitId,
+            final int accountTypeToCreditId, final Long loanProductId, final Long paymentTypeId, final Long loanId,
+            final Long transactionId, final Date transactionDate, final BigDecimal amount, final String loanAccNumber, final Long installment) {
+        final GLAccount debitAccount = getLinkedGLAccountForLoanProduct(loanProductId, accountTypeToDebitId, paymentTypeId);
+        final GLAccount creditAccount = getLinkedGLAccountForLoanProduct(loanProductId, accountTypeToCreditId, paymentTypeId);
+        createReclassPaymentDebitJournalEntry(transactionDate, transactionId, office, currencyCode, debitAccount, amount, loanAccNumber, installment);
+        createReclassPaymentCreditJournalEntry(transactionDate, transactionId, office, currencyCode, creditAccount, amount, loanAccNumber, installment);
+    }
+    
+    public void createReclassPaymentDebitJournalEntry(Date transactionDate, Long reclassId, Office office, String currencyCode,
+            GLAccount account, BigDecimal amount, String loanAccNumber, Long installment) {
+        SavingsAccountTransaction savingsAccountTransaction = null;
+        ClientTransaction clientTransaction = null;
+        PaymentDetail paymentDetail = null;
+        final Long shareTransactionId = null;
+        final boolean manualEntry = false;
+        LoanTransaction loanTransaction = this.loanTransactionRepository.findOne(reclassId);
+        String modifiedTransactionId = LOAN_TRANSACTION_IDENTIFIER + reclassId;
+        String description = "Reclass Accrual from Loan Account : " + loanAccNumber + " for installment " + installment;
+        final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
+                manualEntry, transactionDate, JournalEntryType.DEBIT, amount, description, PortfolioProductType.LOAN.getValue(),
+                reclassId, null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
+        this.glJournalEntryRepository.saveAndFlush(journalEntry);
+    }
+
+    public void createReclassPaymentCreditJournalEntry(Date transactionDate, Long reclassId, Office office, String currencyCode,
+            GLAccount account, BigDecimal amount, String loanAccNumber, Long installment) {
+        SavingsAccountTransaction savingsAccountTransaction = null;
+        ClientTransaction clientTransaction = null;
+        PaymentDetail paymentDetail = null;
+        final Long shareTransactionId = null;
+        final boolean manualEntry = false;
+        String modifiedTransactionId = LOAN_TRANSACTION_IDENTIFIER + reclassId;
+        String description = "Reclass Accrual from Loan Account : " + loanAccNumber + " for installment " + installment;
+        LoanTransaction loanTransaction = this.loanTransactionRepository.findOne(reclassId);
+        final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId,
+                manualEntry, transactionDate, JournalEntryType.CREDIT, amount, description, PortfolioProductType.LOAN.getValue(),
+                reclassId, null, loanTransaction, savingsAccountTransaction, clientTransaction, shareTransactionId);
+        this.glJournalEntryRepository.saveAndFlush(journalEntry);
     }
 }

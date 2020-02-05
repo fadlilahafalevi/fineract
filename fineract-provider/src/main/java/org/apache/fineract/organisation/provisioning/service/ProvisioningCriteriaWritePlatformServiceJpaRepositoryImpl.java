@@ -32,6 +32,7 @@ import org.apache.fineract.accounting.provisioning.service.ProvisioningEntriesRe
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.organisation.provisioning.constants.ProvisioningCriteriaConstants;
@@ -138,12 +139,34 @@ public class ProvisioningCriteriaWritePlatformServiceJpaRepositoryImpl implement
         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(command.parsedJson().getAsJsonObject());
         JsonArray jsonProvisioningCriteria = this.fromApiJsonHelper.extractJsonArrayNamed(
                 ProvisioningCriteriaConstants.JSON_PROVISIONING_DEFINITIONS_PARAM, command.parsedJson());
+        
+        for (int i = 0; i < jsonProvisioningCriteria.size(); i++){
+        	for (int j = i + 1; j < jsonProvisioningCriteria.size();){
+        		JsonObject jsonObject = jsonProvisioningCriteria.get(i).getAsJsonObject();
+        		JsonObject jsonObjectj = jsonProvisioningCriteria.get(j).getAsJsonObject();
+        		
+                Long minimumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MINIMUM_AGE_PARAM, jsonObject);
+                Long maximumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MAXIMUM_AGE_PARAM, jsonObject);
+                
+                Long minimumAgej = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MINIMUM_AGE_PARAM, jsonObjectj);
+                Long maximumAgej = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MAXIMUM_AGE_PARAM, jsonObjectj);
+                
+                if (minimumAge <= maximumAgej && minimumAgej <= maximumAge) {
+                	throw new PlatformApiDataValidationException("error.msg.overlaping", "Gap", null);
+                } else if (minimumAge <= maximumAgej && maximumAge + 1 != minimumAgej) {
+                	throw new PlatformApiDataValidationException("error.msg.gap", "Gap", null);
+                }
+                break;
+        	}
+        }
+        
         for (JsonElement element : jsonProvisioningCriteria) {
             JsonObject jsonObject = element.getAsJsonObject();
             Long id = this.fromApiJsonHelper.extractLongNamed("id", jsonObject) ;
             Long categoryId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_CATEOGRYID_PARAM, jsonObject);
             Long minimumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MINIMUM_AGE_PARAM, jsonObject);
             Long maximumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MAXIMUM_AGE_PARAM, jsonObject);
+            Boolean isNPL = this.fromApiJsonHelper.extractBooleanNamed(ProvisioningCriteriaConstants.JSON_ISNPL_PARAM, jsonObject);
             BigDecimal provisioningpercentage = this.fromApiJsonHelper.extractBigDecimalNamed(ProvisioningCriteriaConstants.JSON_PROVISIONING_PERCENTAGE_PARAM,
                     jsonObject, locale);
             Long assetAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM, jsonObject);
@@ -155,7 +178,7 @@ public class ProvisioningCriteriaWritePlatformServiceJpaRepositoryImpl implement
             String expenseAccountName = null ;
             ProvisioningCriteriaDefinitionData data = new ProvisioningCriteriaDefinitionData(id, categoryId, 
                     categoryName, minimumAge, maximumAge, provisioningpercentage, 
-                    assetAccount.getId(), assetAccount.getGlCode(), liabilityAccountName, expenseAccount.getId(), expenseAccount.getGlCode(), expenseAccountName) ;
+                    assetAccount.getId(), assetAccount.getGlCode(), liabilityAccountName, expenseAccount.getId(), expenseAccount.getGlCode(), expenseAccountName, isNPL) ;
             provisioningCriteria.update(data, assetAccount, expenseAccount) ;
         }
     }

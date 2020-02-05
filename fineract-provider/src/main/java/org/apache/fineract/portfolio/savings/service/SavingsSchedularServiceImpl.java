@@ -116,4 +116,35 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
 			}
 		}
     }
+
+    @CronTarget(jobName = JobName.ACCRUAL_INTEREST_FOR_SAVINGS)
+    @Override
+    public void accrualInterestForAccounts() throws JobExecutionException {
+        int page = 0;
+        Integer initialSize = 500;
+        Integer totalPageSize = 0;
+        StringBuffer sb = new StringBuffer();
+        do {
+            PageRequest pageRequest = new PageRequest(page, initialSize);
+            Page<SavingsAccount> savingsAccounts = this.savingsAccountRepository.findByStatus(SavingsAccountStatusType.ACTIVE.getValue(),
+                    pageRequest);
+            for (SavingsAccount savingsAccount : savingsAccounts.getContent()) {
+                try {
+                    this.savingAccountAssembler.assignSavingAccountHelpers(savingsAccount);
+					this.savingsAccountWritePlatformService.accrualPosting(savingsAccount);
+                } catch (Exception e) {
+                    Throwable realCause = e;
+                    if (e.getCause() != null) {
+                        realCause = e.getCause();
+                    }
+                    sb.append("failed to post interest for Savings with id " + savingsAccount.getId() + " with message "
+                            + realCause.getMessage());
+                }
+            }
+            page++;
+            totalPageSize = savingsAccounts.getTotalPages();
+        } while (page < totalPageSize);
+
+        if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
+    }
 }

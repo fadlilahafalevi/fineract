@@ -28,4 +28,6 @@ public interface AccountingRuleReadPlatformService {
 
     AccountingRuleData retrieveAccountingRuleById(Long accountingRuleId);
 
+	AccountingRuleData retrieveAccountingRuleByName(String accountingRuleName);
+
 }

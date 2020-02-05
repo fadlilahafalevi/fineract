@@ -54,7 +54,7 @@ public class DataSourceProperties extends PoolProperties {
     @Value("${" + UID + ":root}")
     private volatile @NotNull String username;
 
-    @Value("${" + PWD + ":amanamansaja}")
+    @Value("${" + PWD + ":password}")
     private volatile @NotNull String password;
 
     @Value("${" + PROTOCOL + ":jdbc}")

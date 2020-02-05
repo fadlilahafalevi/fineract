@@ -19,6 +19,7 @@
 package org.apache.fineract.infrastructure.core.data;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,11 +43,12 @@ public class CommandProcessingResultBuilder {
     private Map<String, Object> changes;
     private Long productId;
     private boolean rollbackTransaction = false;
+    private List<String> transactionIds;
 
     public CommandProcessingResult build() {
         return CommandProcessingResult.fromDetails(this.createdDate, this.commandId, this.accountNumber, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
                 this.resourceIdentifier, this.entityId, this.transactionId, this.changes, this.productId, this.rollbackTransaction,
-                this.subEntityId);
+                this.subEntityId, this.transactionIds);
     }
     public CommandProcessingResultBuilder withCreatedDate(Date withCreatedDate) {
         this.createdDate = withCreatedDate;
@@ -116,6 +118,11 @@ public class CommandProcessingResultBuilder {
         this.transactionId = withTransactionId;
         return this;
     }
+    
+    public CommandProcessingResultBuilder withTransactionIds(final List<String> withTransactionIds) {
+        this.transactionIds = withTransactionIds;
+        return this;
+    }
 
     public CommandProcessingResultBuilder withProductId(final Long productId) {
         this.productId = productId;
@@ -126,5 +133,4 @@ public class CommandProcessingResultBuilder {
         this.rollbackTransaction = this.rollbackTransaction || rollbackTransaction;
         return this;
     }
-
 }

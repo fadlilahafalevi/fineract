@@ -29,4 +29,8 @@ public class AccountingRuleNotFoundException extends AbstractPlatformResourceNot
     public AccountingRuleNotFoundException(final Long id) {
         super("error.msg.accounting.rule.id.invalid", "Accounting Rule with identifier " + id + " does not exist", id);
     }
+    
+    public AccountingRuleNotFoundException(final String name) {
+        super("error.msg.accounting.rule.id.invalid", "Accounting Rule with identifier " + name + " does not exist", name);
+    }
 }

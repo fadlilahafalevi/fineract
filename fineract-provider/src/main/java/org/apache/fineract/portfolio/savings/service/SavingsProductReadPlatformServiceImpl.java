@@ -78,6 +78,40 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
     }
 
     @Override
+    public Collection<SavingsProductData> retrieveAllMainProductForLookup() {
+
+        String sql = "select " + this.savingsProductLookupsRowMapper.schema() + " where sp.deposit_type_enum = ? and sp.is_main_product = true ";
+
+        // Check if branch specific products are enabled. If yes, fetch only
+        // products mapped to current user's office
+        String inClause = fineractEntityAccessUtil
+                .getSQLWhereClauseForProductIDsForUserOffice_ifGlobalConfigEnabled(FineractEntityType.SAVINGS_PRODUCT);
+        if ((inClause != null) && (!(inClause.trim().isEmpty()))) {
+            sql += " and id in ( " + inClause + " ) ";
+        }
+
+        return this.jdbcTemplate.query(sql, this.savingsProductLookupsRowMapper,
+                new Object[] { DepositAccountType.SAVINGS_DEPOSIT.getValue() });
+    }
+
+    @Override
+    public Collection<SavingsProductData> retrieveAllSubProductForLookup() {
+
+        String sql = "select " + this.savingsProductLookupsRowMapper.schema() + " where sp.deposit_type_enum = ? and sp.is_main_product = false";
+
+        // Check if branch specific products are enabled. If yes, fetch only
+        // products mapped to current user's office
+        String inClause = fineractEntityAccessUtil
+                .getSQLWhereClauseForProductIDsForUserOffice_ifGlobalConfigEnabled(FineractEntityType.SAVINGS_PRODUCT);
+        if ((inClause != null) && (!(inClause.trim().isEmpty()))) {
+            sql += " and id in ( " + inClause + " ) ";
+        }
+
+        return this.jdbcTemplate.query(sql, this.savingsProductLookupsRowMapper,
+                new Object[] { DepositAccountType.SAVINGS_DEPOSIT.getValue() });
+    }
+
+    @Override
     public Collection<SavingsProductData> retrieveAllForLookup() {
 
         String sql = "select " + this.savingsProductLookupsRowMapper.schema() + " where sp.deposit_type_enum = ? ";
@@ -140,7 +174,8 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             sqlBuilder.append("sp.days_to_inactive as daysToInactive,");
             sqlBuilder.append("sp.days_to_dormancy as daysToDormancy,");
             sqlBuilder.append("sp.days_to_escheat as daysToEscheat, ");
-            sqlBuilder.append("sp.interest_compounding_type_enum as interestCompoundingTypeEnum ");
+            sqlBuilder.append("sp.interest_compounding_type_enum as interestCompoundingTypeEnum, ");
+            sqlBuilder.append("sp.is_main_product as isMainProduct ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sp.tax_group_id  ");
@@ -228,6 +263,8 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             interestCompoundingType = CompoundingType.compoundingType(CompoundingType
             		.fromInt(JdbcSupport.getInteger(rs, "interestCompoundingTypeEnum")));
             
+            final Boolean isMainProduct = rs.getBoolean("isMainProduct");
+            
             SavingsProductData savingsProductData = SavingsProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
@@ -235,6 +272,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
                     minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax,
                     taxGroupData, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat);
             savingsProductData.setInterestCompoundingType(interestCompoundingType);
+            savingsProductData.setIsMainProduct(isMainProduct);
             return savingsProductData;
         }
     }

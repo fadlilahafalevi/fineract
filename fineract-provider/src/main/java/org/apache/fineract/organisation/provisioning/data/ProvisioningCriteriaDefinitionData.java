@@ -35,10 +35,11 @@ public final class ProvisioningCriteriaDefinitionData implements Comparable<Prov
     private final Long expenseAccount;
     private final String expenseCode;
     private final String expenseName ;
+    private final Boolean isNPL;
     
     public ProvisioningCriteriaDefinitionData(Long id, Long categoryId, String categoryName, Long minAge, Long maxAge,
             BigDecimal provisioningPercentage, Long assetAccount, final String assetCode, String assetName, Long expenseAccount, 
-            final String expenseCode, final String expenseName) {
+            final String expenseCode, final String expenseName, Boolean isNPL) {
         this.id = id;
         this.categoryId = categoryId;
         this.minAge = minAge;
@@ -51,10 +52,11 @@ public final class ProvisioningCriteriaDefinitionData implements Comparable<Prov
         this.expenseCode = expenseCode;
         this.assetName = assetName ;
         this.expenseName =  expenseName ;
+        this.isNPL = isNPL;
     }
 
     public static ProvisioningCriteriaDefinitionData template(Long categoryId, String categoryName) {
-        return new ProvisioningCriteriaDefinitionData(null, categoryId, categoryName, null, null, null, null, null, null, null, null, null);
+        return new ProvisioningCriteriaDefinitionData(null, categoryId, categoryName, null, null, null, null, null, null, null, null, null, null);
     }
 
     public Long getId() {
@@ -115,6 +117,13 @@ public final class ProvisioningCriteriaDefinitionData implements Comparable<Prov
 	 */
 	public String getExpenseName() {
 		return expenseName;
+	}
+
+	/**
+	 * @return the isNPL
+	 */
+	public Boolean getIsNPL() {
+		return isNPL;
 	}
 
 	@Override

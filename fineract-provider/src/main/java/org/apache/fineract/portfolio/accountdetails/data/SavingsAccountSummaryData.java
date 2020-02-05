@@ -50,6 +50,9 @@ public class SavingsAccountSummaryData {
 
     //differentiate deposit accounts Savings, FD and RD accounts
     private final EnumOptionData depositType;
+    
+    //for FD only
+    private String maturityDate;
 
     public SavingsAccountSummaryData(final Long id, final String accountNo, final String externalId, final Long productId,
             final String productName, final String shortProductName, final SavingsAccountStatusEnumData status, final CurrencyData currency,
@@ -70,4 +73,20 @@ public class SavingsAccountSummaryData {
         this.subStatus = subStatus;
         this.lastActiveTransactionDate = lastActiveTransactionDate;
     }
+
+	public String getMaturityDate() {
+		return maturityDate;
+	}
+
+	public void setMaturityDate(String maturityDate) {
+		this.maturityDate = maturityDate;
+	}
+
+	public EnumOptionData getDepositType() {
+		return depositType;
+	}
+
+	public Long getId() {
+		return id;
+	}
 }

@@ -211,6 +211,9 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
     //Afad 20200110
   	@Column(name = "interest_compounding_type_enum", nullable = true)
   	protected Integer interestCompoundingTypeEnum;
+  	
+  	@Column(name = "is_main_product", nullable = true)
+  	protected Boolean isMainProduct;
 
     public static SavingsProduct createNew(final String name, final String shortName, final String description,
             final MonetaryCurrency currency, final BigDecimal interestRate,
@@ -611,6 +614,12 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
 			actualChanges.put(SavingsApiConstants.interestCompoundingTypeParamName, newValue);
 			this.interestCompoundingTypeEnum = newValue;
 		}
+        
+        if (command.isChangeInBooleanParameterNamed(SavingsApiConstants.isMainProduct, this.isMainProduct)) {
+			final Boolean newValue = command.booleanObjectValueOfParameterNamed(SavingsApiConstants.isMainProduct);
+			actualChanges.put(SavingsApiConstants.isMainProduct, newValue);
+			this.isMainProduct = newValue;
+		}
 
         validateLockinDetails();
         esnureOverdraftLimitsSetForOverdraftAccounts();
@@ -768,6 +777,14 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
 
 	public void setInterestCompoundingTypeEnum(Integer interestCompoundingTypeEnum) {
 		this.interestCompoundingTypeEnum = interestCompoundingTypeEnum;
+	}
+
+	public Boolean getIsMainProduct() {
+		return isMainProduct;
+	}
+
+	public void setIsMainProduct(Boolean isMainProduct) {
+		this.isMainProduct = isMainProduct;
 	}
 
 }

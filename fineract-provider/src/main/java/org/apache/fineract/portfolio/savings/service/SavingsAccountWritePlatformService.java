@@ -120,4 +120,7 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult releaseAmount(Long savingsId, Long transactionId);
 
+	void accrualPosting(SavingsAccount account);
+
+	void postJournalEntriesForReversalAccrual(SavingsAccount savingsAccount, LocalDate accrualDate);
 }

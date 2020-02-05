@@ -540,7 +540,11 @@ public class FixedDepositAccount extends SavingsAccount {
                 }
             }
         }
-        recalucateDailyBalanceDetails = applyWithholdTaxForDepositAccounts(interestPostingUpToDate, recalucateDailyBalanceDetails);
+    }
+
+	public void recalculateDailyBalanceDetailsAfterTax(final LocalDate interestPostingUpToDate,
+			boolean recalucateDailyBalanceDetails) {
+		recalucateDailyBalanceDetails = applyWithholdTaxForDepositAccounts(interestPostingUpToDate, recalucateDailyBalanceDetails);
         if (recalucateDailyBalanceDetails) {
             // update existing transactions so derived balance fields are
             // correct.
@@ -548,7 +552,7 @@ public class FixedDepositAccount extends SavingsAccount {
         }
 
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
-    }
+	}
 
     public void postPreMaturityInterest(final LocalDate accountCloseDate, final boolean isPreMatureClosure,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth) {
@@ -571,14 +575,7 @@ public class FixedDepositAccount extends SavingsAccount {
         //    recalucateDailyBalance = true;
         //}
 
-        recalucateDailyBalance = applyWithholdTaxForDepositAccounts(accountCloseDate, recalucateDailyBalance);
-
-        if (recalucateDailyBalance) {
-            // update existing transactions so derived balance fields are
-            // correct.
-            recalculateDailyBalances(Money.zero(this.currency), accountCloseDate);
-        }
-        this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
+        recalculateDailyBalanceDetailsAfterTax(accountCloseDate, recalucateDailyBalance);
         this.accountTermAndPreClosure.updateMaturityDetails(this.getAccountBalance(), accountCloseDate);
 
     }
@@ -789,7 +786,7 @@ public class FixedDepositAccount extends SavingsAccount {
         final boolean withdrawalFeeApplicableForTransfer = false;
         final String accountNumber = null;
         final boolean withHoldTax = this.withHoldTax;
-        final FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product,
+        FixedDepositAccount reInvestedAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product,
                 savingsOfficer, accountNumber, externalId, accountType, getClosedOnDate(), closedBy, interestRate, compoundingPeriodType,
                 postingPeriodType, interestCalculationType, daysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure,
@@ -797,6 +794,7 @@ public class FixedDepositAccount extends SavingsAccount {
 
         newAccountTermAndPreClosure.updateAccountReference(reInvestedAccount);
         newChart.updateDepositAccountReference(reInvestedAccount);
+        reInvestedAccount.setInterestCompoundingTypeEnum(this.interestCompoundingTypeEnum);
 
         return reInvestedAccount;
 

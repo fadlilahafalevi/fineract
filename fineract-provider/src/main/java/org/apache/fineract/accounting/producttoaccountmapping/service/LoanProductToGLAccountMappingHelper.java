@@ -72,6 +72,16 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
             final int placeHolderTypeId) {
         saveProductToAccountMapping(element, paramName, productId, placeHolderTypeId, GLAccountType.LIABILITY, PortfolioProductType.LOAN);
     }
+    
+    public void saveLoanToOffBalanceSheetClaimAccountMapping(final JsonElement element, final String paramName, final Long productId,
+            final int placeHolderTypeId) {
+        saveProductToAccountMapping(element, paramName, productId, placeHolderTypeId, GLAccountType.OFF_BALANCE_SHEET_CLAIM, PortfolioProductType.LOAN);
+    }
+    
+    public void saveLoanToOffBalanceSheetLiabilityAccountMapping(final JsonElement element, final String paramName, final Long productId,
+            final int placeHolderTypeId) {
+        saveProductToAccountMapping(element, paramName, productId, placeHolderTypeId, GLAccountType.OFF_BALANCE_SHEET_LIABILITY, PortfolioProductType.LOAN);
+    }
 
     /*** Set of abstractions for merging Savings Products to GL Account Mappings ***/
     public void mergeLoanToAssetAccountMappingChanges(final JsonElement element, final String paramName, final Long productId,
@@ -96,6 +106,18 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
             final int accountTypeId, final String accountTypeName, final Map<String, Object> changes) {
         mergeProductToAccountMappingChanges(element, paramName, productId, accountTypeId, accountTypeName, changes,
                 GLAccountType.LIABILITY, PortfolioProductType.LOAN);
+    }
+    
+    public void mergeLoanToOffBalanceSheetClaimAccountMappingChanges(final JsonElement element, final String paramName, final Long productId,
+            final int accountTypeId, final String accountTypeName, final Map<String, Object> changes) {
+        mergeProductToAccountMappingChanges(element, paramName, productId, accountTypeId, accountTypeName, changes,
+                GLAccountType.OFF_BALANCE_SHEET_CLAIM, PortfolioProductType.LOAN);
+    }
+    
+    public void mergeLoanToOffBalanceSheetLiabilityAccountMappingChanges(final JsonElement element, final String paramName, final Long productId,
+            final int accountTypeId, final String accountTypeName, final Map<String, Object> changes) {
+        mergeProductToAccountMappingChanges(element, paramName, productId, accountTypeId, accountTypeName, changes,
+                GLAccountType.OFF_BALANCE_SHEET_LIABILITY, PortfolioProductType.LOAN);
     }
 
     /*** Abstractions for payments channel related to loan products ***/
@@ -154,6 +176,16 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
                 LOAN_PRODUCT_ACCOUNTING_PARAMS.FEES_RECEIVABLE.getValue(), element);
         final Long receivablePenaltyAccountId = this.fromApiJsonHelper.extractLongNamed(
                 LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_RECEIVABLE.getValue(), element);
+        
+        final Long accruedAssetInterestAccountId = this.fromApiJsonHelper.extractLongNamed(
+        		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ASSET.getValue(), element);
+        final Long accruedAdministrativeInterestClaimAccountId = this.fromApiJsonHelper.extractLongNamed(
+        		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), element);
+        final Long accruedAdministrativeInterestLiabilityAccountId = this.fromApiJsonHelper.extractLongNamed(
+        		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), element);
+        
+        final Long accruedReverseAccountId = this.fromApiJsonHelper.extractLongNamed(
+        		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_REVERSE.getValue(), element); 
 
         switch (accountingRuleType) {
             case NONE:
@@ -166,12 +198,16 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
             case ACCRUAL_PERIODIC:
                 populateChangesForAccrualBasedAccounting(changes, fundAccountId, loanPortfolioAccountId, incomeFromInterestId,
                         incomeFromFeeId, incomeFromPenaltyId, writeOffAccountId, overPaymentAccountId, transfersInSuspenseAccountId,
-                        incomeFromRecoveryAccountId, receivableInterestAccountId, receivableFeeAccountId, receivablePenaltyAccountId);
+                        incomeFromRecoveryAccountId, receivableInterestAccountId, receivableFeeAccountId, receivablePenaltyAccountId, 
+                        accruedAssetInterestAccountId, accruedAdministrativeInterestClaimAccountId, accruedAdministrativeInterestLiabilityAccountId,
+                        accruedReverseAccountId);
             break;
             case ACCRUAL_UPFRONT:
                 populateChangesForAccrualBasedAccounting(changes, fundAccountId, loanPortfolioAccountId, incomeFromInterestId,
                         incomeFromFeeId, incomeFromPenaltyId, writeOffAccountId, overPaymentAccountId, transfersInSuspenseAccountId,
-                        incomeFromRecoveryAccountId, receivableInterestAccountId, receivableFeeAccountId, receivablePenaltyAccountId);
+                        incomeFromRecoveryAccountId, receivableInterestAccountId, receivableFeeAccountId, receivablePenaltyAccountId, 
+                        accruedAssetInterestAccountId, accruedAdministrativeInterestClaimAccountId, accruedAdministrativeInterestLiabilityAccountId,
+                        accruedReverseAccountId);
             break;
         }
 
@@ -182,11 +218,16 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
             final Long loanPortfolioAccountId, final Long incomeFromInterestId, final Long incomeFromFeeId, final Long incomeFromPenaltyId,
             final Long writeOffAccountId, final Long overPaymentAccountId, final Long transfersInSuspenseAccountId,
             final Long incomeFromRecoveryAccountId, final Long receivableInterestAccountId, final Long receivableFeeAccountId,
-            final Long receivablePenaltyAccountId) {
+            final Long receivablePenaltyAccountId, Long accruedAssetInterestId, Long accruedAdministrativeInterestClaimId, 
+            Long accruedAdministrativeInterestLiabilityAccountId, Long accruedReverseId) {
 
         changes.put(LOAN_PRODUCT_ACCOUNTING_PARAMS.INTEREST_RECEIVABLE.getValue(), receivableInterestAccountId);
         changes.put(LOAN_PRODUCT_ACCOUNTING_PARAMS.FEES_RECEIVABLE.getValue(), receivableFeeAccountId);
         changes.put(LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_RECEIVABLE.getValue(), receivablePenaltyAccountId);
+        changes.put(LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ASSET.getValue(), accruedAssetInterestId);
+        changes.put(LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), accruedAdministrativeInterestClaimId);
+        changes.put(LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), accruedAdministrativeInterestLiabilityAccountId);
+        changes.put(LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_REVERSE.getValue(), accruedReverseId);
 
         populateChangesForCashBasedAccounting(changes, fundAccountId, loanPortfolioAccountId, incomeFromInterestId, incomeFromFeeId,
                 incomeFromPenaltyId, writeOffAccountId, overPaymentAccountId, transfersInSuspenseAccountId, incomeFromRecoveryAccountId);
@@ -272,6 +313,9 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
                 mergeLoanToAssetAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_RECEIVABLE.getValue(),
                         loanProductId, ACCRUAL_ACCOUNTS_FOR_LOAN.PENALTIES_RECEIVABLE.getValue(),
                         ACCRUAL_ACCOUNTS_FOR_LOAN.PENALTIES_RECEIVABLE.toString(), changes);
+                mergeLoanToAssetAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ASSET.getValue(),
+                        loanProductId, ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.toString(), changes);
 
                 // income
                 mergeLoanToIncomeAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.INTEREST_ON_LOANS.getValue(), loanProductId,
@@ -291,10 +335,20 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
                 mergeLoanToExpenseAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.LOSSES_WRITTEN_OFF.getValue(),
                         loanProductId, ACCRUAL_ACCOUNTS_FOR_LOAN.LOSSES_WRITTEN_OFF.getValue(),
                         ACCRUAL_ACCOUNTS_FOR_LOAN.LOSSES_WRITTEN_OFF.toString(), changes);
+                mergeLoanToExpenseAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_REVERSE.getValue(),
+                        loanProductId, ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_REVERSE.getValue(),
+                        ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_REVERSE.toString(), changes);
 
                 // liabilities
                 mergeLoanToLiabilityAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.OVERPAYMENT.getValue(), loanProductId,
                         CASH_ACCOUNTS_FOR_LOAN.OVERPAYMENT.getValue(), CASH_ACCOUNTS_FOR_LOAN.OVERPAYMENT.toString(), changes);
+                
+                // admininstrative
+                mergeLoanToOffBalanceSheetClaimAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), loanProductId,
+                		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.toString(), changes);
+                
+                mergeLoanToOffBalanceSheetLiabilityAccountMappingChanges(element, LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), loanProductId,
+                		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.toString(), changes);
             break;
         }
     }

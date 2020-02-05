@@ -58,4 +58,6 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
     
     Page<SavingsAccount> findByStatus(Integer status,Pageable pageable);
 
+    @Query("select sa from SavingsAccount sa where sa.product.isMainProduct = true and sa.client.id = :clientId and sa.status = 300")
+    SavingsAccount findMainAccountByClientId(@Param("clientId") Long clientId);
 }

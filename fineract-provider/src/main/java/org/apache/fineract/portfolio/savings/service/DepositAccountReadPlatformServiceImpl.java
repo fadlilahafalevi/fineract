@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -66,7 +67,6 @@ import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatform
 import org.apache.fineract.portfolio.savings.CompoundingType;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
-import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
@@ -330,7 +330,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         if (clientId != null) {
             client = this.clientReadPlatformService.retrieveOne(clientId);
             officeId = client.officeId();
-            savingsAccountDatas = this.savingsAccountReadPlatformService.retrieveActiveForLookup(clientId,
+            savingsAccountDatas = this.savingsAccountReadPlatformService.retrieveActiveMainForLookup(clientId,
                     DepositAccountType.SAVINGS_DEPOSIT);
         }
 
@@ -1520,4 +1520,13 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         }
 
     }
+
+	@Override
+	public Date findMaturityDate(Long savingsId) {
+		final String sql = "select atp.maturity_date "
+				+ "from m_savings_account sa "
+				+ "left join m_deposit_account_term_and_preclosure atp on atp.savings_account_id = sa.id "
+				+ "where sa.id = ?";
+		return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, Date.class);
+	}
 }

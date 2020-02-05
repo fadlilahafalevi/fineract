@@ -63,12 +63,14 @@ import org.apache.fineract.portfolio.group.domain.GroupRepositoryWrapper;
 import org.apache.fineract.portfolio.group.exception.CenterNotActiveException;
 import org.apache.fineract.portfolio.group.exception.ClientNotInGroupException;
 import org.apache.fineract.portfolio.group.exception.GroupNotActiveException;
+import org.apache.fineract.portfolio.savings.CompoundingType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
 import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.apache.fineract.portfolio.savings.domain.interest.CompoundingPeriod;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
@@ -289,6 +291,9 @@ public class SavingsAccountAssembler {
                 overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, nominalAnnualInterestRateOverdraft,
                 minOverdraftForInterestCalculation, withHoldTax);
         account.setInterestCompoundingTypeEnum(interestCompoundingType);
+        if (product.getInterestCompoundingTypeEnum().equals(CompoundingType.NON_COMPOUNDING.getValue())) {
+        	account.setInterestCompoundingPeriodType(SavingsCompoundingInterestPeriodType.NON_COMPOUNDING.getValue());
+        }
         
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
 
@@ -343,13 +348,17 @@ public class SavingsAccountAssembler {
         }
         final SavingsProduct product = this.savingProductRepository.findOne(productId) ;
         final Set<SavingsAccountCharge> charges = this.savingsAccountChargeAssembler.fromSavingsProduct(product);
-        final SavingsAccount account = SavingsAccount.createNewApplicationForSubmittal(client, group, product, null, null, null,
+        SavingsAccount account = SavingsAccount.createNewApplicationForSubmittal(client, group, product, null, null, null,
                 accountType, appliedonDate, appliedBy, product.nominalAnnualInterestRate(), product.interestCompoundingPeriodType(),
                 product.interestPostingPeriodType(), product.interestCalculationType(), product.interestCalculationDaysInYearType(),
                 product.minRequiredOpeningBalance(), product.lockinPeriodFrequency(), product.lockinPeriodFrequencyType(),
                 product.isWithdrawalFeeApplicableForTransfer(), charges, product.isAllowOverdraft(), product.overdraftLimit(),
                 product.isMinRequiredBalanceEnforced(), product.minRequiredBalance(), product.nominalAnnualInterestRateOverdraft(),
                 product.minOverdraftForInterestCalculation(), product.withHoldTax());
+        account.setInterestCompoundingTypeEnum(product.getInterestCompoundingTypeEnum());
+        if (product.getInterestCompoundingTypeEnum().equals(CompoundingType.NON_COMPOUNDING.getValue())) {
+        	account.setInterestCompoundingPeriodType(SavingsCompoundingInterestPeriodType.NON_COMPOUNDING.getValue());
+        }
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
 
         account.validateNewApplicationState(DateUtils.getLocalDateOfTenant(), SAVINGS_ACCOUNT_RESOURCE_NAME);

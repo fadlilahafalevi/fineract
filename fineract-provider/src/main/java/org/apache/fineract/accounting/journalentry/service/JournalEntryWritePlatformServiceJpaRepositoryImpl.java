@@ -23,8 +23,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,9 +61,12 @@ import org.apache.fineract.accounting.producttoaccountmapping.domain.PortfolioPr
 import org.apache.fineract.accounting.provisioning.domain.LoanAccountProvisioningEntry;
 import org.apache.fineract.accounting.provisioning.domain.LoanProductProvisioningEntry;
 import org.apache.fineract.accounting.provisioning.domain.ProvisioningEntry;
+import org.apache.fineract.accounting.rule.data.AccountingRuleData;
 import org.apache.fineract.accounting.rule.domain.AccountingRule;
 import org.apache.fineract.accounting.rule.domain.AccountingRuleRepository;
 import org.apache.fineract.accounting.rule.exception.AccountingRuleNotFoundException;
+import org.apache.fineract.accounting.rule.service.AccountingRuleReadPlatformService;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -70,6 +75,7 @@ import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.office.domain.OfficeRepositoryWrapper;
@@ -86,6 +92,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 @Service
 public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements JournalEntryWritePlatformService {
@@ -108,6 +118,10 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     private final PaymentDetailWritePlatformService paymentDetailWritePlatformService;
     private final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper;
     private final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions;
+    private final AccountingProcessorForSavingsAccrual accountingProcessorForSavingsAccrual;
+    private final AccountingProcessorForSavingsAccrualFactory accountingProcessorForSavingsAccrualFactory;
+    private final AccountingRuleReadPlatformService accountingRuleReadPlatformService;
+    private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired
     public JournalEntryWritePlatformServiceJpaRepositoryImpl(final GLClosureRepository glClosureRepository,
@@ -121,7 +135,11 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final OrganisationCurrencyRepositoryWrapper organisationCurrencyRepository, final PlatformSecurityContext context,
             final PaymentDetailWritePlatformService paymentDetailWritePlatformService,
             final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper,
-            final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions) {
+            final CashBasedAccountingProcessorForClientTransactions accountingProcessorForClientTransactions,
+            final AccountingProcessorForSavingsAccrual accountingProcessorForSavingsAccrual,
+            final AccountingProcessorForSavingsAccrualFactory accountingProcessorForSavingsAccrualFactory,
+            final AccountingRuleReadPlatformService accountingRuleReadPlatformService,
+            final FromJsonHelper fromApiJsonHelper) {
         this.glClosureRepository = glClosureRepository;
         this.officeRepositoryWrapper = officeRepositoryWrapper;
         this.glJournalEntryRepository = glJournalEntryRepository;
@@ -138,6 +156,10 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         this.paymentDetailWritePlatformService = paymentDetailWritePlatformService;
         this.financialActivityAccountRepositoryWrapper = financialActivityAccountRepositoryWrapper;
         this.accountingProcessorForClientTransactions = accountingProcessorForClientTransactions;
+        this.accountingProcessorForSavingsAccrual = accountingProcessorForSavingsAccrual;
+        this.accountingProcessorForSavingsAccrualFactory = accountingProcessorForSavingsAccrualFactory;
+        this.accountingRuleReadPlatformService = accountingRuleReadPlatformService;
+        this.fromApiJsonHelper = fromApiJsonHelper;
     }
 
     @Transactional
@@ -235,6 +257,104 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             return null;
         }
     }
+    
+    @Transactional
+    @Override
+	public CommandProcessingResult createFrequentJournalEntry(final JsonCommand command) {
+		try {
+			final Long officeId = command.longValueOfParameterNamed(JournalEntryJsonInputParams.OFFICE_ID.getValue());
+			final Office office = this.officeRepositoryWrapper.findOneWithNotFoundDetection(officeId);
+			
+			final JsonObject topLevelJsonElement = command.parsedJson().getAsJsonObject();
+			final JsonArray array = topLevelJsonElement.get("accountingRule").getAsJsonArray();
+			final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(topLevelJsonElement);
+			
+			List<String> transactionsId = new ArrayList<>();
+			
+			for (int i = 0; i < array.size(); i++) {
+				final JournalEntryCommand journalEntryCommand = extractAccountingRuleCommand(command, array, locale, i);
+				
+				List<GLAccount> glCredits = new ArrayList<GLAccount>();
+				List<GLAccount> glDebits = new ArrayList<GLAccount>();
+				
+				for (SingleDebitOrCreditEntryCommand data : journalEntryCommand.getCredits()) {
+					GLAccount credit = this.glAccountRepository.findOne(data.getGlAccountId());
+					glCredits.add(credit);
+				}
+				
+				for (SingleDebitOrCreditEntryCommand data : journalEntryCommand.getDebits()) {
+					GLAccount debit = this.glAccountRepository.findOne(data.getGlAccountId());
+					glDebits.add(debit);
+				}
+				validateBusinessRulesForCreatingJournalEntries(journalEntryCommand, glCredits, glDebits);
+				
+				/** Capture payment details **/
+				final Map<String, Object> changes = new LinkedHashMap<>();
+				final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+
+				/** Set a transaction Id and save these Journal entries **/
+				final Date transactionDate = command.DateValueOfParameterNamed(JournalEntryJsonInputParams.TRANSACTION_DATE.getValue());
+				final String transactionId = generateTransactionId(officeId);
+				final String referenceNumber = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue());
+
+				saveAllDebitOrCreditEntries(journalEntryCommand, office, paymentDetail, journalEntryCommand.getCurrencyCode(),
+						transactionDate, journalEntryCommand.getDebits(), transactionId, JournalEntryType.DEBIT,
+						referenceNumber);
+				
+				saveAllDebitOrCreditEntries(journalEntryCommand, office, paymentDetail, journalEntryCommand.getCurrencyCode(),
+						transactionDate, journalEntryCommand.getCredits(), transactionId, JournalEntryType.CREDIT,
+						referenceNumber);
+				
+				transactionsId.add(transactionId);
+			}
+			
+			return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withOfficeId(officeId)
+					.withTransactionIds(transactionsId).build();
+
+		} catch (final DataIntegrityViolationException dve) {
+			handleJournalEntryDataIntegrityIssues(dve);
+			return null;
+		}
+	}
+
+	public JournalEntryCommand extractAccountingRuleCommand(final JsonCommand command, final JsonArray array,
+			final Locale locale, int i) {
+		final JournalEntryCommand journalEntryCommand = this.fromApiJsonDeserializer.commandFromApiJsonForFreqPosting(command.json());
+		journalEntryCommand.validateForCreatingFreqPosting();
+		
+		final JsonObject accountingRuleItemElement = array.get(i).getAsJsonObject();
+		final String accountingRuleName = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.ACCOUNTING_RULE_NAME.getValue(), accountingRuleItemElement);
+		final BigDecimal debitAmount = this.fromApiJsonHelper.extractBigDecimalNamed("debitAmount", accountingRuleItemElement, locale);
+		final BigDecimal creditAmount = this.fromApiJsonHelper.extractBigDecimalNamed("creditAmount", accountingRuleItemElement, locale);
+		
+		final AccountingRuleData accountingRuleData = this.accountingRuleReadPlatformService.retrieveAccountingRuleByName(accountingRuleName);
+
+		SingleDebitOrCreditEntryCommand[] credits = new SingleDebitOrCreditEntryCommand[accountingRuleData.getCreditAccounts().size()];
+		SingleDebitOrCreditEntryCommand[] debits = new SingleDebitOrCreditEntryCommand[accountingRuleData.getDebitAccounts().size()];
+		
+		for (GLAccountDataForLookup debitLookup : accountingRuleData.getDebitAccounts()) {
+			int j = 0;
+			final Long glAccountId = debitLookup.getId();
+			final BigDecimal amount = debitAmount;
+			final Set<String> parametersPassedInForDebitsCommand = new HashSet<>();
+			
+			debits[j] = new SingleDebitOrCreditEntryCommand(parametersPassedInForDebitsCommand, glAccountId, amount, journalEntryCommand.getComments());
+			j++;
+		}
+		
+		for (GLAccountDataForLookup creditLookup : accountingRuleData.getCreditAccounts()) {
+			int j = 0;
+			final Long glAccountId = creditLookup.getId();
+			final BigDecimal amount = creditAmount;
+			final Set<String> parametersPassedInForCreditsCommand = new HashSet<>();
+			
+			credits[j] = new SingleDebitOrCreditEntryCommand(parametersPassedInForCreditsCommand, glAccountId, amount, journalEntryCommand.getComments());
+			j++;
+		}
+		journalEntryCommand.setDebits(debits);
+		journalEntryCommand.setCredits(credits);
+		return journalEntryCommand;
+	}
     
 	private void validateBusinessRulesForCreatingJournalEntries(final JournalEntryCommand command, final List<GLAccount> glCredits, final List<GLAccount> glDebits) {
 		/** check if date of Journal entry is valid ***/
@@ -684,6 +804,27 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final AccountingProcessorForSavings accountingProcessorForSavings = this.accountingProcessorForSavingsFactory
                     .determineProcessor(savingsDTO);
             accountingProcessorForSavings.createJournalEntriesForSavings(savingsDTO);
+        }
+
+    }
+
+    @Transactional
+    @Override
+    public void createJournalEntriesForSavingsAccrual(final Map<String, Object> accountingBridgeData, final Boolean isReversal) {
+
+        final boolean cashBasedAccountingEnabled = (Boolean) accountingBridgeData.get("cashBasedAccountingEnabled");
+        final boolean accrualBasedAccountingEnabled = (Boolean) accountingBridgeData.get("accrualBasedAccountingEnabled");
+
+        if (cashBasedAccountingEnabled || accrualBasedAccountingEnabled) {
+            final SavingsDTO savingsDTO = this.helper.populateSavingsAccrualDtoFromMap(accountingBridgeData, cashBasedAccountingEnabled,
+                    accrualBasedAccountingEnabled);
+            final AccountingProcessorForSavingsAccrual accountingProcessorForSavings = this.accountingProcessorForSavingsAccrualFactory
+                    .determineProcessor(savingsDTO);
+            if (!isReversal) {
+            	accountingProcessorForSavings.createJournalEntriesForSavingsAccrual(savingsDTO);
+            } else {
+            	accountingProcessorForSavings.createJournalEntriesForSavingsAccrualReversal(savingsDTO);
+            }
         }
 
     }

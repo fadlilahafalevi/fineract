@@ -121,6 +121,10 @@ import org.springframework.util.CollectionUtils;
 
 import com.google.gson.JsonArray;
 
+/**
+ * @author USER
+ *
+ */
 @Entity
 @Table(name = "m_savings_account", uniqueConstraints = { @UniqueConstraint(columnNames = { "account_no" }, name = "sa_account_no_UNIQUE"),
         @UniqueConstraint(columnNames = { "external_id" }, name = "sa_external_id_UNIQUE") })
@@ -331,6 +335,15 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     
     @Column(name = "interest_compounding_type_enum", nullable = true)
 	protected Integer interestCompoundingTypeEnum;
+
+    @Column(name = "last_accrual_date", nullable = true)
+    protected Date lastAccrualDate;
+
+    @Column(name = "last_accrual_amount", nullable = true)
+    protected BigDecimal lastAccrualAmount;
+
+    @Column(name = "total_accrual_amount", nullable = true)
+    protected BigDecimal totalAccrualAmount;
     
     protected SavingsAccount() {
         //
@@ -570,7 +583,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     }
 
     private boolean isWithHoldTaxApplicableForInterestPosting() {
-        return this.withHoldTax() && this.depositAccountType().isSavingsDeposit();
+        return this.withHoldTax();
     }
 
     protected SavingsAccountTransaction findInterestPostingTransactionFor(final LocalDate postingDate) {
@@ -775,6 +788,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
 
         return allPostingPeriods;
+    }   
+    
+    //afad
+    //this method is using for passing the fixed deposit accrual
+    public List<PostingPeriod> calculateInterestUsingFixedDepositAccrual(final MathContext mc, final LocalDate upToInterestCalculationDate,
+            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate) {
+    	return this.calculateInterestUsing(mc, upToInterestCalculationDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
     }
 
     private BigDecimal getEffectiveOverdraftInterestRateAsFraction(MathContext mc) {
@@ -1409,7 +1429,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 			final Integer newValue = command.integerValueOfParameterNamed(SavingsApiConstants.interestCompoundingTypeParamName);
 			actualChanges.put(SavingsApiConstants.interestCompoundingTypeParamName, newValue);
 			this.setInterestCompoundingTypeEnum(newValue);
-				
+			if (newValue.equals(CompoundingType.NON_COMPOUNDING.getValue())) {
+	        	this.setInterestCompoundingPeriodType(SavingsCompoundingInterestPeriodType.NON_COMPOUNDING.getValue());
+	        }
 		}
         
         validateLockinDetails(baseDataValidator);
@@ -1468,6 +1490,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
         final List<Map<String, Object>> newSavingsTransactions = new ArrayList<>();
         List<SavingsAccountTransaction> trans = getTransactions() ;
+        
         for (final SavingsAccountTransaction transaction : trans) {
             if (transaction.isReversed() && !existingReversedTransactionIds.contains(transaction.getId())) {
                 newSavingsTransactions.add(transaction.toMapData(currencyData));
@@ -1477,6 +1500,22 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
         }
 
         accountingBridgeData.put("newSavingsTransactions", newSavingsTransactions);
+        return accountingBridgeData;
+    }
+
+    public Map<String, Object> deriveAccountingBridgeDataForAccrual(final CurrencyData currencyData, boolean isAccountTransfer, final BigDecimal interestAccrued,
+    		final LocalDate accrualDate) {
+
+        final Map<String, Object> accountingBridgeData = new LinkedHashMap<>();
+        accountingBridgeData.put("savingsId", getId());
+        accountingBridgeData.put("savingsProductId", productId());
+        accountingBridgeData.put("currency", currencyData);
+        accountingBridgeData.put("officeId", officeId());
+        accountingBridgeData.put("cashBasedAccountingEnabled", isCashBasedAccountingEnabledOnSavingsProduct());
+        accountingBridgeData.put("accrualBasedAccountingEnabled", isAccrualBasedAccountingEnabledOnSavingsProduct());
+        accountingBridgeData.put("isAccountTransfer", isAccountTransfer);
+        accountingBridgeData.put("interestAccrued", interestAccrued);
+        accountingBridgeData.put("accrualDate", accrualDate);
         return accountingBridgeData;
     }
 
@@ -3100,6 +3139,38 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 
 	public void setInterestCompoundingTypeEnum(Integer interestCompoundingTypeEnum) {
 		this.interestCompoundingTypeEnum = interestCompoundingTypeEnum;
+	}
+
+	public Date getLastAccrualDate() {
+		return lastAccrualDate;
+	}
+
+	public void setLastAccrualDate(Date lastAccrualDate) {
+		this.lastAccrualDate = lastAccrualDate;
+	}
+
+	public BigDecimal getLastAccrualAmount() {
+		return lastAccrualAmount;
+	}
+
+	public void setLastAccrualAmount(BigDecimal lastAccrualAmount) {
+		this.lastAccrualAmount = lastAccrualAmount;
+	}
+
+	public BigDecimal getTotalAccrualAmount() {
+		return totalAccrualAmount;
+	}
+
+	public void setTotalAccrualAmount(BigDecimal totalAccrualAmount) {
+		this.totalAccrualAmount = totalAccrualAmount;
+	}
+
+	public Integer getInterestCompoundingPeriodType() {
+		return interestCompoundingPeriodType;
+	}
+
+	public void setInterestCompoundingPeriodType(Integer interestCompoundingPeriodType) {
+		this.interestCompoundingPeriodType = interestCompoundingPeriodType;
 	}
 
 }

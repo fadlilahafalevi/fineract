@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -236,9 +237,9 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
                     .booleanObjectValueOfParameterNamed("isFloatingInterestRateCalculationAllowed");
         } else {
             interestFrequencyType = PeriodFrequencyType.fromInt(command.integerValueOfParameterNamed("interestRateFrequencyType"));
-            interestRatePerPeriod = command.bigDecimalValueOfParameterNamed("interestRatePerPeriod");
-            minInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("minInterestRatePerPeriod");
-            maxInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("maxInterestRatePerPeriod");
+            interestRatePerPeriod = command.bigDecimalValueOfParameterNamed("interestRatePerPeriod", Locale.forLanguageTag("id"));
+            minInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("minInterestRatePerPeriod", Locale.forLanguageTag("id"));
+            maxInterestRatePerPeriod = command.bigDecimalValueOfParameterNamed("maxInterestRatePerPeriod", Locale.forLanguageTag("id"));
             annualInterestRate = aprCalculator.calculateFrom(interestFrequencyType, interestRatePerPeriod, numberOfRepayments, repaymentEvery, repaymentFrequencyType);
 
         }

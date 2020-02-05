@@ -64,7 +64,8 @@ public class AccountingConstants {
     /*** Accounting placeholders for accrual based accounting for loan products ***/
     public static enum ACCRUAL_ACCOUNTS_FOR_LOAN {
         FUND_SOURCE(1), LOAN_PORTFOLIO(2), INTEREST_ON_LOANS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), LOSSES_WRITTEN_OFF(6), INTEREST_RECEIVABLE(
-                7), FEES_RECEIVABLE(8), PENALTIES_RECEIVABLE(9), TRANSFERS_SUSPENSE(10), OVERPAYMENT(11), INCOME_FROM_RECOVERY(12);
+                7), FEES_RECEIVABLE(8), PENALTIES_RECEIVABLE(9), TRANSFERS_SUSPENSE(10), OVERPAYMENT(11), INCOME_FROM_RECOVERY(12), ACCRUED_INTEREST_ASSET(13),
+        ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM(14), ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY(15), ACCRUED_REVERSE(16);
 
         private final Integer value;
 
@@ -107,7 +108,8 @@ public class AccountingConstants {
                 "transfersInSuspenseAccountId"), PAYMENT_CHANNEL_FUND_SOURCE_MAPPING("paymentChannelToFundSourceMappings"), PAYMENT_TYPE(
                 "paymentTypeId"), FEE_INCOME_ACCOUNT_MAPPING("feeToIncomeAccountMappings"), PENALTY_INCOME_ACCOUNT_MAPPING(
                 "penaltyToIncomeAccountMappings"), CHARGE_ID("chargeId"), INCOME_ACCOUNT_ID("incomeAccountId"), INCOME_FROM_RECOVERY(
-                "incomeFromRecoveryAccountId");
+                "incomeFromRecoveryAccountId"), ACCRUED_INTEREST_ASSET("accruedInterestAssetId"), ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM("accruedInterestAdministrativeClaimId"),
+        		ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY("accruedInterestAdministrativeLiabilityId"), ACCRUED_REVERSE("accruedReverseId");
 
         private final String value;
 
@@ -130,7 +132,9 @@ public class AccountingConstants {
                 "incomeFromFeeAccount"), INCOME_FROM_PENALTIES("incomeFromPenaltyAccount"), LOSSES_WRITTEN_OFF("writeOffAccount"), OVERPAYMENT(
                 "overpaymentLiabilityAccount"), INTEREST_RECEIVABLE("receivableInterestAccount"), FEES_RECEIVABLE("receivableFeeAccount"), PENALTIES_RECEIVABLE(
                 "receivablePenaltyAccount"), TRANSFERS_SUSPENSE("transfersInSuspenseAccount"), INCOME_ACCOUNT_ID("incomeAccount"), INCOME_FROM_RECOVERY(
-                "incomeFromRecoveryAccount"), LIABILITY_TRANSFER_SUSPENSE("liabilityTransferInSuspenseAccount");
+                "incomeFromRecoveryAccount"), LIABILITY_TRANSFER_SUSPENSE("liabilityTransferInSuspenseAccount"), ACCRUED_INTEREST_ASSET("accruedInterestAsset"),
+        		ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM("accruedInterestAdministrativeClaim"), ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY("accruedInterestAdministrativeLiability"),
+        		ACCRUED_REVERSE("accruedReverse");
 
         private final String value;
 
@@ -151,7 +155,8 @@ public class AccountingConstants {
     /*** Accounting placeholders for cash based accounting for savings products ***/
     public static enum CASH_ACCOUNTS_FOR_SAVINGS {
         SAVINGS_REFERENCE(1), SAVINGS_CONTROL(2), INTEREST_ON_SAVINGS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), TRANSFERS_SUSPENSE(
-                10), OVERDRAFT_PORTFOLIO_CONTROL(11), INCOME_FROM_INTEREST(12), LOSSES_WRITTEN_OFF(13), ESCHEAT_LIABILITY(14);
+                10), OVERDRAFT_PORTFOLIO_CONTROL(11), INCOME_FROM_INTEREST(12), LOSSES_WRITTEN_OFF(13), ESCHEAT_LIABILITY(14), SAVINGS_ACCRUAL(15),
+        		INCOME_FROM_INTEREST_ACCRUAL(16), SAVINGS_TAX(17);
 
         private final Integer value;
 
@@ -192,7 +197,8 @@ public class AccountingConstants {
                 "paymentTypeId"), FUND_SOURCE("fundSourceAccountId"), TRANSFERS_SUSPENSE("transfersInSuspenseAccountId"), FEE_INCOME_ACCOUNT_MAPPING(
                 "feeToIncomeAccountMappings"), PENALTY_INCOME_ACCOUNT_MAPPING("penaltyToIncomeAccountMappings"), CHARGE_ID("chargeId"), INCOME_ACCOUNT_ID(
                 "incomeAccountId"), OVERDRAFT_PORTFOLIO_CONTROL("overdraftPortfolioControlId"), INCOME_FROM_INTEREST("incomeFromInterestId"), LOSSES_WRITTEN_OFF(
-                "writeOffAccountId"), ESCHEAT_LIABILITY("escheatLiabilityId");
+                "writeOffAccountId"), ESCHEAT_LIABILITY("escheatLiabilityId"), SAVINGS_ACCRUAL("savingsAccrualAccountId"), INCOME_FROM_INTEREST_ACCRUAL(
+                "incomeFromInterestAccrualId"), SAVINGS_TAX("savingsTaxAccountId");
 
         private final String value;
 
@@ -216,7 +222,8 @@ public class AccountingConstants {
                 "fundSourceAccount"), TRANSFERS_SUSPENSE("transfersInSuspenseAccount"), PENALTY_INCOME_ACCOUNT_MAPPING(
                 "penaltyToIncomeAccountMappings"), CHARGE_ID("charge"), INCOME_ACCOUNT_ID("incomeAccount"), OVERDRAFT_PORTFOLIO_CONTROL(
                 "overdraftPortfolioControl"), INCOME_FROM_INTEREST("incomeFromInterest"), LOSSES_WRITTEN_OFF("writeOffAccount"),
-                ESCHEAT_LIABILITY("escheatLiabilityAccount");
+                ESCHEAT_LIABILITY("escheatLiabilityAccount"), SAVINGS_ACCRUAL("savingsAccrualAccount"), INCOME_FROM_INTEREST_ACCRUAL(
+                "incomeFromInterestAccrualAccount"), SAVINGS_TAX("savingsTaxAccount");
 
         private final String value;
 
