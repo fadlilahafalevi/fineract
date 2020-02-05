@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.persistence.Column;
@@ -390,7 +391,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
         final String interestRatePerPeriodParamName = "interestRatePerPeriod";
         if (command.isChangeInBigDecimalParameterNamed(interestRatePerPeriodParamName, this.nominalInterestRatePerPeriod)) {
-            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(interestRatePerPeriodParamName);
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(interestRatePerPeriodParamName, Locale.forLanguageTag("id"));
             actualChanges.put(interestRatePerPeriodParamName, newValue);
             actualChanges.put("locale", localeAsInput);
             this.nominalInterestRatePerPeriod = newValue;

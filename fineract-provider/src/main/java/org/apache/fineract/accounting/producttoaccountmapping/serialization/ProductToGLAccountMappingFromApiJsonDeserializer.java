@@ -157,6 +157,26 @@ public final class ProductToGLAccountMappingFromApiJsonDeserializer {
                     LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_RECEIVABLE.getValue(), element);
             baseDataValidator.reset().parameter(LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_RECEIVABLE.getValue())
                     .value(receivablePenaltyAccountId).notNull().integerGreaterThanZero();
+            
+            final Long accruedAssetInterestAccountId = this.fromApiJsonHelper.extractLongNamed(
+                    LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ASSET.getValue(), element);
+            baseDataValidator.reset().parameter(LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ASSET.getValue())
+                    .value(accruedAssetInterestAccountId).notNull().integerGreaterThanZero();
+            
+            final Long accruedAdministrativeClaimInterestAccountId = this.fromApiJsonHelper.extractLongNamed(
+                    LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), element);
+            baseDataValidator.reset().parameter(LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue())
+                    .value(accruedAdministrativeClaimInterestAccountId).notNull().integerGreaterThanZero();
+            
+            final Long accruedAdministrativeLiabilityInterestAccountId = this.fromApiJsonHelper.extractLongNamed(
+                    LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), element);
+            baseDataValidator.reset().parameter(LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue())
+                    .value(accruedAdministrativeLiabilityInterestAccountId).notNull().integerGreaterThanZero();
+            
+            final Long accruedReverseAccountId = this.fromApiJsonHelper.extractLongNamed(
+                    LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_REVERSE.getValue(), element);
+            baseDataValidator.reset().parameter(LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_REVERSE.getValue())
+                    .value(accruedReverseAccountId).notNull().integerGreaterThanZero();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);

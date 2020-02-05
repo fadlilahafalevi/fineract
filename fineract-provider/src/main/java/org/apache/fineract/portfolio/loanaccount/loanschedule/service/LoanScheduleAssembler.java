@@ -222,7 +222,7 @@ public class LoanScheduleAssembler {
             allowPartialPeriodInterestCalcualtion = loanProduct.getLoanProductRelatedDetail().isAllowPartialPeriodInterestCalcualtion();
         }
 
-        final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("interestRatePerPeriod", element);
+        final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed("interestRatePerPeriod", element, Locale.forLanguageTag("en"));
         final PeriodFrequencyType interestRatePeriodFrequencyType = loanProduct.getInterestPeriodFrequencyType();
 
         BigDecimal annualNominalInterestRate = BigDecimal.ZERO;

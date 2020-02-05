@@ -39,6 +39,7 @@ public interface ProvisioningCriteriaConstants {
 	public final static String JSON_LIABILITY_ACCOUNT_PARAM = "liabilityAccount";
 	public final static String JSON_ASSET_ACCOUNT_PARAM = "assetAccount";
 	public final static String JSON_EXPENSE_ACCOUNT_PARAM = "expenseAccount";
+	public final static String JSON_ISNPL_PARAM = "isNPL";
 	public final static String DEFINITIONS_PARAM = "definitions";
 	public final static String LOANPRODUCTS_PARAM = "loanProducts";
 	public final static String GLACCOUNTS_PARAM = "glAccounts";

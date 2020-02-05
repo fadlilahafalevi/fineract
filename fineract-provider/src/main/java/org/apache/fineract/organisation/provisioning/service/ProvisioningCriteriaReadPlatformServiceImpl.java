@@ -138,7 +138,7 @@ public class ProvisioningCriteriaReadPlatformServiceImpl implements Provisioning
         private final StringBuilder sqlQuery = new StringBuilder()
                 .append("pc.id, pc.criteria_id, pc.category_id, mpc.category_name, pc.min_age, pc.max_age, ")
                 .append("pc.provision_percentage, pc.asset_account, pc.expense_account, asset.gl_code as assetcode, expe.gl_code as expensecode, ")
-                .append("asset.name as assetname, expe.name as expensename ")
+                .append("asset.name as assetname, expe.name as expensename, pc.is_npl as isNPL ")
                 .append("from m_provisioning_criteria_definition as pc ")
                 .append("LEFT JOIN acc_gl_account asset ON asset.id = pc.asset_account ")
                 .append("LEFT JOIN acc_gl_account expe ON expe.id = pc.expense_account ")
@@ -160,9 +160,10 @@ public class ProvisioningCriteriaReadPlatformServiceImpl implements Provisioning
             Long expenseAccount = rs.getLong("expense_account");
             String expenseAccountCode = rs.getString("expensecode");
             String expenseAccountName = rs.getString("expensename") ;
+            Boolean isNPL = rs.getBoolean("isNPL");
             
             return new ProvisioningCriteriaDefinitionData(id, categoryId, categoryName, minAge, maxAge, provisioningPercentage,
-            		assetAccount, assetAccountCode, assetAccountName, expenseAccount, expenseAccountCode, expenseAccountName);
+            		assetAccount, assetAccountCode, assetAccountName, expenseAccount, expenseAccountCode, expenseAccountName, isNPL);
         }
 
         public String schema() {

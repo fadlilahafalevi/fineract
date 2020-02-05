@@ -307,8 +307,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             }
 
             final String interestRatePerPeriodParameterName = "interestRatePerPeriod";
-            final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                    interestRatePerPeriodParameterName, element);
+            final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalNamed(
+                    interestRatePerPeriodParameterName, element, Locale.forLanguageTag("id"));
             baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull()
                     .zeroOrPositiveAmount();
 
@@ -727,7 +727,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             final String interestRatePerPeriodParameterName = "interestRatePerPeriod";
             BigDecimal interestRatePerPeriod = existingLoanApplication.getLoanProductRelatedDetail().getNominalInterestRatePerPeriod();
             if (this.fromApiJsonHelper.parameterExists(interestRatePerPeriodParameterName, element)) {
-                this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(interestRatePerPeriodParameterName, element);
+                this.fromApiJsonHelper.extractBigDecimalNamed(interestRatePerPeriodParameterName, element, Locale.forLanguageTag("id"));
                 atLeastOneParameterPassedForUpdate = true;
             }
             baseDataValidator.reset().parameter(interestRatePerPeriodParameterName).value(interestRatePerPeriod).notNull()

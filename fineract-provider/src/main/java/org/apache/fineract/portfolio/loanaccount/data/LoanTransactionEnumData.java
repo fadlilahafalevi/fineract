@@ -44,6 +44,13 @@ public class LoanTransactionEnumData {
     private final boolean chargePayment;
     private final boolean refund;
     private final boolean refundForActiveLoans;
+    private final boolean accrualAsset;
+    private final boolean accrualAdministrative;
+    private final boolean reverseIncome;
+    private final boolean reverseAdministrativeRepayment;
+    private final boolean reverseAccrualAsset;
+    private final boolean reverseAccrualAdministrativeToAsset;
+    private final boolean reverseAccrualAdministrativeToReceivable;
 
     public LoanTransactionEnumData(final Long id, final String code, final String value) {
         this.id = id;
@@ -65,6 +72,13 @@ public class LoanTransactionEnumData {
         this.refund = Long.valueOf(16).equals(this.id);
         this.chargePayment = Long.valueOf(17).equals(this.id);
         this.refundForActiveLoans = Long.valueOf(18).equals(this.id);
+        this.accrualAsset = Long.valueOf(20).equals(this.id);
+        this.accrualAdministrative = Long.valueOf(21).equals(this.id);
+        this.reverseIncome = Long.valueOf(22).equals(this.id);
+        this.reverseAdministrativeRepayment = Long.valueOf(23).equals(this.id);
+        this.reverseAccrualAsset = Long.valueOf(24).equals(this.id);
+        this.reverseAccrualAdministrativeToAsset = Long.valueOf(25).equals(this.id);
+        this.reverseAccrualAdministrativeToReceivable = Long.valueOf(26).equals(this.id);
     }
 
     public Long id() {
@@ -150,4 +164,52 @@ public class LoanTransactionEnumData {
         return this.refundForActiveLoans;
     }
 
+	/**
+	 * @return the accrualAsset
+	 */
+	public boolean isAccrualAsset() {
+		return accrualAsset;
+	}
+
+	/**
+	 * @return the accrualAdministrative
+	 */
+	public boolean isAccrualAdministrative() {
+		return accrualAdministrative;
+	}
+
+	/**
+	 * @return the reverseIncome
+	 */
+	public boolean isReverseIncome() {
+		return reverseIncome;
+	}
+
+	/**
+	 * @return the reverseAdministrativeRepayment
+	 */
+	public boolean isReverseAdministrativeRepayment() {
+		return reverseAdministrativeRepayment;
+	}
+
+	/**
+	 * @return the reverseAccrualAsset
+	 */
+	public boolean isReverseAccrualAsset() {
+		return reverseAccrualAsset;
+	}
+
+	/**
+	 * @return the reverseAccrualAdministrativeToAsset
+	 */
+	public boolean isReverseAccrualAdministrativeToAsset() {
+		return reverseAccrualAdministrativeToAsset;
+	}
+
+	/**
+	 * @return the reverseAccrualAdministrativeToReceivable
+	 */
+	public boolean isReverseAccrualAdministrativeToReceivable() {
+		return reverseAccrualAdministrativeToReceivable;
+	}
 }

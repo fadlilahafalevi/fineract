@@ -20,7 +20,10 @@ package org.apache.fineract.organisation.provisioning.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -94,6 +97,7 @@ public class ProvisioningCriteriaAssembler {
                 } else if (def.get(i).isGap(def.get(j))) {
                 	throw new PlatformApiDataValidationException("error.msg.gap", "Gap", null);
                 }
+                break;
             }
         }
     }
@@ -103,7 +107,7 @@ public class ProvisioningCriteriaAssembler {
         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(jsonElement.getAsJsonObject());
         List<LoanProduct> loanProducts = parseLoanProducts(jsonElement) ;
         
-        Set<ProvisioningCriteriaDefinition> criteriaDefinitions = new HashSet<>();
+        Set<ProvisioningCriteriaDefinition> criteriaDefinitions = new LinkedHashSet<>();
         JsonArray jsonProvisioningCriteria = this.fromApiJsonHelper.extractJsonArrayNamed(
                 ProvisioningCriteriaConstants.JSON_PROVISIONING_DEFINITIONS_PARAM, jsonElement);
         for (JsonElement element : jsonProvisioningCriteria) {
@@ -136,6 +140,7 @@ public class ProvisioningCriteriaAssembler {
         Long categoryId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_CATEOGRYID_PARAM, jsonObject);
         Long minimumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MINIMUM_AGE_PARAM, jsonObject);
         Long maximumAge = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_MAXIMUM_AGE_PARAM, jsonObject);
+        Boolean isNPL = this.fromApiJsonHelper.extractBooleanNamed(ProvisioningCriteriaConstants.JSON_ISNPL_PARAM, jsonObject);
         BigDecimal provisioningpercentage = this.fromApiJsonHelper.extractBigDecimalNamed(ProvisioningCriteriaConstants.JSON_PROVISIONING_PERCENTAGE_PARAM,
                 jsonObject, locale);
         Long assetAccountId = this.fromApiJsonHelper.extractLongNamed(ProvisioningCriteriaConstants.JSON_ASSET_ACCOUNT_PARAM, jsonObject);
@@ -145,6 +150,6 @@ public class ProvisioningCriteriaAssembler {
         GLAccount assetAccount = glAccountRepository.findOne(assetAccountId);
         GLAccount expenseAccount = glAccountRepository.findOne(expenseAccountId);
         return ProvisioningCriteriaDefinition.newPrivisioningCriteria(criteria, provisioningCategory, minimumAge, maximumAge,
-                provisioningpercentage, assetAccount, expenseAccount);
+                provisioningpercentage, assetAccount, expenseAccount, isNPL);
     }
 }

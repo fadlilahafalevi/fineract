@@ -137,6 +137,9 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 this.loanProductToGLAccountMappingHelper.saveLoanToAssetAccountMapping(element,
                         LOAN_PRODUCT_ACCOUNTING_PARAMS.PENALTIES_RECEIVABLE.getValue(), loanProductId,
                         ACCRUAL_ACCOUNTS_FOR_LOAN.PENALTIES_RECEIVABLE.getValue());
+                this.loanProductToGLAccountMappingHelper.saveLoanToAssetAccountMapping(element, 
+                		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ASSET.getValue(), loanProductId, 
+                		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ASSET.getValue());
 
                 // income
                 this.loanProductToGLAccountMappingHelper.saveLoanToIncomeAccountMapping(element,
@@ -156,11 +159,26 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 this.loanProductToGLAccountMappingHelper.saveLoanToExpenseAccountMapping(element,
                         LOAN_PRODUCT_ACCOUNTING_PARAMS.LOSSES_WRITTEN_OFF.getValue(), loanProductId,
                         ACCRUAL_ACCOUNTS_FOR_LOAN.LOSSES_WRITTEN_OFF.getValue());
+                this.loanProductToGLAccountMappingHelper.saveLoanToExpenseAccountMapping(element,
+                        LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_REVERSE.getValue(), loanProductId,
+                        ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_REVERSE.getValue());
 
                 // liabilities
                 this.loanProductToGLAccountMappingHelper.saveLoanToLiabilityAccountMapping(element,
                         LOAN_PRODUCT_ACCOUNTING_PARAMS.OVERPAYMENT.getValue(), loanProductId,
                         ACCRUAL_ACCOUNTS_FOR_LOAN.OVERPAYMENT.getValue());
+                
+                
+                // administrative
+                this.loanProductToGLAccountMappingHelper
+                		.saveLoanToOffBalanceSheetClaimAccountMapping(element, 
+                		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue(), loanProductId,
+                		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_CLAIM.getValue());
+                
+                this.loanProductToGLAccountMappingHelper
+		        		.saveLoanToOffBalanceSheetLiabilityAccountMapping(element,
+		        		LOAN_PRODUCT_ACCOUNTING_PARAMS.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue(), loanProductId,
+		        		ACCRUAL_ACCOUNTS_FOR_LOAN.ACCRUED_INTEREST_ADMINISTRATIVE_LIABILITY.getValue());
 
                 // advanced accounting mappings
                 this.loanProductToGLAccountMappingHelper.savePaymentChannelToFundSourceMappings(command, element, loanProductId, null);
