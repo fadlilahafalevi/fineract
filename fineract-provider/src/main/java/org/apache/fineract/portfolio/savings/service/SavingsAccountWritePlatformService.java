@@ -43,6 +43,13 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult withdrawal2(Long savingsId, JsonCommand command);
 
+	CommandProcessingResult accountNumberDeposit(String accountNumber, JsonCommand command);
+
+	CommandProcessingResult accountNumberDeposit2(String accountNumber, JsonCommand command);
+	
+	CommandProcessingResult accountNumberWithdrawal(String accountNumber, JsonCommand command);
+	
+	CommandProcessingResult accountNumberWithdrawal2(String accountNumber, JsonCommand command);
     //edited
     
     CommandProcessingResult applyAnnualFee(final Long savingsAccountChargeId, final Long accountId);
@@ -112,4 +119,5 @@ public interface SavingsAccountWritePlatformService {
     CommandProcessingResult unblockDebits(Long savingsId);
 
     CommandProcessingResult releaseAmount(Long savingsId, Long transactionId);
+
 }

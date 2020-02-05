@@ -114,7 +114,6 @@ import org.apache.fineract.portfolio.transfer.api.TransferApiConstants;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
 import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -274,7 +273,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.context.authenticatedUser();
 
         this.savingsAccountTransactionDataValidator.validate(command);
-
+        
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         checkClientOrGroupActive(account);
         final Locale locale = command.extractLocale();
@@ -354,6 +353,87 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     
     /*################# End Secondary Endpoint #############################################################*/  
 
+    @Transactional
+    @Override
+    public CommandProcessingResult accountNumberDeposit(final String accountNumber, final JsonCommand command) {
+
+        this.context.authenticatedUser();
+        this.savingsAccountTransactionDataValidator.validate(command);
+        
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(accountNumber);
+        checkClientOrGroupActive(account);
+        final Locale locale = command.extractLocale();
+        final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+        boolean isAccountTransfer = false;
+        boolean isRegularTransaction = true;
+        final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
+                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.savingsTransactionNote(account, deposit, noteText);
+            this.noteRepository.save(note) ;
+        }
+        
+        return new CommandProcessingResultBuilder() //
+        		//.withTransactionDate(deposit.createdDate())
+        		.withEntityId(deposit.getId()) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withAccountNumber(account.getAccountNumber())
+                .with(changes) //
+                .build();
+       
+    }
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult accountNumberDeposit2(final String accountNumber, final JsonCommand command) {
+
+        this.context.authenticatedUser();
+        this.savingsAccountTransactionDataValidator.validate(command);
+        
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(accountNumber);
+        checkClientOrGroupActive(account);
+        final Locale locale = command.extractLocale();
+        final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+        boolean isAccountTransfer = false;
+        boolean isRegularTransaction = true;
+        final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
+                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.savingsTransactionNote(account, deposit, noteText);
+            this.noteRepository.save(note) ;
+        }
+        
+        return new CommandProcessingResultBuilder() //
+        		//.withTransactionDate(deposit.createdDate())
+        		.withCreatedDate(deposit.createdDate())
+        		.withEntityId(deposit.getId()) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withAccountNumber(account.getAccountNumber())
+                .with(changes) //
+                .build();
+       
+    }
+    
     private Long saveTransactionToGenerateTransactionId(final SavingsAccountTransaction transaction) {
         this.savingsAccountTransactionRepository.saveAndFlush(transaction);
         return transaction.getId();
@@ -450,6 +530,99 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     }
     
 /*################# End Secondary Endpoint #############################################################*/    
+    
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult accountNumberWithdrawal(final String accountNumber, final JsonCommand command) {
+
+        this.savingsAccountTransactionDataValidator.validate(command);
+
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+
+        final Locale locale = command.extractLocale();
+        final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(accountNumber);
+        checkClientOrGroupActive(account);
+        final boolean isAccountTransfer = false;
+        final boolean isRegularTransaction = true;
+        final boolean isApplyWithdrawFee = true;
+        final boolean isInterestTransfer = false;
+        final boolean isWithdrawBalance = false;
+        final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
+                isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance);
+        final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate,
+                transactionAmount, paymentDetail, transactionBooleanValues);
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.savingsTransactionNote(account, withdrawal, noteText);
+            this.noteRepository.save(note) ;
+        }
+        
+        return new CommandProcessingResultBuilder() //
+        		//.withTransactionDate(withdrawal.createdDate())
+        		.withEntityId(withdrawal.getId()) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withAccountNumber(account.getAccountNumber())
+                //.withSavingsId(savingsId) //-
+                .with(changes)//
+                .build();
+    }
+    
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult accountNumberWithdrawal2 (final String accountNumber, final JsonCommand command) {
+
+        this.savingsAccountTransactionDataValidator.validate(command);
+
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+
+        final Locale locale = command.extractLocale();
+        final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(accountNumber);
+        checkClientOrGroupActive(account);
+        final boolean isAccountTransfer = false;
+        final boolean isRegularTransaction = true;
+        final boolean isApplyWithdrawFee = true;
+        final boolean isInterestTransfer = false;
+        final boolean isWithdrawBalance = false;
+        final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
+                isRegularTransaction, isApplyWithdrawFee, isInterestTransfer, isWithdrawBalance);
+        final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(account, fmt, transactionDate,
+                transactionAmount, paymentDetail, transactionBooleanValues);
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.savingsTransactionNote(account, withdrawal, noteText);
+            this.noteRepository.save(note) ;
+        }
+        
+        return new CommandProcessingResultBuilder() //
+        		//.withTransactionDate(withdrawal.createdDate())
+        		.withCreatedDate(withdrawal.createdDate())
+        		.withEntityId(withdrawal.getId()) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withAccountNumber(account.getAccountNumber())
+                //.withSavingsId(savingsId) //-
+                .with(changes)//
+                .build();
+    }
 
     @Transactional
     @Override

@@ -22,13 +22,15 @@ import org.apache.fineract.useradministration.api.PasswordPreferencesApiConstant
 
 public class CommandWrapper {
 
-    private final Long commandId;
+	private String accountNumber;
+	private final Long commandId;
     @SuppressWarnings("unused")
     private final Long officeId;
     private final Long groupId;
     private final Long clientId;
     private final Long loanId;
     private final Long savingsId;
+    
     private final String actionName;
     private final String entityName;
     private final String taskPermissionName;
@@ -107,6 +109,7 @@ public class CommandWrapper {
         this.organisationCreditBureauId=organisationCreditBureauId;
     }
 
+        
     private CommandWrapper(final Long commandId, final String actionName, final String entityName, final Long resourceId,
             final Long subresourceId, final String resourceGetUrl, final Long productId, final Long officeId, final Long groupId,
             final Long clientId, final Long loanId, final Long savingsId, final String transactionId,
@@ -338,4 +341,14 @@ public class CommandWrapper {
         return this.actionName.equalsIgnoreCase("UPDATE") && this.entityName.equalsIgnoreCase("DISBURSEMENTDETAIL")
                 && this.entityId == null;
     }
+
+	public String getAccountNumber() {
+		return accountNumber;
+	}
+
+	public void setAccountNumber(String accountNumber) {
+		this.accountNumber = accountNumber;
+	}
+    
+    
 }

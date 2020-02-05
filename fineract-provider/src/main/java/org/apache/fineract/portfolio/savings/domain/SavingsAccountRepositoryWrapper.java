@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -56,6 +57,14 @@ public class SavingsAccountRepositoryWrapper {
     public SavingsAccount findOneWithNotFoundDetection(final Long savingsId) {
         final SavingsAccount account = this.repository.findOne(savingsId);
         if (account == null) { throw new SavingsAccountNotFoundException(savingsId); }
+        account.loadLazyCollections();
+        return account;
+    }
+    
+    @Transactional(readOnly=true)
+    public SavingsAccount findOneWithNotFoundDetection (final String accountNumber) {
+        final SavingsAccount account = this.repository.findNonClosedAccountByAccountNumber(accountNumber);
+        if (account == null) { throw new SavingsAccountNumberNotFoundException(accountNumber); }
         account.loadLazyCollections();
         return account;
     }

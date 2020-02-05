@@ -91,7 +91,7 @@ public class CommandProcessingResult implements Serializable {
         } else {
             this.resourceIdentifier = null;
         }
-        this.createdDate=null;
+        this.setCreatedDate(null);
         this.resourceId = entityId;
         this.officeId = null;
         this.groupId = null;
@@ -108,7 +108,7 @@ public class CommandProcessingResult implements Serializable {
     private CommandProcessingResult(Date createdDate, final Long commandId, final String accountNumber, final Long officeId, final Long groupId, final Long clientId, final Long loanId,
             final Long savingsId, final String resourceIdentifier, final Long resourceId, final String transactionId,
             final Map<String, Object> changesOnly, final Long productId, Boolean rollbackTransaction, final Long subResourceId) {
-		this.createdDate = createdDate;
+		this.setCreatedDate(createdDate);
 		this.commandId = commandId;
         this.accountNumber = accountNumber;
         this.officeId = officeId;
@@ -131,7 +131,7 @@ public class CommandProcessingResult implements Serializable {
         } else {
             this.resourceIdentifier = null;
         }
-        this.createdDate = null;
+        this.setCreatedDate(null);
         this.resourceId = resourceId;
         this.officeId = officeId;
         this.groupId = null;
@@ -210,5 +210,17 @@ public class CommandProcessingResult implements Serializable {
     public Long getSubResourceId() {
         return subResourceId;
     }
+
+	public String getAccountNumber() {
+		return accountNumber;
+	}
+
+	public Date getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(Date createdDate) {
+		this.createdDate = createdDate;
+	}
 
 }

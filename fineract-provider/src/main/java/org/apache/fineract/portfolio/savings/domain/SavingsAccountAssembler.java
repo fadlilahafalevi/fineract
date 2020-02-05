@@ -304,6 +304,12 @@ public class SavingsAccountAssembler {
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
         return account;
     }
+    
+    public SavingsAccount assembleFrom(final String accountNumber) {
+        final SavingsAccount account = this.savingsAccountRepository.findOneWithNotFoundDetection(accountNumber);
+        account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
+        return account;
+    }
 
     public void setHelpers(final SavingsAccount account) {
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
