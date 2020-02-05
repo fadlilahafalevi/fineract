@@ -16,19 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.savings.service;
+package org.apache.fineract.portfolio.savings.domain;
 
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-
-public interface SavingsSchedularService {
-
-    void postInterestForAccounts() throws JobExecutionException;
-    
-    void updateSavingsDormancyStatus() throws JobExecutionException;
-
-	void accrualInterestForAccounts() throws JobExecutionException;
-
-	void savingsSummaryTax() throws JobExecutionException;
+public interface SavingsSummaryTaxRepository extends JpaRepository<SavingsSummaryTax, Long>, JpaSpecificationExecutor<SavingsSummaryTax> {
 
 }

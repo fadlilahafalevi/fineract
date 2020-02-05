@@ -61,9 +61,11 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
+import org.apache.fineract.portfolio.savings.data.SavingsSummaryTaxData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.SavingsSummaryTaxReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -88,6 +90,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private final CalendarInstanceRepository calendarInstanceRepository;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;  
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
 
     @Autowired
     public DepositAccountDomainServiceJpa(final PlatformSecurityContext context,final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -99,7 +102,8 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
             final CalendarInstanceRepository calendarInstanceRepository,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService) {
         this.context = context;
         this.savingsAccountRepository = savingsAccountRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -113,6 +117,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.calendarInstanceRepository = calendarInstanceRepository;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
     }
 
     @Transactional
@@ -161,7 +166,12 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         final boolean isAnyActivationChargesDue = isAnyActivationChargesDue(account);
         if(isAnyActivationChargesDue){
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
-            account.processAccountUponActivation(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user);
+            SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+    		Boolean isTaxApplicable = false;
+    		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+    			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+    		}
+            account.processAccountUponActivation(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user, isTaxApplicable);
             this.savingsAccountRepository.saveAndFlush(account);
         }
         account.handleScheduleInstallments(deposit);

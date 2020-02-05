@@ -77,4 +77,6 @@ public interface SavingsAccountReadPlatformService {
 			String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize);
 
 
+	List<SavingsAccountData> retrieveByClientId(Long clientId);
+
 }

@@ -249,6 +249,18 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         }
     }
 
+    @Override
+    public List<SavingsAccountData> retrieveByClientId(final Long clientId) {
+
+        try {
+            final String sql = "select " + this.savingAccountMapper.schema() + " where sa.client_id = ? and sa.status_enum = 300";
+
+            return this.jdbcTemplate.query(sql, this.savingAccountMapper, new Object[] { clientId });
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(clientId);
+        }
+    }
+
     private static final class SavingAccountMapper implements RowMapper<SavingsAccountData> {
 
         private final String schemaSql;

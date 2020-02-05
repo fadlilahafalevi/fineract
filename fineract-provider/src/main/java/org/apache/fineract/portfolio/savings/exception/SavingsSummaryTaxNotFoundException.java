@@ -16,19 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.savings.service;
+package org.apache.fineract.portfolio.savings.exception;
 
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 
+public class SavingsSummaryTaxNotFoundException extends AbstractPlatformResourceNotFoundException {
 
-public interface SavingsSchedularService {
-
-    void postInterestForAccounts() throws JobExecutionException;
-    
-    void updateSavingsDormancyStatus() throws JobExecutionException;
-
-	void accrualInterestForAccounts() throws JobExecutionException;
-
-	void savingsSummaryTax() throws JobExecutionException;
-
+    public SavingsSummaryTaxNotFoundException(final Long id) {
+        super("error.msg.savings.summary.id.invalid", "savigns summary with identifier " + id + " does not exist", id);
+    }
 }

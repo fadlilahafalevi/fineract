@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.client.service;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
@@ -50,4 +51,6 @@ public interface ClientReadPlatformService {
 	Date retrieveClientTransferProposalDate(Long clientId);
 
 	void validateClient(Long clientId);
+
+	List<ClientData> retrieveAllActive();
 }
