@@ -18,13 +18,18 @@
  */
 package org.apache.fineract.portfolio.savings.exception;
 
+import java.math.BigInteger;
+
 import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
 
-public class SavingsAccountTransactioninqNotFoundException extends AbstractPlatformResourceNotFoundException {
+public class SavingsAccountTransactionsHistoryNotFoundException extends AbstractPlatformResourceNotFoundException {
 
-	public SavingsAccountTransactioninqNotFoundException(final Long savingsId, final String receiptNumber) {
-        super("error.msg.saving.account.trasaction.id.invalid", "Savings account with savings identifier " + savingsId
-                + " and receipt identifier " + receiptNumber + " does not exist", savingsId, receiptNumber);
+	public SavingsAccountTransactionsHistoryNotFoundException(final String accountNo, final String startdate, final String enddate, DepositAccountType depositAccountType, final Long lastId, final Long pageSize) {
+        super("error.msg.saving.account.trasaction.id.invalid", "Savings account with account identifier " + accountNo
+                + " and startDate identifier " + startdate + " and endDate identifier " + enddate + " and DepositAccountType identifier " 
+        		+ depositAccountType + " and lastId identifier " + lastId + " and pageSize identifier "
+                + pageSize +" does not exist", accountNo, startdate, enddate,depositAccountType.getValue(),lastId,pageSize);
     }
 
 }

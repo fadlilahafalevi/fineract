@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.savings.data;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Date;
 
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -29,7 +30,9 @@ import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
 /**
  * Immutable data object representing a savings account transaction.
@@ -49,7 +52,7 @@ public class SavingsAccountTransactionData {
     private final BigDecimal runningBalance;
     private final boolean reversed;
     private final AccountTransferData transfer;
-    private final LocalDate submittedOnDate;
+    private final Date submittedOnDate;
     private final boolean interestedPostedAsOn;
     private final String submittedByUsername;
     private final String note ;
@@ -138,14 +141,24 @@ public class SavingsAccountTransactionData {
     public static SavingsAccountTransactionData create(final Long id, final SavingsAccountTransactionEnumData transactionType,
             final PaymentDetailData paymentDetailData, final Long savingsId, final String savingsAccountNo, final LocalDate date,
             final CurrencyData currency, final BigDecimal amount, final BigDecimal outstandingChargeAmount,
-            final BigDecimal runningBalance, final boolean reversed, final AccountTransferData transfer, final LocalDate submittedOnDate,
+            final BigDecimal runningBalance, final boolean reversed, final AccountTransferData transfer, final Date submittedOnDate,
             final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
         final Collection<PaymentTypeData> paymentTypeOptions = null;
         return new SavingsAccountTransactionData(id, transactionType, paymentDetailData, savingsId, savingsAccountNo, date, currency,
                 amount, outstandingChargeAmount, runningBalance, reversed, transfer, paymentTypeOptions, submittedOnDate,
                 interestedPostedAsOn, submittedByUsername, note);
     }
-
+    
+    public static SavingsAccountTransactionData create(final String savingsAccount,final Long id, final SavingsAccountTransactionEnumData transactionType,
+            final PaymentDetailData paymentDetailData, final Long savingsId, final String savingsAccountNo, final LocalDate date,
+            final CurrencyData currency, final BigDecimal amount, final BigDecimal outstandingChargeAmount,final BigDecimal runningBalance, final boolean reversed,
+            final AccountTransferData transfer, final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
+        final Collection<PaymentTypeData> paymentTypeOptions = null;
+        return new SavingsAccountTransactionData(id, transactionType, paymentDetailData, savingsId, savingsAccountNo, date, currency,
+                amount, outstandingChargeAmount,runningBalance, reversed, transfer, paymentTypeOptions, interestedPostedAsOn, submittedByUsername, note);
+    }
+    
+    
     public static SavingsAccountTransactionData template(final Long savingsId, final String savingsAccountNo,
             final LocalDate defaultLocalDate, final CurrencyData currency) {
         final Long id = null;
@@ -186,7 +199,7 @@ public class SavingsAccountTransactionData {
     private SavingsAccountTransactionData(final Long id, final SavingsAccountTransactionEnumData transactionType,
             final PaymentDetailData paymentDetailData, final Long savingsId, final String savingsAccountNo, final LocalDate date,
             final CurrencyData currency, final BigDecimal amount,final BigDecimal outstandingChargeAmount, final BigDecimal runningBalance, final boolean reversed,
-            final AccountTransferData transfer, final Collection<PaymentTypeData> paymentTypeOptions, final LocalDate submittedOnDate,
+            final AccountTransferData transfer, final Collection<PaymentTypeData> paymentTypeOptions, final Date submittedOnDate,
             final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
         this.id = id;
         this.transactionType = transactionType;
