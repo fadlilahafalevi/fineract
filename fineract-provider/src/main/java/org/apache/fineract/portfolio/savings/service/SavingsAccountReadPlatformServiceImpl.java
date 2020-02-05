@@ -73,6 +73,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactioninqNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionsHistoryNotFoundException;
@@ -1378,5 +1379,15 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 				+ "left join m_savings_product sp on sa.product_id = sp.id "
 				+ "where sa.id = ?";
 		return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, Boolean.class);
+	}
+	
+	@Override
+	public Long retrieveSavingsIdByAccountNumber(String accountNumber) {
+		try {
+			final String sql = "select s.id from m_savings_account s where s.account_no = ?";
+			return this.jdbcTemplate.queryForObject(sql, new Object[] { accountNumber }, Long.class);
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNumberNotFoundException(accountNumber);
+		}
 	}
 }

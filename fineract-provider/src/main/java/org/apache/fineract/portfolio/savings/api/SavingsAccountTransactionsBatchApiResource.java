@@ -42,6 +42,7 @@ import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatform
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformServiceImpl;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -58,6 +59,7 @@ public class SavingsAccountTransactionsBatchApiResource {
 
     private final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
     public SavingsAccountTransactionsBatchApiResource(final PlatformSecurityContext context,
@@ -68,6 +70,7 @@ public class SavingsAccountTransactionsBatchApiResource {
             PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
     private boolean is(final String commandParam, final String commandValue) {
@@ -84,34 +87,33 @@ public class SavingsAccountTransactionsBatchApiResource {
         try {
         	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
         	JSONArray jsonArray =  jsonObject.getJSONArray("batch");
+        	String accountNumber = jsonObject.getString("accountNo");
+        	Long savingsId = this.savingsAccountReadPlatformService.retrieveSavingsIdByAccountNumber(accountNumber);      	
+        			
         	Collection<CommandProcessingResult> resultArray = new ArrayList<CommandProcessingResult>();
         	for (int i = 0; i < jsonArray.length(); i++) {
                 String apiRequestBodyAsJsonArray = jsonArray.getJSONObject(i).toString();
-                String accountNumber = jsonArray.getJSONObject(i).getString("savingsAccountNumber");
-            
+                
             final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJsonArray);
 
             CommandProcessingResult result = null;
             if (is(commandParam, "deposit")) {
-                final CommandWrapper commandRequest = builder.savingsAccountDeposit(accountNumber).buildWithAccountNumber();
+                final CommandWrapper commandRequest = builder.savingsAccountDeposit(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, "withdrawal")) {
-                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(accountNumber).buildWithAccountNumber();
+                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, "deposit2")) {
-                final CommandWrapper commandRequest = builder.savingsAccountDeposit2(accountNumber).buildWithAccountNumber();
+                final CommandWrapper commandRequest = builder.savingsAccountDeposit2(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, "withdrawal2")) {
-                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal2(accountNumber).buildWithAccountNumber();
+                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal2(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-					/*
-					 * } else if (is(commandParam, "postInterestAsOn")) { final CommandWrapper
-					 * commandRequest =
-					 * builder.savingsAccountNumberInterestPosting(accountNumber).build(); result =
-					 * this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-					 */ 
+            } else if (is(commandParam, "postInterestAsOn")) {
+                final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, SavingsApiConstants.COMMAND_HOLD_AMOUNT)) {
-                final CommandWrapper commandRequest = builder.holdAmount(accountNumber).build();
+                final CommandWrapper commandRequest = builder.holdAmount(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             }
 

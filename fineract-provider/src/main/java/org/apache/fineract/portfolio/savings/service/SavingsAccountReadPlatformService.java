@@ -76,4 +76,6 @@ public interface SavingsAccountReadPlatformService {
 
 	Collection<SavingsAccountData> retrieveActiveMainForLookup(Long clientId, DepositAccountType depositAccountType);
 
+	Long retrieveSavingsIdByAccountNumber(String accountNumber);
+
 }
