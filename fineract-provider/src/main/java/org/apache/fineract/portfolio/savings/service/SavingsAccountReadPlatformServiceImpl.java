@@ -1390,4 +1390,14 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 			throw new SavingsAccountNumberNotFoundException(accountNumber);
 		}
 	}
+	
+	@Override
+	public String retrieveClientsAccountNumberBySavingsId(Long savingsId) {
+		try {
+			final String sql = "select c.account_no from m_client c left join m_savings_account sa on sa.client_id = c.id where sa.id = ?";
+			return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, String.class);
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNotFoundException(savingsId);
+		}
+	}
 }

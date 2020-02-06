@@ -26,6 +26,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.lang.StringUtils;
@@ -41,8 +43,8 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
-import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformServiceImpl;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -83,12 +85,19 @@ public class SavingsAccountTransactionsBatchApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String transaction(@QueryParam("command") final String commandParam,
-            final String apiRequestBodyAsJson) throws JSONException {
+            final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) throws JSONException {
         try {
+            /*String clientAccountNumber = entityHeader;*/
         	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
         	JSONArray jsonArray =  jsonObject.getJSONArray("batch");
         	String accountNumber = jsonObject.getString("accountNo");
-        	Long savingsId = this.savingsAccountReadPlatformService.retrieveSavingsIdByAccountNumber(accountNumber);      	
+        	Long savingsId = this.savingsAccountReadPlatformService.retrieveSavingsIdByAccountNumber(accountNumber);     
+
+        	String clientAccountNumberHeader = requestHeader.getRequestHeaders().getFirst("client-account-number");
+        	String clientAccountNumber = this.savingsAccountReadPlatformService.retrieveClientsAccountNumberBySavingsId(savingsId);
+        	if (!(clientAccountNumberHeader.equals(clientAccountNumber))) {
+        		throw new SavingsAccountNumberNotFoundException(accountNumber);
+        	}
         			
         	Collection<CommandProcessingResult> resultArray = new ArrayList<CommandProcessingResult>();
         	for (int i = 0; i < jsonArray.length(); i++) {

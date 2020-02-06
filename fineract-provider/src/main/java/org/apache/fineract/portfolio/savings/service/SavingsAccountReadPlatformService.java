@@ -78,4 +78,6 @@ public interface SavingsAccountReadPlatformService {
 
 	Long retrieveSavingsIdByAccountNumber(String accountNumber);
 
+	String retrieveClientsAccountNumberBySavingsId(Long savingsId);
+
 }
