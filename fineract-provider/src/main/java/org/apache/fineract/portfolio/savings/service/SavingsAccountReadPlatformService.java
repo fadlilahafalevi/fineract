@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
@@ -78,6 +79,8 @@ public interface SavingsAccountReadPlatformService {
 
 	Long retrieveSavingsIdByAccountNumber(String accountNumber);
 
-	String retrieveClientsAccountNumberBySavingsId(Long savingsId);
+	Long retrieveClientsIdBySavingsId(Long savingsId);
+
+	BigDecimal retrieveAmountBySavingsId(Long savingsId);
 
 }

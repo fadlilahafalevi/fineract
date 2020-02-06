@@ -1392,10 +1392,20 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 	}
 	
 	@Override
-	public String retrieveClientsAccountNumberBySavingsId(Long savingsId) {
+	public Long retrieveClientsIdBySavingsId(Long savingsId) {
 		try {
-			final String sql = "select c.account_no from m_client c left join m_savings_account sa on sa.client_id = c.id where sa.id = ?";
-			return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, String.class);
+			final String sql = "select sa.client_id from m_savings_account sa where sa.id = ?";
+			return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, Long.class);
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNotFoundException(savingsId);
+		}
+	}
+	
+	@Override
+	public BigDecimal retrieveAmountBySavingsId(Long savingsId) {
+		try {
+			final String sql = "select account_balance_derived from m_savings_account where id = ?";
+			return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, BigDecimal.class);
 		} catch (final EmptyResultDataAccessException e) {
 			throw new SavingsAccountNotFoundException(savingsId);
 		}
