@@ -126,12 +126,6 @@ public class SavingsAccountTransactionsBatchApiResource {
             } else if (is(commandParam, "withdrawal")) {
                 final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "deposit2")) {
-                final CommandWrapper commandRequest = builder.savingsAccountDeposit2(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "withdrawal2")) {
-                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal2(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, "postInterestAsOn")) {
                 final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);

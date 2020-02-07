@@ -56,10 +56,10 @@ import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
-@Path("/savingsaccounts/{savingsId}/transactions")
+@Path("/savingsaccounts/{savingsId}/transactions2")
 @Component
 @Scope("singleton")
-public class SavingsAccountTransactionsApiResource {
+public class SavingsAccountTransactionsApiResource2 {
 
     private final PlatformSecurityContext context;
     private final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer;
@@ -69,7 +69,7 @@ public class SavingsAccountTransactionsApiResource {
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
 
     @Autowired
-    public SavingsAccountTransactionsApiResource(final PlatformSecurityContext context,
+    public SavingsAccountTransactionsApiResource2(final PlatformSecurityContext context,
             final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
@@ -129,46 +129,54 @@ public class SavingsAccountTransactionsApiResource {
                 SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
     }
 
+	/*
+	 * @POST
+	 * 
+	 * @Consumes({ MediaType.APPLICATION_JSON })
+	 * 
+	 * @Produces({ MediaType.APPLICATION_JSON }) public String
+	 * transaction(@PathParam("savingsId") final Long
+	 * savingsId, @QueryParam("command") final String commandParam, final String
+	 * apiRequestBodyAsJson) { try { final CommandWrapperBuilder builder = new
+	 * CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
+	 * 
+	 * CommandProcessingResult result = null; if (is(commandParam, "deposit")) {
+	 * final CommandWrapper commandRequest =
+	 * builder.savingsAccountDeposit(savingsId).build(); result =
+	 * this.commandsSourceWritePlatformService.logCommandSource(commandRequest); }
+	 * else if (is(commandParam, "withdrawal")) { final CommandWrapper
+	 * commandRequest = builder.savingsAccountWithdrawal(savingsId).build(); result
+	 * = this.commandsSourceWritePlatformService.logCommandSource(commandRequest); }
+	 * else if (is(commandParam, "deposit2")) { final CommandWrapper commandRequest
+	 * = builder.savingsAccountDeposit2(savingsId).build(); result =
+	 * this.commandsSourceWritePlatformService.logCommandSource(commandRequest); }
+	 * else if (is(commandParam, "withdrawal2")) { final CommandWrapper
+	 * commandRequest = builder.savingsAccountWithdrawal2(savingsId).build(); result
+	 * = this.commandsSourceWritePlatformService.logCommandSource(commandRequest); }
+	 * else if (is(commandParam, "postInterestAsOn")) { final CommandWrapper
+	 * commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
+	 * result =
+	 * this.commandsSourceWritePlatformService.logCommandSource(commandRequest); }
+	 * else if (is(commandParam, SavingsApiConstants.COMMAND_HOLD_AMOUNT)) { final
+	 * CommandWrapper commandRequest = builder.holdAmount(savingsId).build(); result
+	 * = this.commandsSourceWritePlatformService.logCommandSource(commandRequest); }
+	 * 
+	 * if (result == null) { // throw new UnrecognizedQueryParamException("command",
+	 * commandParam, new Object[] { "deposit", "withdrawal",
+	 * SavingsApiConstants.COMMAND_HOLD_AMOUNT }); }
+	 * 
+	 * return this.toApiJsonSerializer.serialize(result); } catch
+	 * (ObjectOptimisticLockingFailureException lockingFailureException) { throw new
+	 * PlatformDataIntegrityException("error.msg.savings.concurrent.operations",
+	 * "Concurrent Transactions being made on this savings account: " +
+	 * lockingFailureException.getMessage()); } catch (CannotAcquireLockException
+	 * cannotAcquireLockException) { throw new PlatformDataIntegrityException(
+	 * "error.msg.savings.concurrent.operations.unable.to.acquire.lock",
+	 * "Unable to acquir lock for this transaction: " +
+	 * cannotAcquireLockException.getMessage()); } }
+	 */
+
     @POST
-    @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON })
-    public String transaction(@PathParam("savingsId") final Long savingsId, @QueryParam("command") final String commandParam,
-            final String apiRequestBodyAsJson) {
-        try {
-            final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
-            
-            CommandProcessingResult result = null;
-            if (is(commandParam, "deposit")) {
-                final CommandWrapper commandRequest = builder.savingsAccountDeposit(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "withdrawal")) {
-                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            }else if (is(commandParam, "postInterestAsOn")) {
-                final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, SavingsApiConstants.COMMAND_HOLD_AMOUNT)) {
-                final CommandWrapper commandRequest = builder.holdAmount(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            }
-
-            if (result == null) {
-                //
-                throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "deposit", "withdrawal", SavingsApiConstants.COMMAND_HOLD_AMOUNT });
-            }
-
-            return this.toApiJsonSerializer.serialize(result);
-        } catch (ObjectOptimisticLockingFailureException lockingFailureException) {
-            throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations",
-                    "Concurrent Transactions being made on this savings account: " + lockingFailureException.getMessage());
-        } catch (CannotAcquireLockException cannotAcquireLockException) {
-            throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations.unable.to.acquire.lock",
-                    "Unable to acquir lock for this transaction: " + cannotAcquireLockException.getMessage());
-        }
-    }
-
-    @POST
-    @Path("v2")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String transactionv2(@PathParam("savingsId") final Long savingsId, @QueryParam("command") final String commandParam,
@@ -192,7 +200,7 @@ public class SavingsAccountTransactionsApiResource {
             } else if (is(commandParam, "withdrawal")) {
                 final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "postInterestAsOn")) {
+            }  else if (is(commandParam, "postInterestAsOn")) {
                 final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, SavingsApiConstants.COMMAND_HOLD_AMOUNT)) {

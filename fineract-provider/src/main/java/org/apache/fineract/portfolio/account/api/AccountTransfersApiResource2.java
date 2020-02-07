@@ -58,11 +58,11 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Path("/accounttransfers")
+@Path("/accounttransfers2")
 @Component
 @Scope("singleton")
 @Api(value = "Account Transfers", description = "Ability to be able to transfer monetary funds from one account to another.\n\n" + "\n\n" + "Note: At present only savings account to savings account transfers are supported.")
-public class AccountTransfersApiResource {
+public class AccountTransfersApiResource2 {
 
     private final PlatformSecurityContext context;
     private final DefaultToApiJsonSerializer<AccountTransferData> toApiJsonSerializer;
@@ -72,7 +72,7 @@ public class AccountTransfersApiResource {
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
-    public AccountTransfersApiResource(final PlatformSecurityContext context,
+    public AccountTransfersApiResource2(final PlatformSecurityContext context,
             final DefaultToApiJsonSerializer<AccountTransferData> toApiJsonSerializer,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
@@ -110,19 +110,24 @@ public class AccountTransfersApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @ApiOperation(value = "Create new Transfer", httpMethod = "POST", notes = "Ability to create new transfer of monetary funds from one account to another.")
-    @ApiImplicitParams({@ApiImplicitParam(value = "body", required = true, paramType = "body", dataType = "body", format = "body", dataTypeClass = AccountTransfersApiResourceSwagger.PostAccountTransfersRequest.class)})
-    @ApiResponses({@ApiResponse(code = 200, message = "OK", response = AccountTransfersApiResourceSwagger.PostAccountTransfersResponse.class)})
-    public String create(@ApiParam(hidden = true) final String apiRequestBodyAsJson) {
+    public String createV2(final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) throws JSONException {
 
+    	final Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
+    	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
+        final Long savingsId = new Long(jsonObject.getLong("fromAccountId"));
+        final Long clientId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
+        final String accountNumber = this.savingsAccountReadPlatformService.retrieveAccountNumberByAccountId(savingsId);
+        if (!(clientAccountIdHeader.equals(clientId))) {
+    		throw new SavingsAccountNumberNotFoundException(accountNumber);
+    	}
+    	
+        
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createAccountTransfer().withJson(apiRequestBodyAsJson).build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return this.toApiJsonSerializer.serialize(result);
     }
-
-   
 
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })

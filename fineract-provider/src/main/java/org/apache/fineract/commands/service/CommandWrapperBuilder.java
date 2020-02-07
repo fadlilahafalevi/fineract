@@ -1278,14 +1278,6 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder savingsAccountDeposit2(final Long accountId) {
-        this.actionName = "DEPOSIT2";
-        this.entityName = "SAVINGSACCOUNT";
-        this.savingsId = accountId;
-        this.entityId = null;
-        this.href = "/savingsaccounts/" + accountId + "/transactions";
-        return this;
-    }
     
     public CommandWrapperBuilder savingsAccountDeposit(final String accountNo) {
         this.actionName = "DEPOSIT";
@@ -1296,17 +1288,7 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder savingsAccountDeposit2(final String accountNo) {
-        this.actionName = "DEPOSIT2";
-        this.entityName = "SAVINGSACCOUNTNUMBER";
-        this.accountNumber = accountNo;
-        this.entityId = null;
-        this.href = "/savingsaccounts/batchtrx";
-        return this;
-    }
     
-    
-
     public CommandWrapperBuilder savingsAccountWithdrawal(final Long accountId) {
         this.actionName = "WITHDRAWAL";
         this.entityName = "SAVINGSACCOUNT";
@@ -1316,14 +1298,7 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder savingsAccountWithdrawal2(final Long accountId) {
-        this.actionName = "WITHDRAWAL2";
-        this.entityName = "SAVINGSACCOUNT";
-        this.savingsId = accountId;
-        this.entityId = null;
-        this.href = "/savingsaccounts/" + accountId + "/transactions";
-        return this;
-    }
+    
     
     public CommandWrapperBuilder savingsAccountWithdrawal(final String accountNo) {
         this.actionName = "WITHDRAWAL";
@@ -1334,14 +1309,6 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder savingsAccountWithdrawal2(final String accountNo) {
-        this.actionName = "WITHDRAWAL2";
-        this.entityName = "SAVINGSACCOUNTNUMBER";
-        this.accountNumber = accountNo;
-        this.entityId = null;
-        this.href = "/savingsaccounts/batchtrx";
-        return this;
-    }
 
     public CommandWrapperBuilder undoSavingsAccountTransaction(final Long accountId, final Long transactionId) {
         this.actionName = "UNDOTRANSACTION";
