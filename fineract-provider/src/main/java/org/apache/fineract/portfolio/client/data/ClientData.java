@@ -617,8 +617,8 @@ final public class ClientData implements Comparable<ClientData> {
 	}
 
 	public SavingsSummaryTaxData getSavingsSummaryTaxData() {
-	}
 		return savingsSummaryTaxData;
+	}
 
 	public void setSavingsSummaryTaxData(SavingsSummaryTaxData savingsSummaryTaxData) {
 		this.savingsSummaryTaxData = savingsSummaryTaxData;
