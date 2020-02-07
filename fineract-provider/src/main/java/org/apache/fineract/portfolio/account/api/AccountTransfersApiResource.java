@@ -18,7 +18,18 @@
  */
 package org.apache.fineract.portfolio.account.api;
 
-import io.swagger.annotations.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
+
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
 import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
@@ -31,14 +42,21 @@ import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.account.data.AccountTransferData;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 @Path("/accounttransfers")
 @Component
@@ -51,18 +69,21 @@ public class AccountTransfersApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final AccountTransfersReadPlatformService accountTransfersReadPlatformService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
     public AccountTransfersApiResource(final PlatformSecurityContext context,
             final DefaultToApiJsonSerializer<AccountTransferData> toApiJsonSerializer,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
             final AccountTransfersReadPlatformService accountTransfersReadPlatformService) {
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.accountTransfersReadPlatformService = accountTransfersReadPlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
     @GET
@@ -94,6 +115,29 @@ public class AccountTransfersApiResource {
     @ApiResponses({@ApiResponse(code = 200, message = "OK", response = AccountTransfersApiResourceSwagger.PostAccountTransfersResponse.class)})
     public String create(@ApiParam(hidden = true) final String apiRequestBodyAsJson) {
 
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().createAccountTransfer().withJson(apiRequestBodyAsJson).build();
+
+        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+        return this.toApiJsonSerializer.serialize(result);
+    }
+
+    @POST
+    @Path("secondVersion")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String createV2(final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) throws JSONException {
+
+    	final Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
+    	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
+        final Long savingsId = new Long(jsonObject.getLong("fromAccountId"));
+        final Long clientId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
+        final String accountNumber = this.savingsAccountReadPlatformService.retrieveAccountNumberByAccountId(savingsId);
+        if (!(clientAccountIdHeader.equals(clientId))) {
+    		throw new SavingsAccountNumberNotFoundException(accountNumber);
+    	}
+    	
+        
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createAccountTransfer().withJson(apiRequestBodyAsJson).build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);

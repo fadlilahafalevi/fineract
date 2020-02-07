@@ -28,6 +28,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
@@ -47,6 +48,7 @@ import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatform
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -134,7 +136,61 @@ public class SavingsAccountTransactionsApiResource {
             final String apiRequestBodyAsJson) {
         try {
             final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
+            
+            CommandProcessingResult result = null;
+            if (is(commandParam, "deposit")) {
+                final CommandWrapper commandRequest = builder.savingsAccountDeposit(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            } else if (is(commandParam, "withdrawal")) {
+                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            } else if (is(commandParam, "deposit2")) {
+                final CommandWrapper commandRequest = builder.savingsAccountDeposit2(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            } else if (is(commandParam, "withdrawal2")) {
+                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal2(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            } else if (is(commandParam, "postInterestAsOn")) {
+                final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            } else if (is(commandParam, SavingsApiConstants.COMMAND_HOLD_AMOUNT)) {
+                final CommandWrapper commandRequest = builder.holdAmount(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            }
 
+            if (result == null) {
+                //
+                throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "deposit", "withdrawal", SavingsApiConstants.COMMAND_HOLD_AMOUNT });
+            }
+
+            return this.toApiJsonSerializer.serialize(result);
+        } catch (ObjectOptimisticLockingFailureException lockingFailureException) {
+            throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations",
+                    "Concurrent Transactions being made on this savings account: " + lockingFailureException.getMessage());
+        } catch (CannotAcquireLockException cannotAcquireLockException) {
+            throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations.unable.to.acquire.lock",
+                    "Unable to acquir lock for this transaction: " + cannotAcquireLockException.getMessage());
+        }
+    }
+
+    @POST
+    @Path("v2")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String transactionv2(@PathParam("savingsId") final Long savingsId, @QueryParam("command") final String commandParam,
+            final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) {
+        try {
+            final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
+
+            if (is(commandParam, "withdrawal")) {
+	            Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
+	        	Long clientAccountId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
+	        	String accountNumber = this.savingsAccountReadPlatformService.retrieveAccountNumberByAccountId(savingsId);
+	        	if (!(clientAccountIdHeader.equals(clientAccountId))) {
+	        		throw new SavingsAccountNumberNotFoundException(accountNumber);
+	        	}
+            }
+            
             CommandProcessingResult result = null;
             if (is(commandParam, "deposit")) {
                 final CommandWrapper commandRequest = builder.savingsAccountDeposit(savingsId).build();
