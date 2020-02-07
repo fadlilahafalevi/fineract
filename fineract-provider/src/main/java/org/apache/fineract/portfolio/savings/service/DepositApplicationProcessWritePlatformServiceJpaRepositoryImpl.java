@@ -276,7 +276,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                     .isSavingsInterestPostingAtCurrentPeriodEnd();
             final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
 
-            final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(command, submittedBy,
+            final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFromFixedDeposit(command, submittedBy,
                     DepositAccountType.FIXED_DEPOSIT);
 
             final MathContext mc = MathContext.DECIMAL64;
