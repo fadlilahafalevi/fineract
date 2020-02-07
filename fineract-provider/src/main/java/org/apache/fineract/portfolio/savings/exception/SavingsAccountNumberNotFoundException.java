@@ -23,6 +23,6 @@ import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourc
 public class SavingsAccountNumberNotFoundException extends AbstractPlatformResourceNotFoundException {
 
     public SavingsAccountNumberNotFoundException(final String accountNumber) {
-        super("error.msg.saving.account.id.invalid", "Savings account Number with identifier " + accountNumber + " does not exist", accountNumber);
+        super("error.msg.saving.account.number.invalid", "Savings account Number with identifier " + accountNumber + " does not exist", accountNumber);
     }
 }

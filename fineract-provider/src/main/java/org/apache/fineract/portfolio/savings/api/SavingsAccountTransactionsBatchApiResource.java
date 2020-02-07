@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.api;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -26,6 +27,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.lang.StringUtils;
@@ -41,8 +44,9 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
+import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
-import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformServiceImpl;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -83,13 +87,32 @@ public class SavingsAccountTransactionsBatchApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String transaction(@QueryParam("command") final String commandParam,
-            final String apiRequestBodyAsJson) throws JSONException {
+            final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) throws JSONException {
         try {
         	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
         	JSONArray jsonArray =  jsonObject.getJSONArray("batch");
         	String accountNumber = jsonObject.getString("accountNo");
-        	Long savingsId = this.savingsAccountReadPlatformService.retrieveSavingsIdByAccountNumber(accountNumber);      	
-        			
+        	Long savingsId = this.savingsAccountReadPlatformService.retrieveSavingsIdByAccountNumber(accountNumber);     
+
+        	Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
+        	Long clientAccountId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
+        	if (!(clientAccountIdHeader.equals(clientAccountId))) {
+        		throw new SavingsAccountNumberNotFoundException(accountNumber);
+        	}
+        	
+        	if (is(commandParam, "withdrawal")) {
+        		BigDecimal amount = BigDecimal.ZERO;
+        		for (int i = 0; i < jsonArray.length(); i++) {
+        			String apiRequestBodyAsJsonArray = jsonArray.getJSONObject(i).toString();
+        			JSONObject jsonObjectAmount = new JSONObject(apiRequestBodyAsJsonArray);
+        			amount = amount.add(new BigDecimal(jsonObjectAmount.getString("transactionAmount")));
+        		}
+        		BigDecimal savingsAccountAmount = this.savingsAccountReadPlatformService.retrieveAmountBySavingsId(savingsId);
+        		if (savingsAccountAmount.compareTo(amount) < 0) {
+					throw new InsufficientAccountBalanceException("savingsAccountNumber:" + accountNumber, savingsAccountAmount, BigDecimal.ZERO, amount);
+        		}
+        	}
+        	
         	Collection<CommandProcessingResult> resultArray = new ArrayList<CommandProcessingResult>();
         	for (int i = 0; i < jsonArray.length(); i++) {
                 String apiRequestBodyAsJsonArray = jsonArray.getJSONObject(i).toString();
