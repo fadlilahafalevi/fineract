@@ -52,7 +52,7 @@ public class SavingsAccountTransactionData {
     private final BigDecimal runningBalance;
     private final boolean reversed;
     private final AccountTransferData transfer;
-    private final Date submittedOnDate;
+    private final String createdDate;
     private final boolean interestedPostedAsOn;
     private final String submittedByUsername;
     private final String note ;
@@ -98,7 +98,7 @@ public class SavingsAccountTransactionData {
         this.runningBalance = null;
         this.reversed = false;
         this.transfer = null;
-        this.submittedOnDate = null;
+        this.createdDate = null;
         this.interestedPostedAsOn = false;
         this.rowIndex = rowIndex;
         this.savingsAccountId=savingsAccountId;
@@ -141,11 +141,11 @@ public class SavingsAccountTransactionData {
     public static SavingsAccountTransactionData create(final Long id, final SavingsAccountTransactionEnumData transactionType,
             final PaymentDetailData paymentDetailData, final Long savingsId, final String savingsAccountNo, final LocalDate date,
             final CurrencyData currency, final BigDecimal amount, final BigDecimal outstandingChargeAmount,
-            final BigDecimal runningBalance, final boolean reversed, final AccountTransferData transfer, final Date submittedOnDate,
+            final BigDecimal runningBalance, final boolean reversed, final AccountTransferData transfer, final String createdDate,
             final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
         final Collection<PaymentTypeData> paymentTypeOptions = null;
         return new SavingsAccountTransactionData(id, transactionType, paymentDetailData, savingsId, savingsAccountNo, date, currency,
-                amount, outstandingChargeAmount, runningBalance, reversed, transfer, paymentTypeOptions, submittedOnDate,
+                amount, outstandingChargeAmount, runningBalance, reversed, transfer, paymentTypeOptions, createdDate,
                 interestedPostedAsOn, submittedByUsername, note);
     }
     
@@ -199,7 +199,7 @@ public class SavingsAccountTransactionData {
     private SavingsAccountTransactionData(final Long id, final SavingsAccountTransactionEnumData transactionType,
             final PaymentDetailData paymentDetailData, final Long savingsId, final String savingsAccountNo, final LocalDate date,
             final CurrencyData currency, final BigDecimal amount,final BigDecimal outstandingChargeAmount, final BigDecimal runningBalance, final boolean reversed,
-            final AccountTransferData transfer, final Collection<PaymentTypeData> paymentTypeOptions, final Date submittedOnDate,
+            final AccountTransferData transfer, final Collection<PaymentTypeData> paymentTypeOptions, final String createdDate,
             final boolean interestedPostedAsOn, final String submittedByUsername, final String note) {
         this.id = id;
         this.transactionType = transactionType;
@@ -214,7 +214,7 @@ public class SavingsAccountTransactionData {
         this.reversed = reversed;
         this.transfer = transfer;
         this.paymentTypeOptions = paymentTypeOptions;
-        this.submittedOnDate = submittedOnDate;
+        this.createdDate = createdDate;
         this.interestedPostedAsOn = interestedPostedAsOn;
         this.submittedByUsername = submittedByUsername ;
         this.note = note ;
