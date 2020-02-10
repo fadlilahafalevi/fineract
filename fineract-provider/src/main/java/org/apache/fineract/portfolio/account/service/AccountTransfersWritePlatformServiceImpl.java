@@ -58,6 +58,7 @@ import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
 import org.apache.fineract.portfolio.paymenttype.domain.PaymentTypeRepositoryWrapper;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
@@ -172,10 +173,12 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 final Long toSavingsId = command.longValueOfParameterNamed(toAccountIdParamName);
                 final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsId);
             	final Boolean isToSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(toSavingsId);
+            	final Integer savingsAccountType = toSavingsAccount.depositAccountType().getValue();
             	
             	Boolean processTransfer = false;
             	
-            	if (isFromSavingsMainAccount && isToSavingsMainAccount) {
+				if ((isFromSavingsMainAccount && isToSavingsMainAccount) || (isFromSavingsMainAccount
+						&& savingsAccountType.equals(DepositAccountType.FIXED_DEPOSIT.getValue()))) {
             		processTransfer = true;
             	} else if (isFromSavingsMainAccount && !isToSavingsMainAccount) {
             		final SavingsAccount mainAccountSavingsDestination = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(toSavingsAccount.getClient().getId());
