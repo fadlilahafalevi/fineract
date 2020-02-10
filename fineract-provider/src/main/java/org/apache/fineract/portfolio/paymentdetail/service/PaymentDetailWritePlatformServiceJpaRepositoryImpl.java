@@ -54,6 +54,14 @@ public class PaymentDetailWritePlatformServiceJpaRepositoryImpl implements Payme
         return paymentDetail;
 
     }
+    
+    @Override
+    public PaymentDetail createPaymentDetailByName(final JsonCommand command, final Map<String, Object> changes, final String name) {
+        final PaymentType paymentType = this.paymentTyperepositoryWrapper.findOneWithNotFoundDetection(name);
+        final PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetail(paymentType, command, changes);
+        return paymentDetail;
+
+    }
 
     @Override
     @Transactional
@@ -65,6 +73,14 @@ public class PaymentDetailWritePlatformServiceJpaRepositoryImpl implements Payme
     @Transactional
     public PaymentDetail createAndPersistPaymentDetail(final JsonCommand command, final Map<String, Object> changes) {
         final PaymentDetail paymentDetail = createPaymentDetail(command, changes);
+        if (paymentDetail != null) { return persistPaymentDetail(paymentDetail); }
+        return paymentDetail;
+    }
+    
+    @Override
+    @Transactional
+    public PaymentDetail createAndPersistPaymentDetailByName(final JsonCommand command, final Map<String, Object> changes, final String name) {
+        final PaymentDetail paymentDetail = createPaymentDetailByName(command, changes, name);
         if (paymentDetail != null) { return persistPaymentDetail(paymentDetail); }
         return paymentDetail;
     }

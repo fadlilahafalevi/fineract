@@ -24,11 +24,15 @@ import static org.apache.fineract.portfolio.account.AccountDetailConstants.toAcc
 import static org.apache.fineract.portfolio.account.AccountDetailConstants.toAccountTypeParamName;
 import static org.apache.fineract.portfolio.account.api.AccountTransfersApiConstants.transferAmountParamName;
 import static org.apache.fineract.portfolio.account.api.AccountTransfersApiConstants.transferDateParamName;
+import static org.apache.fineract.portfolio.account.AccountDetailConstants.paymentTypeFromParamName;
+import static org.apache.fineract.portfolio.account.AccountDetailConstants.paymentTypeToParamName;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -52,6 +56,8 @@ import org.apache.fineract.portfolio.loanaccount.exception.InvalidPaidInAdvanceA
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
+import org.apache.fineract.portfolio.paymenttype.domain.PaymentTypeRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
@@ -84,6 +90,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private final LoanReadPlatformService loanReadPlatformService;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper;
+    private final PaymentDetailWritePlatformService paymentDetailWritePlatformService;
 
     @Autowired
     public AccountTransfersWritePlatformServiceImpl(final AccountTransfersDataValidator accountTransfersDataValidator,
@@ -94,7 +101,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final AccountTransferDetailRepository accountTransferDetailRepository,
             final LoanReadPlatformService loanReadPlatformService,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper) {
+            final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper,
+            final PaymentDetailWritePlatformService paymentDetailWritePlatformService) {
         this.accountTransfersDataValidator = accountTransfersDataValidator;
         this.accountTransferAssembler = accountTransferAssembler;
         this.accountTransferRepository = accountTransferRepository;
@@ -107,6 +115,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         this.loanReadPlatformService = loanReadPlatformService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.savingsAccountRepositoryWrapper = savingsAccountRepositoryWrapper;
+        this.paymentDetailWritePlatformService = paymentDetailWritePlatformService;
     }
 
     @Transactional
@@ -138,6 +147,17 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
         if (isSavingsToSavingsAccountTransfer(fromAccountType, toAccountType)) {
         	
+        	final String paymentTypeFromName = command.stringValueOfParameterNamed(paymentTypeFromParamName);
+        	final String paymentTypeToName = command.stringValueOfParameterNamed(paymentTypeToParamName);
+        	
+        	PaymentDetail paymentDetailFrom = null;
+        	PaymentDetail paymentDetailTo = null;
+        	
+        	if (!paymentTypeFromName.isEmpty() && !paymentTypeToName.isEmpty()) {
+        		final Map<String, Object> changes = new LinkedHashMap<>();
+        		paymentDetailFrom = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeFromName);
+        		paymentDetailTo = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeToName);
+        	}
 
             fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
             final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
@@ -146,7 +166,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                     isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
-                    transactionDate, transactionAmount, paymentDetail, transactionBooleanValues);
+                    transactionDate, transactionAmount, paymentDetailFrom, transactionBooleanValues);
 
             final Long toSavingsId = command.longValueOfParameterNamed(toAccountIdParamName);
             final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsId);
@@ -174,7 +194,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         	}
 
             final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount, fmt,
-                    transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+                    transactionDate, transactionAmount, paymentDetailTo, isAccountTransfer, isRegularTransaction);
 
             final AccountTransferDetails accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSavingsTransfer(command,
                     fromSavingsAccount, toSavingsAccount, withdrawal, deposit);
