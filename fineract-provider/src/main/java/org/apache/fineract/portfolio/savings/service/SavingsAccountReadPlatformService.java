@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
@@ -67,16 +68,20 @@ public interface SavingsAccountReadPlatformService {
 	SavingsAccountTransactionData retrieveSavingsTransactionByRecipt(Long savingsId, String receiptNumber,
 			DepositAccountType depositAccountType);
 
+	Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistory(String accountNo, String startdate,
+			String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize);
+
 	Boolean checkingMainProduct(Long clientId);
 
 	Boolean isMainProduct(Long savingsId);
 
 	Collection<SavingsAccountData> retrieveActiveMainForLookup(Long clientId, DepositAccountType depositAccountType);
 
-	Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistory(String accountNo, String startdate,
-			String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize);
+	Long retrieveSavingsIdByAccountNumber(String accountNumber);
 
+	Long retrieveClientsIdBySavingsId(Long savingsId);
+
+	BigDecimal retrieveAmountBySavingsId(Long savingsId);
 
 	List<SavingsAccountData> retrieveByClientId(Long clientId);
-
 }

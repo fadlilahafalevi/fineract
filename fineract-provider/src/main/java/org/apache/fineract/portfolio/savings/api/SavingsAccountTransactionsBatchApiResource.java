@@ -18,15 +18,17 @@
  */
 package org.apache.fineract.portfolio.savings.api;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.lang.StringUtils;
@@ -40,9 +42,10 @@ import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamE
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
-import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
+import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -53,13 +56,14 @@ import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
-@Path("/savingsaccounts/{savingsId}/batchtrx")
+@Path("/savingsaccounts/batchtrx")
 @Component
 @Scope("singleton")
 public class SavingsAccountTransactionsBatchApiResource {
 
     private final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
     public SavingsAccountTransactionsBatchApiResource(final PlatformSecurityContext context,
@@ -70,6 +74,7 @@ public class SavingsAccountTransactionsBatchApiResource {
             PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
     private boolean is(final String commandParam, final String commandValue) {
@@ -81,18 +86,37 @@ public class SavingsAccountTransactionsBatchApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String transaction(@PathParam("savingsId") final Long savingsId, @QueryParam("command") final String commandParam,
-            final String apiRequestBodyAsJson) throws JSONException {
+    public String transaction(@QueryParam("command") final String commandParam,
+            final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) throws JSONException {
         try {
         	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
         	JSONArray jsonArray =  jsonObject.getJSONArray("batch");
+        	String accountNumber = jsonObject.getString("accountNo");
+        	Long savingsId = this.savingsAccountReadPlatformService.retrieveSavingsIdByAccountNumber(accountNumber);     
+
+        	Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
+        	Long clientAccountId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
+        	if (!(clientAccountIdHeader.equals(clientAccountId))) {
+        		throw new SavingsAccountNumberNotFoundException(accountNumber);
+        	}
+        	
+        	if (is(commandParam, "withdrawal")) {
+        		BigDecimal amount = BigDecimal.ZERO;
+        		for (int i = 0; i < jsonArray.length(); i++) {
+        			String apiRequestBodyAsJsonArray = jsonArray.getJSONObject(i).toString();
+        			JSONObject jsonObjectAmount = new JSONObject(apiRequestBodyAsJsonArray);
+        			amount = amount.add(new BigDecimal(jsonObjectAmount.getString("transactionAmount")));
+        		}
+        		BigDecimal savingsAccountAmount = this.savingsAccountReadPlatformService.retrieveAmountBySavingsId(savingsId);
+        		if (savingsAccountAmount.compareTo(amount) < 0) {
+					throw new InsufficientAccountBalanceException("savingsAccountNumber:" + accountNumber, savingsAccountAmount, BigDecimal.ZERO, amount);
+        		}
+        	}
+        	
         	Collection<CommandProcessingResult> resultArray = new ArrayList<CommandProcessingResult>();
         	for (int i = 0; i < jsonArray.length(); i++) {
                 String apiRequestBodyAsJsonArray = jsonArray.getJSONObject(i).toString();
                 
-            
-        	
-        	
             final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJsonArray);
 
             CommandProcessingResult result = null;
@@ -101,12 +125,6 @@ public class SavingsAccountTransactionsBatchApiResource {
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, "withdrawal")) {
                 final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "deposit2")) {
-                final CommandWrapper commandRequest = builder.savingsAccountDeposit2(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "withdrawal2")) {
-                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal2(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             } else if (is(commandParam, "postInterestAsOn")) {
                 final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();

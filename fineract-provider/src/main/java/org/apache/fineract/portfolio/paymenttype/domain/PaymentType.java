@@ -121,4 +121,12 @@ public class PaymentType extends AbstractPersistableCustom<Long> {
 	public void setSubGL(String subGL) {
 		this.subGl = subGL;
 	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 }

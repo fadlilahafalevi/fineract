@@ -30,6 +30,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
@@ -48,6 +49,7 @@ import org.apache.fineract.portfolio.self.account.exception.DailyTPTTransactionA
 import org.apache.fineract.portfolio.self.account.service.SelfAccountTransferReadService;
 import org.apache.fineract.portfolio.self.account.service.SelfBeneficiariesTPTReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.codehaus.jettison.json.JSONException;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -122,13 +124,13 @@ public class SelfAccountTransferApiResource {
 	@Produces({ MediaType.APPLICATION_JSON })
 	public String create(
 			@DefaultValue("") @QueryParam("type") final String type,
-			final String apiRequestBodyAsJson) {
+			final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) throws JSONException {
 		Map<String, Object> params = this.dataValidator.validateCreate(type,
 				apiRequestBodyAsJson);
 		if (type.equals("tpt")) {
 			checkForLimits(params);
 		}
-		return this.accountTransfersApiResource.create(apiRequestBodyAsJson);
+		return this.accountTransfersApiResource.create(apiRequestBodyAsJson, requestHeader);
 	}
 
 	private void checkForLimits(Map<String, Object> params) {

@@ -33,6 +33,7 @@ public class CommandWrapperBuilder {
     private Long clientId;
     private Long loanId;
     private Long savingsId;
+    private String accountNumber;
     private String actionName;
     private String entityName;
     private Long entityId;
@@ -50,6 +51,14 @@ public class CommandWrapperBuilder {
         return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
                 this.entityName, this.entityId, this.subentityId, this.href, this.json, this.transactionId, this.productId,
                 this.templateId,this.creditBureauId,this.organisationCreditBureauId);
+    }
+    
+    public CommandWrapper buildWithAccountNumber() {
+    	CommandWrapper commandWrapper = new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
+                this.entityName, this.entityId, this.subentityId, this.href, this.json, this.transactionId, this.productId,
+                this.templateId,this.creditBureauId,this.organisationCreditBureauId);
+    	commandWrapper.setAccountNumber(this.accountNumber);
+    	return commandWrapper;
     }
     
     public CommandWrapperBuilder updateCreditBureau() {
@@ -1269,15 +1278,17 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder savingsAccountDeposit2(final Long accountId) {
-        this.actionName = "DEPOSIT2";
-        this.entityName = "SAVINGSACCOUNT";
-        this.savingsId = accountId;
+    
+    public CommandWrapperBuilder savingsAccountDeposit(final String accountNo) {
+        this.actionName = "DEPOSIT";
+        this.entityName = "SAVINGSACCOUNTNUMBER";
+        this.accountNumber = accountNo;
         this.entityId = null;
-        this.href = "/savingsaccounts/" + accountId + "/transactions";
+        this.href = "/savingsaccounts/batchtrx";
         return this;
     }
-
+    
+    
     public CommandWrapperBuilder savingsAccountWithdrawal(final Long accountId) {
         this.actionName = "WITHDRAWAL";
         this.entityName = "SAVINGSACCOUNT";
@@ -1287,14 +1298,17 @@ public class CommandWrapperBuilder {
         return this;
     }
     
-    public CommandWrapperBuilder savingsAccountWithdrawal2(final Long accountId) {
-        this.actionName = "WITHDRAWAL2";
-        this.entityName = "SAVINGSACCOUNT";
-        this.savingsId = accountId;
+    
+    
+    public CommandWrapperBuilder savingsAccountWithdrawal(final String accountNo) {
+        this.actionName = "WITHDRAWAL";
+        this.entityName = "SAVINGSACCOUNTNUMBER";
+        this.accountNumber = accountNo;
         this.entityId = null;
-        this.href = "/savingsaccounts/" + accountId + "/transactions";
+        this.href = "/savingsaccounts/batchtrx";
         return this;
     }
+    
 
     public CommandWrapperBuilder undoSavingsAccountTransaction(final Long accountId, final Long transactionId) {
         this.actionName = "UNDOTRANSACTION";
@@ -1336,6 +1350,18 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    
+/*hanya digunakan ketika diperlukan, masih bingung soal entityId
+ *     
+    public CommandWrapperBuilder savingsAccountNumberInterestPosting(final String accountNo) {
+        this.actionName = "POSTINTEREST";
+        this.entityName = "SAVINGSACCOUNT";
+        this.accountNumber = accountNo;
+        this.entityId = accountId;
+        this.href = "/savingsaccounts/?command=postInterest";
+        return this;
+    }
+*/
     public CommandWrapperBuilder savingsAccountApplyAnnualFees(final Long accountId) {
         this.actionName = "APPLYANNUALFEE";
         this.entityName = "SAVINGSACCOUNT";
@@ -2998,6 +3024,16 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder holdAmount(final String accountNo) {
+        this.actionName = "HOLDAMOUNT";
+        this.entityName = "SAVINGSACCOUNTNUMBER";
+        this.accountNumber = accountNo;
+        this.entityId = null;
+        this.href = "/savingsaccounts/batchtrx?command=holdAmount";
+        return this;
+    }
+
+    
     public CommandWrapperBuilder releaseAmount(final Long accountId, final Long transactionId) {
         this.actionName = "RELEASEAMOUNT";
         this.entityName = "SAVINGSACCOUNT";

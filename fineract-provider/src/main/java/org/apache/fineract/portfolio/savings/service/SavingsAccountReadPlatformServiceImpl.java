@@ -22,11 +22,13 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
@@ -73,6 +75,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactioninqNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionsHistoryNotFoundException;
@@ -933,7 +936,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final SavingsAccountTransactionEnumData transactionType = SavingsEnumerations.transactionType(transactionTypeInt);
 
             final LocalDate date = JdbcSupport.getLocalDate(rs, "transactionDate");
-            final Date submittedOnDate = JdbcSupport.getDate(rs, "submittedOnDate");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+			sdf.setTimeZone(TimeZone.getDefault());
+			
+            final String submittedOnDate = sdf.format(JdbcSupport.getDate(rs, "submittedOnDate"));
+                      		
             final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "transactionAmount");
             final BigDecimal outstandingChargeAmount = null;
             final BigDecimal runningBalance = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "runningBalance");
@@ -1395,5 +1402,35 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 				+ "left join m_savings_product sp on sa.product_id = sp.id "
 				+ "where sa.id = ?";
 		return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, Boolean.class);
+	}
+	
+	@Override
+	public Long retrieveSavingsIdByAccountNumber(String accountNumber) {
+		try {
+			final String sql = "select s.id from m_savings_account s where s.account_no = ?";
+			return this.jdbcTemplate.queryForObject(sql, new Object[] { accountNumber }, Long.class);
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNumberNotFoundException(accountNumber);
+		}
+	}
+	
+	@Override
+	public Long retrieveClientsIdBySavingsId(Long savingsId) {
+		try {
+			final String sql = "select sa.client_id from m_savings_account sa where sa.id = ?";
+			return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, Long.class);
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNotFoundException(savingsId);
+		}
+	}
+	
+	@Override
+	public BigDecimal retrieveAmountBySavingsId(Long savingsId) {
+		try {
+			final String sql = "select account_balance_derived from m_savings_account where id = ?";
+			return this.jdbcTemplate.queryForObject(sql, new Object[] { savingsId }, BigDecimal.class);
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNotFoundException(savingsId);
+		}
 	}
 }

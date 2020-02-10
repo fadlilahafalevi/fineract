@@ -93,7 +93,7 @@ public class CommandProcessingResult implements Serializable {
         } else {
             this.resourceIdentifier = null;
         }
-        this.createdDate=null;
+        this.setCreatedDate(null);
         this.resourceId = entityId;
         this.officeId = null;
         this.groupId = null;
@@ -135,7 +135,7 @@ public class CommandProcessingResult implements Serializable {
         } else {
             this.resourceIdentifier = null;
         }
-        this.createdDate = null;
+        this.setCreatedDate(null);
         this.resourceId = resourceId;
         this.officeId = officeId;
         this.groupId = null;
@@ -215,5 +215,17 @@ public class CommandProcessingResult implements Serializable {
     public Long getSubResourceId() {
         return subResourceId;
     }
+
+	public String getAccountNumber() {
+		return accountNumber;
+	}
+
+	public Date getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(Date createdDate) {
+		this.createdDate = createdDate;
+	}
 
 }

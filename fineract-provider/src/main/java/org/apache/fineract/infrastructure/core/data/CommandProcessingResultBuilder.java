@@ -108,6 +108,11 @@ public class CommandProcessingResultBuilder {
         this.savingsId = withSavingsId;
         return this;
     }
+    
+    public CommandProcessingResultBuilder withAccountNumber(final String withAccountNumber) {
+        this.accountNumber = withAccountNumber;
+        return this;
+    }
 
     public CommandProcessingResultBuilder withTransactionId(final String withTransactionId) {
         this.transactionId = withTransactionId;

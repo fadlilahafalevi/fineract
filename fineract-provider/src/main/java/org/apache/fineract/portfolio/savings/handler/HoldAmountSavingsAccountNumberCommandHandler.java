@@ -28,19 +28,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@CommandType(entity = "SAVINGSACCOUNT", action = "DEPOSIT2")
-public class DepositSavingsAccountCommandHandler2 implements NewCommandSourceHandler {
+@CommandType(entity = "SAVINGSACCOUNTNUMBER", action = "HOLDAMOUNT")
+public class HoldAmountSavingsAccountNumberCommandHandler implements NewCommandSourceHandler {
 
     private final SavingsAccountWritePlatformService writePlatformService;
 
     @Autowired
-    public DepositSavingsAccountCommandHandler2(final SavingsAccountWritePlatformService writePlatformService) {
-        this.writePlatformService = writePlatformService;
+    public HoldAmountSavingsAccountNumberCommandHandler(final SavingsAccountWritePlatformService savingAccountWritePlatformService) {
+        this.writePlatformService = savingAccountWritePlatformService;
     }
 
     @Transactional
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
-        return this.writePlatformService.deposit2(command.getSavingsId(), command);
+    public CommandProcessingResult processCommand(JsonCommand command) {
+        return this.writePlatformService.holdAmount(command.getSavingsId(), command);
     }
+
 }
