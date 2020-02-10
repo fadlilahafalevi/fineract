@@ -15,7 +15,9 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- */
+ *//*
+ *
+ *Deleted API Because not used anymore.
 package org.apache.fineract.portfolio.account.api;
 
 import javax.ws.rs.Consumes;
@@ -202,4 +204,4 @@ public class AccountTransfersApiResource2 {
 
         return this.toApiJsonSerializer.serialize(result);
     }
-}
+}*/

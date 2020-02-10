@@ -148,7 +148,17 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         if(transactionDate.equals(todayDate))
         {
         	if (isSavingsToSavingsAccountTransfer(fromAccountType, toAccountType)) {
+        		final String paymentTypeFromName = command.stringValueOfParameterNamed(paymentTypeFromParamName);
+            	final String paymentTypeToName = command.stringValueOfParameterNamed(paymentTypeToParamName);
             	
+            	PaymentDetail paymentDetailFrom = null;
+            	PaymentDetail paymentDetailTo = null;
+            	
+            	if (!paymentTypeFromName.isEmpty() && !paymentTypeToName.isEmpty()) {
+            		final Map<String, Object> changes = new LinkedHashMap<>();
+            		paymentDetailFrom = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeFromName);
+            		paymentDetailTo = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeToName);
+            	}
 
                 fromSavingsAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
                 final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountId);
@@ -157,7 +167,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                         isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
                 final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
-                        transactionDate, transactionAmount, paymentDetail, transactionBooleanValues);
+                        transactionDate, transactionAmount, paymentDetailFrom, transactionBooleanValues);
 
                 final Long toSavingsId = command.longValueOfParameterNamed(toAccountIdParamName);
                 final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsId);
@@ -168,16 +178,23 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             	if (isFromSavingsMainAccount && isToSavingsMainAccount) {
             		processTransfer = true;
             	} else if (isFromSavingsMainAccount && !isToSavingsMainAccount) {
-            		final SavingsAccount savingsAccountMainAccount = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(fromSavingsAccount.getClient().getId());
-            		if (savingsAccountMainAccount != null) {
-	            		if (savingsAccountMainAccount.getAccountNumber() == fromSavingsAccount.getAccountNumber()) {
+            		final SavingsAccount mainAccountSavingsDestination = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(toSavingsAccount.getClient().getId());
+            		if (mainAccountSavingsDestination != null) {
+	            		if (mainAccountSavingsDestination.getAccountNumber() == fromSavingsAccount.getAccountNumber()) {
 	            			processTransfer = true;
+	            		} else {
+	            			//Jika Main dan Sub berbeda CIS, akan dicek payment typenya//
+	            			if (paymentDetailFrom != null) {
+	            				if (paymentDetailFrom.getPaymentType().getName().equals("OSSA") && paymentDetailTo.getPaymentType().getName().equals("ISSA")) {
+	            					processTransfer = true;
+	            				}
+	            			}
 	            		}
             		}
             	} else if (!isFromSavingsMainAccount && isToSavingsMainAccount) {
-            		final SavingsAccount savingsAccountMainAccount = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(toSavingsAccount.getClient().getId());
-            		if (savingsAccountMainAccount != null) {
-	            		if (savingsAccountMainAccount.getAccountNumber() == toSavingsAccount.getAccountNumber()) {
+            		final SavingsAccount mainAccountSavingsSource = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(fromSavingsAccount.getClient().getId());
+            		if (mainAccountSavingsSource != null) {
+	            		if (mainAccountSavingsSource.getAccountNumber() == toSavingsAccount.getAccountNumber()) {
 	            			processTransfer = true;
 	            		}
             		}
@@ -189,7 +206,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             	}
 
                 final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount, fmt,
-                        transactionDate, transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+                        transactionDate, transactionAmount, paymentDetailTo, isAccountTransfer, isRegularTransaction);
 
                 final AccountTransferDetails accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSavingsTransfer(command,
                         fromSavingsAccount, toSavingsAccount, withdrawal, deposit);

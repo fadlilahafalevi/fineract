@@ -113,8 +113,17 @@ public class AccountTransfersApiResource {
     @ApiOperation(value = "Create new Transfer", httpMethod = "POST", notes = "Ability to create new transfer of monetary funds from one account to another.")
     @ApiImplicitParams({@ApiImplicitParam(value = "body", required = true, paramType = "body", dataType = "body", format = "body", dataTypeClass = AccountTransfersApiResourceSwagger.PostAccountTransfersRequest.class)})
     @ApiResponses({@ApiResponse(code = 200, message = "OK", response = AccountTransfersApiResourceSwagger.PostAccountTransfersResponse.class)})
-    public String create(@ApiParam(hidden = true) final String apiRequestBodyAsJson) {
+    public String create(@ApiParam(hidden = true) final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) throws JSONException {
 
+    	final Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
+    	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
+        final Long savingsId = new Long(jsonObject.getLong("fromAccountId"));
+        final Long clientId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
+        final String accountNumber = this.savingsAccountReadPlatformService.retrieveAccountNumberByAccountId(savingsId);
+        if (!(clientAccountIdHeader.equals(clientId))) {
+    		throw new SavingsAccountNumberNotFoundException(accountNumber);
+    	}
+        
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createAccountTransfer().withJson(apiRequestBodyAsJson).build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
