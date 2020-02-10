@@ -92,6 +92,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValida
 import org.apache.fineract.portfolio.savings.data.SavingsAccountDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDataValidator;
+import org.apache.fineract.portfolio.savings.data.SavingsSummaryTaxData;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
@@ -154,6 +155,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final StandingInstructionRepository standingInstructionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -176,7 +178,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
             final AppUserRepositoryWrapper appuserRepository, final StandingInstructionRepository standingInstructionRepository,
             final BusinessEventNotifierService businessEventNotifierService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -203,6 +206,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.standingInstructionRepository = standingInstructionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
     }
 
     @Transactional
@@ -263,7 +267,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     null, isAccountTransfer, isRegularTransaction);
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
         }
-        account.processAccountUponActivation(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user);
+        Boolean isTaxApplicable = getIsTaxApplicable(account);
+        account.processAccountUponActivation(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user, isTaxApplicable);
         List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
         if (account.getOnHoldFunds().compareTo(BigDecimal.ZERO) == 1) {
             depositAccountOnHoldTransactions = this.depositAccountOnHoldTransactionRepository
@@ -795,8 +800,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             if (postInterestAs) {
                 postInterestOnDate = transactionDate;
             }
+            Boolean isTaxApplicable = getIsTaxApplicable(account);
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                    postInterestOnDate);
+                    postInterestOnDate, isTaxApplicable);
             // for generating transaction id's
             BigDecimal accruedAmountAfterPosted = account.getTotalAccrualAmount();
             List<SavingsAccountTransaction> transactions = account.getTransactions();
@@ -919,8 +925,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         checkClientOrGroupActive(account);
         if (savingsAccountTransaction.isPostInterestCalculationRequired()
                 && account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
+            Boolean isTaxApplicable = getIsTaxApplicable(account);
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                    postInterestOnDate);
+                    postInterestOnDate, isTaxApplicable);
         } else {
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
@@ -1011,8 +1018,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final LocalDate postInterestOnDate = null;
         if (account.isBeforeLastPostingPeriod(transactionDate)
                 || account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
+            Boolean isTaxApplicable = getIsTaxApplicable(account);
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                    postInterestOnDate);
+                    postInterestOnDate, isTaxApplicable);
         } else {
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
@@ -1397,8 +1405,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
+            Boolean isTaxApplicable = getIsTaxApplicable(account);
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                    postInterestOnDate);
+                    postInterestOnDate, isTaxApplicable);
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -1530,8 +1539,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
+            Boolean isTaxApplicable = getIsTaxApplicable(account);
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-                    postInterestOnDate);
+                    postInterestOnDate, isTaxApplicable);
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -1550,6 +1560,17 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
     }
+
+	private Boolean getIsTaxApplicable(final SavingsAccount account) {
+		SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+		Boolean isTaxApplicable = false;
+		if (savingsSummaryTaxData != null) {
+			if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+				isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+			}
+		}
+		return isTaxApplicable;
+	}
 
     private void updateExistingTransactionsDetails(SavingsAccount account, Set<Long> existingTransactionIds,
             Set<Long> existingReversedTransactionIds) {

@@ -18,17 +18,26 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformServiceImpl;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
+import org.apache.fineract.portfolio.client.data.ClientData;
+import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
-import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
+import org.apache.fineract.portfolio.savings.domain.SavingsSummaryTax;
+import org.apache.fineract.portfolio.savings.domain.SavingsSummaryTaxRepository;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -42,15 +51,27 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final SavingsAccountReadPlatformService savingAccountReadPlatformService;
     private final SavingsAccountRepositoryWrapper savingsAccountRepository;
+    private final ClientReadPlatformService clientReadPlatformService;
+    private final CodeValueReadPlatformServiceImpl codeValueReadPlatformServiceImpl;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final SavingsSummaryTaxRepository savingsSummaryTaxRepository;
 
     @Autowired
     public SavingsSchedularServiceImpl(final SavingsAccountAssembler savingAccountAssembler,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            final SavingsAccountReadPlatformService savingAccountReadPlatformService, final SavingsAccountRepositoryWrapper savingsAccountRepository) {
+            final SavingsAccountReadPlatformService savingAccountReadPlatformService, final SavingsAccountRepositoryWrapper savingsAccountRepository,
+            final ClientReadPlatformService clientReadPlatformService,
+            final CodeValueReadPlatformServiceImpl codeValueReadPlatformServiceImpl,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final SavingsSummaryTaxRepository savingsSummaryTaxRepository) {
         this.savingAccountAssembler = savingAccountAssembler;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingAccountReadPlatformService = savingAccountReadPlatformService;
         this.savingsAccountRepository = savingsAccountRepository;
+        this.clientReadPlatformService = clientReadPlatformService;
+        this.codeValueReadPlatformServiceImpl = codeValueReadPlatformServiceImpl;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.savingsSummaryTaxRepository = savingsSummaryTaxRepository;
     }
 
     @CronTarget(jobName = JobName.POST_INTEREST_FOR_SAVINGS)
@@ -145,6 +166,56 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
             totalPageSize = savingsAccounts.getTotalPages();
         } while (page < totalPageSize);
 
+        if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
+    }
+
+    @CronTarget(jobName = JobName.CLIENTS_SAVINGS_SUMMARY_TAX)
+    @Override
+    public void savingsSummaryTax() throws JobExecutionException {
+        StringBuffer sb = new StringBuffer();
+        final List<ClientData> clientsData = this.clientReadPlatformService.retrieveAllActive();
+    	
+        //Preparing Tax Threshold
+    	BigDecimal taxThreshold = BigDecimal.ZERO;
+    	String value = "0";
+    	Collection<CodeValueData> taxThresholdsCodeValue = this.codeValueReadPlatformServiceImpl.retrieveCodeValuesByCode("TaxThreshold");
+    	for (CodeValueData codeValue : taxThresholdsCodeValue) {
+    		value = codeValue.getName();
+    	}
+    	taxThreshold = new BigDecimal(value);
+    	Date now = new Date();
+    	
+        for (ClientData clientData : clientsData) {
+        	
+        	//Begin calculating
+        	try {
+        		BigDecimal totalBalance = BigDecimal.ZERO;
+        		List<SavingsAccountData> savingsAccountData = this.savingsAccountReadPlatformService.retrieveByClientId(clientData.getId());
+        		for (SavingsAccountData savings : savingsAccountData) {
+        			totalBalance = totalBalance.add(savings.getSummary().getAvailableBalance());
+        		}
+        		String clientAccountNumber = clientData.accountNo();
+        		Boolean isTaxApplicable = false;
+        		if (totalBalance.compareTo(taxThreshold) > 0) {
+        			isTaxApplicable = true;
+        		}
+        		SavingsSummaryTax savingsSummaryTax = new SavingsSummaryTax();
+        		savingsSummaryTax.setClientAccountNumber(clientAccountNumber);
+        		savingsSummaryTax.setTotalBalance(totalBalance);
+        		savingsSummaryTax.setIsTaxApplicable(isTaxApplicable);
+        		savingsSummaryTax.setDate(now);
+        		
+        		this.savingsSummaryTaxRepository.save(savingsSummaryTax);
+        	} catch (Exception e) {
+                Throwable realCause = e;
+                if (e.getCause() != null) {
+                    realCause = e.getCause();
+                }
+                sb.append("failed to calculate savings summary tax of clients : " + clientData.accountNo() + " with message "
+                        + realCause.getMessage());
+            }
+        }
+        
         if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
     }
 }

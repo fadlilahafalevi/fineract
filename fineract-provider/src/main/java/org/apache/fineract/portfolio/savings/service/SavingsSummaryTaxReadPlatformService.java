@@ -18,17 +18,10 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+import org.apache.fineract.portfolio.savings.data.SavingsSummaryTaxData;
 
+public interface SavingsSummaryTaxReadPlatformService {
 
-public interface SavingsSchedularService {
-
-    void postInterestForAccounts() throws JobExecutionException;
-    
-    void updateSavingsDormancyStatus() throws JobExecutionException;
-
-	void accrualInterestForAccounts() throws JobExecutionException;
-
-	void savingsSummaryTax() throws JobExecutionException;
+    public SavingsSummaryTaxData retrieveOne(final Long clientId);
 
 }

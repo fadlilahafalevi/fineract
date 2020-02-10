@@ -348,6 +348,166 @@ public class DepositAccountAssembler {
 
         return account;
     }
+    
+    /**
+     * Assembles a new {@link SavingsAccount} from JSON details passed in
+     * request inheriting details where relevant from chosen
+     * {@link SavingsProduct}.
+     */
+    public SavingsAccount assembleFromFixedDeposit(final JsonCommand command, final AppUser submittedBy, final DepositAccountType depositAccountType) {
+
+        final JsonElement element = command.parsedJson();
+
+        final String accountNo = this.fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
+        final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
+        final Long productId = this.fromApiJsonHelper.extractLongNamed(productIdParamName, element);
+
+        SavingsProduct product = null;
+        if (depositAccountType.isFixedDeposit()) {
+            product = this.fixedDepositProductRepository.findOne(productId);
+            if (product == null) { throw new FixedDepositProductNotFoundException(productId); }
+        } else if (depositAccountType.isRecurringDeposit()) {
+            product = this.recurringDepositProductRepository.findOne(productId);
+            if (product == null) { throw new RecurringDepositProductNotFoundException(productId); }
+        }
+
+        if (product == null) { throw new SavingsProductNotFoundException(productId); }
+        
+
+        Client client = null;
+        Group group = null;
+        Staff fieldOfficer = null;
+        AccountType accountType = AccountType.INVALID;
+        final Long clientId = this.fromApiJsonHelper.extractLongNamed(clientIdParamName, element);
+        if (clientId != null) {
+            final boolean isCalendarInherited = command.booleanPrimitiveValueOfParameterNamed(isCalendarInheritedParamName);
+            client = this.clientRepository.findOneWithNotFoundDetection(clientId, isCalendarInherited); //we need group collection if isCalendarInherited is true
+            accountType = AccountType.INDIVIDUAL;
+            if (client.isNotActive()) { throw new ClientNotActiveException(clientId); }
+        }
+
+        final Long groupId = this.fromApiJsonHelper.extractLongNamed(groupIdParamName, element);
+        if (groupId != null) {
+            group = this.groupRepository.findOneWithNotFoundDetection(groupId);
+            accountType = AccountType.GROUP;
+        }
+
+        if (group != null && client != null) {
+            if (!group.hasClientAsMember(client)) { throw new ClientNotInGroupException(clientId, groupId); }
+            accountType = AccountType.JLG;
+            if (group.isNotActive()) {
+                if (group.isCenter()) { throw new CenterNotActiveException(groupId); }
+                throw new GroupNotActiveException(groupId);
+            }
+        }
+
+        final Long fieldOfficerId = this.fromApiJsonHelper.extractLongNamed(fieldOfficerIdParamName, element);
+        if (fieldOfficerId != null) {
+            fieldOfficer = this.staffRepository.findOneWithNotFoundDetection(fieldOfficerId);
+        }
+
+        final LocalDate submittedOnDate = this.fromApiJsonHelper.extractLocalDateNamed(submittedOnDateParamName, element);
+
+        BigDecimal interestRate = product.nominalAnnualInterestRate();
+
+        SavingsCompoundingInterestPeriodType interestCompoundingPeriodType = product.interestCompoundingPeriodType();
+
+        SavingsPostingInterestPeriodType interestPostingPeriodType = product.interestPostingPeriodType();
+
+        SavingsInterestCalculationType interestCalculationType = product.interestCalculationType();
+
+        SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType = product.interestCalculationDaysInYearType();
+
+        BigDecimal minRequiredOpeningBalance = product.minRequiredOpeningBalance();
+
+        Integer lockinPeriodFrequency = null;
+        if (command.parameterExists(lockinPeriodFrequencyParamName)) {
+            lockinPeriodFrequency = command.integerValueOfParameterNamed(lockinPeriodFrequencyParamName);
+        } else {
+            lockinPeriodFrequency = product.lockinPeriodFrequency();
+        }
+
+        SavingsPeriodFrequencyType lockinPeriodFrequencyType = null;
+
+        if (command.parameterExists(lockinPeriodFrequencyTypeParamName)) {
+            Integer lockinPeriodFrequencyTypeValue = null;
+            lockinPeriodFrequencyTypeValue = command.integerValueOfParameterNamed(lockinPeriodFrequencyTypeParamName);
+            if (lockinPeriodFrequencyTypeValue != null) {
+                lockinPeriodFrequencyType = SavingsPeriodFrequencyType.fromInt(lockinPeriodFrequencyTypeValue);
+            }
+        } else {
+            lockinPeriodFrequencyType = product.lockinPeriodFrequencyType();
+        }
+        boolean iswithdrawalFeeApplicableForTransfer = false;
+        if (command.parameterExists(withdrawalFeeForTransfersParamName)) {
+            iswithdrawalFeeApplicableForTransfer = command.booleanPrimitiveValueOfParameterNamed(withdrawalFeeForTransfersParamName);
+        }
+
+        final Set<SavingsAccountCharge> charges = this.savingsAccountChargeAssembler.fromParsedJson(element, product.currency().getCode());
+
+        DepositAccountInterestRateChart accountChart = null;
+        InterestRateChart productChart = null;
+
+        if (command.parameterExists(chartIdParamName)) {
+            Long chartId = command.longValueOfParameterNamed(chartIdParamName);
+            productChart = product.findChart(chartId);
+
+        } else {
+            productChart = product.applicableChart(submittedOnDate);
+        }
+
+        if (productChart != null) {
+            accountChart = DepositAccountInterestRateChart.from(productChart);
+        }
+        
+        boolean withHoldTax = product.withHoldTax();
+        
+        final Integer interestCompoundingType = product.getInterestCompoundingTypeEnum();
+
+        SavingsAccount account = null;
+        if (depositAccountType.isFixedDeposit()) {
+            final DepositProductTermAndPreClosure prodTermAndPreClosure = ((FixedDepositProduct) product).depositProductTermAndPreClosure();
+            final DepositAccountTermAndPreClosure accountTermAndPreClosure = this.assembleAccountTermAndPreClosureFixedDeposit(command,
+                    prodTermAndPreClosure);
+
+            FixedDepositAccount fdAccount = FixedDepositAccount.createNewApplicationForSubmittal(client, group, product, fieldOfficer,
+                    accountNo, externalId, accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType,
+                    interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
+                    lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, charges,
+                    accountTermAndPreClosure, accountChart, withHoldTax);
+            accountTermAndPreClosure.updateAccountReference(fdAccount);
+            fdAccount.setInterestCompoundingTypeEnum(interestCompoundingType); 
+            fdAccount.validateDomainRules();
+            account = fdAccount;
+        } else if (depositAccountType.isRecurringDeposit()) {
+            final DepositProductTermAndPreClosure prodTermAndPreClosure = ((RecurringDepositProduct) product)
+                    .depositProductTermAndPreClosure();
+            final DepositAccountTermAndPreClosure accountTermAndPreClosure = this.assembleAccountTermAndPreClosure(command,
+                    prodTermAndPreClosure);
+
+            final DepositProductRecurringDetail prodRecurringDetail = ((RecurringDepositProduct) product).depositRecurringDetail();
+            final DepositAccountRecurringDetail accountRecurringDetail = this.assembleAccountRecurringDetail(command,
+                    prodRecurringDetail.recurringDetail());
+
+            RecurringDepositAccount rdAccount = RecurringDepositAccount.createNewApplicationForSubmittal(client, group, product,
+                    fieldOfficer, accountNo, externalId, accountType, submittedOnDate, submittedBy, interestRate,
+                    interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
+                    minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer,
+                    charges, accountTermAndPreClosure, accountRecurringDetail, accountChart, withHoldTax);
+
+            accountTermAndPreClosure.updateAccountReference(rdAccount);
+            accountRecurringDetail.updateAccountReference(rdAccount);
+            rdAccount.validateDomainRules();
+            account = rdAccount;
+        }
+
+        if (account != null) {
+            account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
+            account.validateNewApplicationState(DateUtils.getLocalDateOfTenant(), depositAccountType.resourceName());
+        }
+
+        return account;
+    }
 
     public SavingsAccount assembleFrom(final Long savingsId, DepositAccountType depositAccountType) {
         final SavingsAccount account = this.savingsAccountRepository.findOneWithNotFoundDetection(savingsId, depositAccountType);
@@ -368,6 +528,34 @@ public class DepositAccountAssembler {
         final DepositPreClosureDetail updatedProductPreClosure = this.depositProductAssembler.assemblePreClosureDetail(command,
                 productPreClosure);
         final DepositTermDetail updatedProductTerm = this.depositProductAssembler.assembleDepositTermDetail(command, productTerm);
+
+        final BigDecimal depositAmount = command.bigDecimalValueOfParameterNamed(depositAmountParamName);
+        final Integer depositPeriod = command.integerValueOfParameterNamed(depositPeriodParamName);
+        final Integer depositPeriodFrequencyId = command.integerValueOfParameterNamed(depositPeriodFrequencyIdParamName);
+        final SavingsPeriodFrequencyType depositPeriodFrequency = SavingsPeriodFrequencyType.fromInt(depositPeriodFrequencyId);
+        final SavingsAccount account = null;
+        final LocalDate expectedFirstDepositOnDate = command.localDateValueOfParameterNamed(expectedFirstDepositOnDateParamName);
+        final Boolean trasferInterest = command.booleanPrimitiveValueOfParameterNamed(transferInterestToSavingsParamName);
+
+        // calculate maturity amount
+        final BigDecimal maturityAmount = null;// calculated and updated in
+                                               // account
+        final LocalDate maturityDate = null;// calculated and updated in account
+        final DepositAccountOnClosureType accountOnClosureType = null;
+        return DepositAccountTermAndPreClosure.createNew(updatedProductPreClosure, updatedProductTerm, account, depositAmount,
+                maturityAmount, maturityDate, depositPeriod, depositPeriodFrequency, expectedFirstDepositOnDate, accountOnClosureType,
+                trasferInterest);
+    }
+
+    public DepositAccountTermAndPreClosure assembleAccountTermAndPreClosureFixedDeposit(final JsonCommand command,
+            final DepositProductTermAndPreClosure productTermAndPreclosure) {
+        final DepositPreClosureDetail productPreClosure = (productTermAndPreclosure == null) ? null : productTermAndPreclosure
+                .depositPreClosureDetail();
+        final DepositTermDetail productTerm = (productTermAndPreclosure == null) ? null : productTermAndPreclosure.depositTermDetail();
+
+        final DepositPreClosureDetail updatedProductPreClosure = this.depositProductAssembler.assemblePreClosureDetail(command,
+                productPreClosure);
+        final DepositTermDetail updatedProductTerm = this.depositProductAssembler.assembleDepositTermDetailFixedDeposit(command, productTerm);
 
         final BigDecimal depositAmount = command.bigDecimalValueOfParameterNamed(depositAmountParamName);
         final Integer depositPeriod = command.integerValueOfParameterNamed(depositPeriodParamName);

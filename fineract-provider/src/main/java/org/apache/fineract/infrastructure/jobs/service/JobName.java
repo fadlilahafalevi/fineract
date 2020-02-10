@@ -52,7 +52,8 @@ public enum JobName {
     EXECUTE_EMAIL("Execute Email"),
     UPDATE_TRAIL_BALANCE_DETAILS("Update Trial Balance Details"),
 	GENERATE_LOAN_COLLECTIBILITY("Generate Loan Collectibility"),
-	ACCRUAL_INTEREST_FOR_SAVINGS("Accrual Interest For Savings");
+	ACCRUAL_INTEREST_FOR_SAVINGS("Accrual Interest For Savings"),
+	CLIENTS_SAVINGS_SUMMARY_TAX("Clients Savings Summary Tax");
 
     private final String name;
 

@@ -425,6 +425,42 @@ public class DepositProductAssembler {
         return depositTermDetail;
     }
 
+    public DepositTermDetail assembleDepositTermDetailFixedDeposit(final JsonCommand command, final DepositTermDetail prodDepositTermDetail) {
+
+        Integer minDepositTerm = null;
+        Integer maxDepositTerm = null;
+        Integer minDepositTermTypeId = null;
+        Integer maxDepositTermTypeId = null;
+        Integer inMultiplesOfDepositTerm = null;
+        Integer inMultiplesOfDepositTermTypeId = null;
+
+        minDepositTerm = prodDepositTermDetail.minDepositTerm();
+
+        maxDepositTerm = prodDepositTermDetail.maxDepositTerm();
+
+        minDepositTermTypeId = prodDepositTermDetail.minDepositTermType();
+
+    	maxDepositTermTypeId = prodDepositTermDetail.maxDepositTermType();
+
+        final SavingsPeriodFrequencyType minDepositTermType = (minDepositTermTypeId == null) ? null : SavingsPeriodFrequencyType
+                .fromInt(minDepositTermTypeId);
+
+        final SavingsPeriodFrequencyType maxDepositTermType = (maxDepositTermTypeId == null) ? null : SavingsPeriodFrequencyType
+                .fromInt(maxDepositTermTypeId);
+
+        inMultiplesOfDepositTerm = prodDepositTermDetail.inMultiplesOfDepositTerm();
+
+        inMultiplesOfDepositTermTypeId = prodDepositTermDetail.inMultiplesOfDepositTermType();
+
+        final SavingsPeriodFrequencyType inMultiplesOfDepositTermType = (inMultiplesOfDepositTermTypeId == null) ? null
+                : SavingsPeriodFrequencyType.fromInt(inMultiplesOfDepositTermTypeId);
+
+        final DepositTermDetail depositTermDetail = DepositTermDetail.createFrom(minDepositTerm, maxDepositTerm, minDepositTermType,
+                maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType);
+
+        return depositTermDetail;
+    }
+
     public DepositRecurringDetail assembleRecurringDetail(final JsonCommand command) {
 
         Boolean isMandatoryDeposit = command.booleanObjectValueOfParameterNamed(isMandatoryDepositParamName);

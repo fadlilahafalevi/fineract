@@ -252,6 +252,18 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         }
     }
 
+    @Override
+    public List<SavingsAccountData> retrieveByClientId(final Long clientId) {
+
+        try {
+            final String sql = "select " + this.savingAccountMapper.schema() + " where sa.client_id = ? and sa.status_enum = 300";
+
+            return this.jdbcTemplate.query(sql, this.savingAccountMapper, new Object[] { clientId });
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(clientId);
+        }
+    }
+
     private static final class SavingAccountMapper implements RowMapper<SavingsAccountData> {
 
         private final String schemaSql;
@@ -844,11 +856,16 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                 + "where sa.account_no = ? and tr.transaction_date between ? and ? and sa.deposit_type_enum = ? order by tr.id desc limit ?"; // 
             	transactionDataHistory = this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { accountNo, startdate, enddate, depositAccountType.getValue(), pageSize});
             }
+        	if(transactionDataHistory ==null  || transactionDataHistory.isEmpty())
+        	{
+        		throw new SavingsAccountTransactionsHistoryNotFoundException(accountNo, startdate, enddate, depositAccountType, lastId, pageSize);
+        	}
         } catch (EmptyResultDataAccessException e) {
         	throw new SavingsAccountTransactionsHistoryNotFoundException(accountNo, startdate, enddate, depositAccountType, lastId, pageSize);
         }
-        
         return transactionDataHistory;
+        
+        
         
     }
 

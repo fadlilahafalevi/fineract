@@ -16,19 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.savings.service;
+package org.apache.fineract.portfolio.savings.domain;
 
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+import org.apache.fineract.portfolio.savings.exception.SavingsSummaryTaxNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
+public class SavingsSummaryTaxRepositoryWrapper {
 
-public interface SavingsSchedularService {
+    private final SavingsSummaryTaxRepository repository;
 
-    void postInterestForAccounts() throws JobExecutionException;
-    
-    void updateSavingsDormancyStatus() throws JobExecutionException;
+    @Autowired
+    public SavingsSummaryTaxRepositoryWrapper(final SavingsSummaryTaxRepository repository) {
+        this.repository = repository;
+    }
 
-	void accrualInterestForAccounts() throws JobExecutionException;
+    public SavingsSummaryTax findOneWithNotFoundDetection(final Long id) {
 
-	void savingsSummaryTax() throws JobExecutionException;
+        final SavingsSummaryTax taxComponent = this.repository.findOne(id);
+        if (taxComponent == null) { throw new SavingsSummaryTaxNotFoundException(id); }
+
+        return taxComponent;
+    }
 
 }

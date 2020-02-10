@@ -91,6 +91,7 @@ import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.DepositAccountTransactionDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
+import org.apache.fineract.portfolio.savings.data.SavingsSummaryTaxData;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountAssembler;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountDomainService;
 import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
@@ -142,6 +143,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     private final HolidayRepositoryWrapper holidayRepository;
     private final WorkingDaysRepositoryWrapper workingDaysRepository;
     private final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository;
+    private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
 
     @Autowired
     public DepositAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -161,7 +163,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
             final DepositAccountReadPlatformService depositAccountReadPlatformService,
             final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
-            final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository) {
+            final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
+            final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService) {
 
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
@@ -185,6 +188,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         this.calendarInstanceRepository = calendarInstanceRepository;
         this.configurationDomainService = configurationDomainService;
         this.depositAccountOnHoldTransactionRepository = depositAccountOnHoldTransactionRepository;
+        this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
     }
 
     @Transactional
@@ -239,8 +243,9 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 }                
                 if (account.isBeforeLastPostingPeriod(account.getActivationLocalDate())) {
                     final LocalDate today = DateUtils.getLocalDateOfTenant();
+                    Boolean isTaxApplicable = getIsTaxApplicable(account);
                     account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                            financialYearBeginningMonth, postInterestOnDate);
+                            financialYearBeginningMonth, postInterestOnDate, isTaxApplicable);
                 } else {
                     final LocalDate today = DateUtils.getLocalDateOfTenant();
                     account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -273,6 +278,15 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 .with(changes) //
                 .build();
     }
+
+	private Boolean getIsTaxApplicable(final FixedDepositAccount account) {
+		SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+		Boolean isTaxApplicable = false;
+		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+		}
+		return isTaxApplicable;
+	}
 
     private Money getActivationCharge(final FixedDepositAccount account) {
         Money activationChargeAmount = Money.zero(account.getCurrency());
@@ -363,8 +377,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             final LocalDate postInterestOnDate = null;
             if (account.isBeforeLastPostingPeriod(account.getActivationLocalDate())) {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
+                SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+        		Boolean isTaxApplicable = false;
+        		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+        			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+        		}
                 account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                        financialYearBeginningMonth, postInterestOnDate);
+                        financialYearBeginningMonth, postInterestOnDate, isTaxApplicable);
             } else {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
                 account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -562,8 +581,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final MathContext mc = new MathContext(10, MoneyHelper.getRoundingMode());
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
+        SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+		Boolean isTaxApplicable = false;
+		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+		}
         account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-        		postInterestOnDate);
+        		postInterestOnDate, isTaxApplicable);
         this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
@@ -631,8 +655,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         checkClientOrGroupActive(account);
         if (savingsAccountTransaction.isPostInterestCalculationRequired()
                 && account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
+            SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+    		Boolean isTaxApplicable = false;
+    		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+    			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+    		}
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-            		postInterestOnDate);
+            		postInterestOnDate, isTaxApplicable);
         } else {
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
@@ -734,8 +763,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final LocalDate postInterestOnDate = null;
         if (account.isBeforeLastPostingPeriod(transactionDate)
                 || account.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
+            SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+    		Boolean isTaxApplicable = false;
+    		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+    			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+    		}
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-            		postInterestOnDate);
+            		postInterestOnDate, isTaxApplicable);
         } else {
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth, postInterestOnDate);
@@ -1179,8 +1213,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastPostingPeriod(savingsAccountCharge.getDueLocalDate())) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
+            SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+    		Boolean isTaxApplicable = false;
+    		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+    			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+    		}
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-            		postInterestOnDate);
+            		postInterestOnDate, isTaxApplicable);
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -1314,8 +1353,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
+            SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+    		Boolean isTaxApplicable = false;
+    		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+    			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+    		}
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-            		postInterestOnDate);
+            		postInterestOnDate, isTaxApplicable);
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,

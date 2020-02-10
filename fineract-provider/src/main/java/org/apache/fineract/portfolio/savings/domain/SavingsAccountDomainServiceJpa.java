@@ -32,7 +32,9 @@ import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
+import org.apache.fineract.portfolio.savings.data.SavingsSummaryTaxData;
 import org.apache.fineract.portfolio.savings.exception.DepositAccountTransactionNotAllowedException;
+import org.apache.fineract.portfolio.savings.service.SavingsSummaryTaxReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
@@ -60,6 +62,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
 
     @Autowired
     public SavingsAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -68,7 +71,8 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final JournalEntryWritePlatformService journalEntryWritePlatformService,
             final ConfigurationDomainService configurationDomainService, final PlatformSecurityContext context,
             final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, 
-            final BusinessEventNotifierService businessEventNotifierService) {
+            final BusinessEventNotifierService businessEventNotifierService,
+            final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
@@ -77,6 +81,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         this.context = context;
         this.depositAccountOnHoldTransactionRepository = depositAccountOnHoldTransactionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
     }
 
     @Transactional
@@ -104,8 +109,9 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
+            Boolean isTaxApplicable = getIsTaxApplicable(account);
             account.postInterest(mc, today, transactionBooleanValues.isInterestTransfer(), isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+                    financialYearBeginningMonth, postInterestOnDate, isTaxApplicable);
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, transactionBooleanValues.isInterestTransfer(),
@@ -170,8 +176,9 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final MathContext mc = MathContext.DECIMAL64;
         if (account.isBeforeLastPostingPeriod(transactionDate)) {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
+            Boolean isTaxApplicable = getIsTaxApplicable(account);
             account.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
-            		postInterestOnDate);
+            		postInterestOnDate, isTaxApplicable);
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
@@ -187,6 +194,15 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
                 constructEntityMap(BUSINESS_ENTITY.SAVINGS_TRANSACTION, deposit));
         return deposit;
     }
+
+	private Boolean getIsTaxApplicable(final SavingsAccount account) {
+		SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());
+		Boolean isTaxApplicable = false;
+		if (savingsSummaryTaxData.getIsTaxApplicable() != null) {
+			isTaxApplicable = savingsSummaryTaxData.getIsTaxApplicable(); 
+		}
+		return isTaxApplicable;
+	}
 
     @Override
     public SavingsAccountTransaction handleDividendPayout(final SavingsAccount account, final LocalDate transactionDate,

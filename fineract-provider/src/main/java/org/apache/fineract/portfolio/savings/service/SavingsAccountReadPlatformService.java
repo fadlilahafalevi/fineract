@@ -83,4 +83,5 @@ public interface SavingsAccountReadPlatformService {
 
 	BigDecimal retrieveAmountBySavingsId(Long savingsId);
 
+	List<SavingsAccountData> retrieveByClientId(Long clientId);
 }

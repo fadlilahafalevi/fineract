@@ -64,8 +64,10 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+import org.apache.fineract.portfolio.savings.data.SavingsSummaryTaxData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.SavingsSummaryTaxReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +98,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ConfigurationReadPlatformService configurationReadPlatformService;
     private final EntityDatatableChecksReadService entityDatatableChecksReadService;
     private final ColumnValidator columnValidator;
+    private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
 
     @Autowired
     public ClientReadPlatformServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
@@ -105,7 +108,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final AddressReadPlatformService addressReadPlatformService,final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService,
             final ConfigurationReadPlatformService configurationReadPlatformService,
             final EntityDatatableChecksReadService entityDatatableChecksReadService,
-			final ColumnValidator columnValidator) {
+			final ColumnValidator columnValidator,
+			final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService) {
 		this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -117,6 +121,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         this.configurationReadPlatformService=configurationReadPlatformService;
         this.entityDatatableChecksReadService = entityDatatableChecksReadService;
         this.columnValidator = columnValidator;
+        this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
 	}
 
     @Override
@@ -298,14 +303,32 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                     hierarchySearchString, clientId });
 
             final String clientGroupsSql = "select " + this.clientGroupsMapper.parentGroupsSchema();
+            
+            final SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(clientId);
 
             final Collection<GroupGeneralData> parentGroups = this.jdbcTemplate.query(clientGroupsSql, this.clientGroupsMapper,
                     new Object[] { clientId });
-
-            return ClientData.setParentGroups(clientData, parentGroups);
+            ClientData newClientData = ClientData.setParentGroups(clientData, parentGroups);
+            newClientData.setSavingsSummaryTaxData(savingsSummaryTaxData);
+            
+            return newClientData;
 
         } catch (final EmptyResultDataAccessException e) {
             throw new ClientNotFoundException(clientId);
+        }
+    }
+
+    @Override
+    public List<ClientData> retrieveAllActive() {
+        try {
+            final String sql = "select " + this.clientMapper.schema()
+                    + " where status_enum = 300";
+            final List<ClientData> clientData = this.jdbcTemplate.query(sql, this.clientMapper, new Object[] { });
+
+            return clientData;
+
+        } catch (final EmptyResultDataAccessException e) {
+            return null;
         }
     }
 
