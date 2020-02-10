@@ -159,14 +159,18 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             	if (isFromSavingsMainAccount && isToSavingsMainAccount) {
             		processTransfer = true;
             	} else if (isFromSavingsMainAccount && !isToSavingsMainAccount) {
-            		final SavingsAccount savingsAccountMainAccount = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(toSavingsAccount.getClient().getId());
-            		if (savingsAccountMainAccount.getAccountNumber() == fromSavingsAccount.getAccountNumber()) {
-            			processTransfer = true;
+            		final SavingsAccount savingsAccountMainAccount = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(fromSavingsAccount.getClient().getId());
+            		if (savingsAccountMainAccount != null) {
+	            		if (savingsAccountMainAccount.getAccountNumber() == fromSavingsAccount.getAccountNumber()) {
+	            			processTransfer = true;
+	            		}
             		}
             	} else if (!isFromSavingsMainAccount && isToSavingsMainAccount) {
             		final SavingsAccount savingsAccountMainAccount = this.savingsAccountRepositoryWrapper.findMainAccountByClientId(toSavingsAccount.getClient().getId());
-            		if (savingsAccountMainAccount.getAccountNumber() == toSavingsAccount.getAccountNumber()) {
-            			processTransfer = true;
+            		if (savingsAccountMainAccount != null) {
+	            		if (savingsAccountMainAccount.getAccountNumber() == toSavingsAccount.getAccountNumber()) {
+	            			processTransfer = true;
+	            		}
             		}
             	}
             	
