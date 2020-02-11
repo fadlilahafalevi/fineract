@@ -40,6 +40,7 @@ import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSer
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.portfolio.account.AccountDetailConstants;
 import org.apache.fineract.portfolio.account.data.AccountTransferData;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
@@ -117,11 +118,10 @@ public class AccountTransfersApiResource {
 
     	final Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
     	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
-        final Long savingsId = new Long(jsonObject.getLong("fromAccountId"));
-        final Long clientId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
-        final String accountNumber = this.savingsAccountReadPlatformService.retrieveAccountNumberByAccountId(savingsId);
+        final String savingsAccountNumber = jsonObject.getString(AccountDetailConstants.fromAccountNumberParamName);
+        final Long clientId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsAccountNumber(savingsAccountNumber);
         if (!(clientAccountIdHeader.equals(clientId))) {
-    		throw new SavingsAccountNumberNotFoundException(accountNumber);
+    		throw new SavingsAccountNumberNotFoundException(savingsAccountNumber);
     	}
         
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createAccountTransfer().withJson(apiRequestBodyAsJson).build();
