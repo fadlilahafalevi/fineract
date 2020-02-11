@@ -51,12 +51,13 @@ public class AccountTransfersDataValidator {
 	private static final Set<String> REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
 			AccountDetailConstants.localeParamName, AccountDetailConstants.dateFormatParamName,
 			AccountDetailConstants.fromOfficeIdParamName, AccountDetailConstants.fromClientIdParamName,
-			AccountDetailConstants.fromAccountTypeParamName, AccountDetailConstants.fromAccountIdParamName,
+			AccountDetailConstants.fromAccountTypeParamName, /*AccountDetailConstants.fromAccountIdParamName,*/
 			AccountDetailConstants.toOfficeIdParamName, AccountDetailConstants.toClientIdParamName,
-			AccountDetailConstants.toAccountTypeParamName, AccountDetailConstants.toAccountIdParamName,
+			AccountDetailConstants.toAccountTypeParamName,/* AccountDetailConstants.toAccountIdParamName,*/
 			AccountTransfersApiConstants.transferDateParamName, AccountTransfersApiConstants.transferAmountParamName,
 			AccountTransfersApiConstants.transferDescriptionParamName, AccountDetailConstants.paymentTypeFromParamName,
-			AccountDetailConstants.paymentTypeToParamName));
+			AccountDetailConstants.paymentTypeToParamName, AccountDetailConstants.fromAccountNumberParamName,
+			AccountDetailConstants.toAccountNumberParamName));
 
 
     @Autowired
