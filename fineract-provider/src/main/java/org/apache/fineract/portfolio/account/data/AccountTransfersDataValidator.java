@@ -56,8 +56,8 @@ public class AccountTransfersDataValidator {
 			AccountDetailConstants.toAccountTypeParamName,/* AccountDetailConstants.toAccountIdParamName,*/
 			AccountTransfersApiConstants.transferDateParamName, AccountTransfersApiConstants.transferAmountParamName,
 			AccountTransfersApiConstants.transferDescriptionParamName, AccountDetailConstants.paymentTypeFromParamName,
-			AccountDetailConstants.paymentTypeToParamName, AccountDetailConstants.fromAccountNumberParamName,
-			AccountDetailConstants.toAccountNumberParamName));
+			AccountDetailConstants.paymentTypeToParamName, AccountDetailConstants.fromAccountNoParamName,
+			AccountDetailConstants.toAccountNoParamName));
 
 
     @Autowired

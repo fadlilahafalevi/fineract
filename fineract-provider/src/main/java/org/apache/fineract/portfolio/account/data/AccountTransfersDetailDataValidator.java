@@ -56,7 +56,7 @@ public class AccountTransfersDetailDataValidator {
         final Long fromClientId = this.fromApiJsonHelper.extractLongNamed(fromClientIdParamName, element);
         baseDataValidator.reset().parameter(fromClientIdParamName).value(fromClientId).notNull().integerGreaterThanZero();
 
-        final String fromAccountNumber = this.fromApiJsonHelper.extractStringNamed(AccountDetailConstants.fromAccountNumberParamName, element);
+        final String fromAccountNumber = this.fromApiJsonHelper.extractStringNamed(AccountDetailConstants.fromAccountNoParamName, element);
         baseDataValidator.reset().parameter(fromAccountIdParamName).value(fromAccountNumber).notNull();
 
         final Integer fromAccountType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(fromAccountTypeParamName, element);
@@ -69,7 +69,7 @@ public class AccountTransfersDetailDataValidator {
         final Long toClientId = this.fromApiJsonHelper.extractLongNamed(toClientIdParamName, element);
         baseDataValidator.reset().parameter(toClientIdParamName).value(toClientId).notNull().integerGreaterThanZero();
 
-        final String toAccountNumber = this.fromApiJsonHelper.extractStringNamed(AccountDetailConstants.toAccountNumberParamName, element);
+        final String toAccountNumber = this.fromApiJsonHelper.extractStringNamed(AccountDetailConstants.toAccountNoParamName, element);
         baseDataValidator.reset().parameter(toAccountIdParamName).value(toAccountNumber).notNull();
 
         final Integer toAccountType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(toAccountTypeParamName, element);
