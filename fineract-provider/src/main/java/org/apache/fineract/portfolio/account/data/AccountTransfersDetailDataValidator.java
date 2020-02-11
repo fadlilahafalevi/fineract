@@ -30,6 +30,7 @@ import static org.apache.fineract.portfolio.account.AccountDetailConstants.toOff
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.portfolio.account.AccountDetailConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -55,8 +56,8 @@ public class AccountTransfersDetailDataValidator {
         final Long fromClientId = this.fromApiJsonHelper.extractLongNamed(fromClientIdParamName, element);
         baseDataValidator.reset().parameter(fromClientIdParamName).value(fromClientId).notNull().integerGreaterThanZero();
 
-        final Long fromAccountId = this.fromApiJsonHelper.extractLongNamed(fromAccountIdParamName, element);
-        baseDataValidator.reset().parameter(fromAccountIdParamName).value(fromAccountId).notNull().integerGreaterThanZero();
+        final String fromAccountNumber = this.fromApiJsonHelper.extractStringNamed(AccountDetailConstants.fromAccountNumberParamName, element);
+        baseDataValidator.reset().parameter(fromAccountIdParamName).value(fromAccountNumber).notNull();
 
         final Integer fromAccountType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(fromAccountTypeParamName, element);
         baseDataValidator.reset().parameter(fromAccountTypeParamName).value(fromAccountType).notNull()
@@ -68,8 +69,8 @@ public class AccountTransfersDetailDataValidator {
         final Long toClientId = this.fromApiJsonHelper.extractLongNamed(toClientIdParamName, element);
         baseDataValidator.reset().parameter(toClientIdParamName).value(toClientId).notNull().integerGreaterThanZero();
 
-        final Long toAccountId = this.fromApiJsonHelper.extractLongNamed(toAccountIdParamName, element);
-        baseDataValidator.reset().parameter(toAccountIdParamName).value(toAccountId).notNull().integerGreaterThanZero();
+        final String toAccountNumber = this.fromApiJsonHelper.extractStringNamed(AccountDetailConstants.toAccountNumberParamName, element);
+        baseDataValidator.reset().parameter(toAccountIdParamName).value(toAccountNumber).notNull();
 
         final Integer toAccountType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(toAccountTypeParamName, element);
         baseDataValidator.reset().parameter(toAccountTypeParamName).value(toAccountType).notNull()

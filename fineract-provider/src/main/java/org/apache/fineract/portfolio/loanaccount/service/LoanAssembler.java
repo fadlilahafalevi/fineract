@@ -146,6 +146,14 @@ public class LoanAssembler {
         return loanAccount;
     }
 
+    public Loan assembleFrom(final String accountNumber) {
+        final Loan loanAccount = this.loanRepository.findNonClosedLoanByAccountNumber(accountNumber);
+        loanAccount.setHelpers(defaultLoanLifecycleStateMachine(), this.loanSummaryWrapper,
+                this.loanRepaymentScheduleTransactionProcessorFactory);
+
+        return loanAccount;
+    }
+
     public void setHelpers(final Loan loanAccount) {
         loanAccount.setHelpers(defaultLoanLifecycleStateMachine(), this.loanSummaryWrapper,
                 this.loanRepaymentScheduleTransactionProcessorFactory);
