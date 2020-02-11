@@ -38,5 +38,7 @@ public class AccountDetailConstants {
     public static final String transferTypeParamName = "transferType";
     public static final String paymentTypeFromParamName = "paymentTypeFrom";
     public static final String paymentTypeToParamName = "paymentTypeTo";
+    public static final String fromAccountNumberParamName = "fromAccountNumber";
+    public static final String toAccountNumberParamName = "toAccountNumber";
 
 }
