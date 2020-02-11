@@ -125,6 +125,9 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
     @Column(name = "release_id_of_hold_amount", length = 20)
     private Long releaseIdOfHoldAmountTransaction;
 
+    @Column(name = "batch_id", length = 20)
+    private Long batchId;
+    
     protected SavingsAccountTransaction() {
         this.dateOf = null;
         this.typeOf = null;
@@ -794,5 +797,13 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom<L
 	
 	public Date getCreatedDate() {
 		return createdDate;
+	}
+
+	public Long getBatchId() {
+		return batchId;
+	}
+
+	public void setBatchId(Long batchId) {
+		this.batchId = batchId;
 	}
 }
