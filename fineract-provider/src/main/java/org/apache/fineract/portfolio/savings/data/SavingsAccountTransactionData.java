@@ -40,25 +40,25 @@ import org.joda.time.LocalDateTime;
 @SuppressWarnings("unused")
 public class SavingsAccountTransactionData {
 
-    private final Long id;
-    private final SavingsAccountTransactionEnumData transactionType;
-    private final Long accountId;
-    private final String accountNo;
-    private final LocalDate date;
-    private final CurrencyData currency;
-    private final PaymentDetailData paymentDetailData;
-    private final BigDecimal amount;
-    private final BigDecimal outstandingChargeAmount;
-    private final BigDecimal runningBalance;
-    private final boolean reversed;
-    private final AccountTransferData transfer;
-    private final String createdDate;
-    private final boolean interestedPostedAsOn;
-    private final String submittedByUsername;
-    private final String note ;
+    private Long id;
+    private SavingsAccountTransactionEnumData transactionType;
+    private Long accountId;
+    private String accountNo;
+    private LocalDate date;
+    private CurrencyData currency;
+    private PaymentDetailData paymentDetailData;
+    private BigDecimal amount;
+    private BigDecimal outstandingChargeAmount;
+    private BigDecimal runningBalance;
+    private boolean reversed;
+    private AccountTransferData transfer;
+    private String createdDate;
+    private boolean interestedPostedAsOn;
+    private String submittedByUsername;
+    private String note ;
     
     // templates
-    final Collection<PaymentTypeData> paymentTypeOptions;
+    Collection<PaymentTypeData> paymentTypeOptions;
 
     //import fields
     private transient Integer rowIndex;
@@ -74,6 +74,11 @@ public class SavingsAccountTransactionData {
     private String receiptNumber;
     private String bankNumber;
 
+    
+    public SavingsAccountTransactionData() {
+    	
+    }
+    
     public static SavingsAccountTransactionData importInstance(BigDecimal transactionAmount,LocalDate transactionDate,
             Long paymentTypeId,String accountNumber, String checkNumber, String routingCode,
             String receiptNumber, String bankNumber,Long savingsAccountId,
@@ -235,4 +240,12 @@ public class SavingsAccountTransactionData {
                 savingsAccountTransactionData.transfer, savingsAccountTransactionData.paymentTypeOptions,
                 savingsAccountTransactionData.interestedPostedAsOn,savingsAccountTransactionData.submittedByUsername, savingsAccountTransactionData.note);
     }
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
 }
