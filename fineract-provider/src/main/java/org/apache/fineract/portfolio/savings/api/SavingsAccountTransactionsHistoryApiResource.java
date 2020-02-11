@@ -19,7 +19,11 @@
 package org.apache.fineract.portfolio.savings.api;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -37,6 +41,7 @@ import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatform
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionHistoryData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -50,12 +55,12 @@ import org.springframework.stereotype.Component;
 public class SavingsAccountTransactionsHistoryApiResource {
 
     private final PlatformSecurityContext context;
-    private final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer;
+    private final DefaultToApiJsonSerializer<SavingsAccountTransactionHistoryData> toApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     @Autowired
     public SavingsAccountTransactionsHistoryApiResource(final PlatformSecurityContext context,
-            final DefaultToApiJsonSerializer<SavingsAccountTransactionData> toApiJsonSerializer,
+            final DefaultToApiJsonSerializer<SavingsAccountTransactionHistoryData> toApiJsonSerializer,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
@@ -66,32 +71,37 @@ public class SavingsAccountTransactionsHistoryApiResource {
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
-    @POST
+    @SuppressWarnings("null")
+	@POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOne(final String apiRequestBodyAsJson, @Context final UriInfo uriInfo) throws JSONException, ParseException {
-    	
-    	
+    	Long pageSize = null; 
+    	Long lastId = null;
     	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
     	String accountNo = jsonObject.getString("accountNo");
     	String startdate = jsonObject.getString("startDate");
     	String enddate = jsonObject.getString("endDate");
     	String lastid = jsonObject.getString("lastId");
     	String pagesize = jsonObject.getString("pageSize");
+    	Long lastIdReponse = null;
     	//Date startDate=new SimpleDateFormat("yyyy-MM-dd").parse(startdate);
     	//Date endDate=new SimpleDateFormat("yyyy-MM-dd").parse(enddate);
-    	Long pageSize = null; 
-    	if (pagesize != "null") {
-    		pageSize = new Long(pagesize);
-    	} else {
+    	
+    	if (pagesize.isEmpty()) {
     		pageSize = 15L;
+    	} else {
+    		pageSize = new Long(pagesize);
     	}
     	
     	
-    	Long lastId = null;
-    	if (lastid != "null") {
+    	if (lastid.isEmpty()) {
+    		lastId = null;
+    	} else {
+    		lastIdReponse = new Long(lastid);
     		lastId = new Long(lastid);
-    	} 
+    	}
+    		
     	
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
         
@@ -99,9 +109,20 @@ public class SavingsAccountTransactionsHistoryApiResource {
         
         Collection<SavingsAccountTransactionData> transactionDataHistory = this.savingsAccountReadPlatformService.retrieveSavingsTransactionsHistory(accountNo,
         		startdate, enddate, DepositAccountType.SAVINGS_DEPOSIT, lastId, pageSize);
+        if (transactionDataHistory != null && (!(transactionDataHistory.isEmpty()))) {
+	        List<Long> listTransactionId = new ArrayList<Long>();
+	        for (SavingsAccountTransactionData transactionData : transactionDataHistory) {
+	        	listTransactionId.add(transactionData.getId());
+	        }
+	        lastIdReponse = Collections.min(listTransactionId);
+        }
+        
+        SavingsAccountTransactionHistoryData savingsAccountTransactionHistoryData = new SavingsAccountTransactionHistoryData();
+        savingsAccountTransactionHistoryData.setLastId(lastIdReponse);
+        savingsAccountTransactionHistoryData.setTransactionHistory(transactionDataHistory);
         
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, transactionDataHistory,
+        return this.toApiJsonSerializer.serialize(settings, savingsAccountTransactionHistoryData,
                 SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
     }
 }
