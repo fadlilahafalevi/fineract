@@ -118,7 +118,7 @@ public class AccountTransfersApiResource {
 
     	final Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
     	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
-        final String savingsAccountNumber = jsonObject.getString(AccountDetailConstants.fromAccountNumberParamName);
+        final String savingsAccountNumber = jsonObject.getString(AccountDetailConstants.fromAccountNoParamName);
         final Long clientId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsAccountNumber(savingsAccountNumber);
         if (!(clientAccountIdHeader.equals(clientId))) {
     		throw new SavingsAccountNumberNotFoundException(savingsAccountNumber);

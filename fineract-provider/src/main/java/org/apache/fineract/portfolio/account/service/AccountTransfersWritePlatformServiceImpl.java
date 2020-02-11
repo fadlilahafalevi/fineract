@@ -162,7 +162,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             		paymentDetailTo = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeToName);
             	}
 
-                fromSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.fromAccountNumberParamName);
+                fromSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.fromAccountNoParamName);
                 fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountNumber);
             	final Boolean isFromSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(fromSavingsAccount.getId());
 
@@ -171,7 +171,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
                         transactionDate, transactionAmount, paymentDetailFrom, transactionBooleanValues);
 
-                final String toSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.toAccountNumberParamName);
+                final String toSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.toAccountNoParamName);
                 final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsAccountNumber);
             	final Boolean isToSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(toSavingsAccount.getId());
             	final Integer savingsAccountType = toSavingsAccount.depositAccountType().getValue();
@@ -219,7 +219,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             } else if (isSavingsToLoanAccountTransfer(fromAccountType, toAccountType)) {
                 
-            	fromSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.fromAccountNumberParamName);
+            	fromSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.fromAccountNoParamName);
                 fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountNumber);
                 final Boolean isMainAccount = this.savingsAccountReadPlatformService.isMainProduct(fromSavingsAccount.getId());
             	if (!isMainAccount) {
@@ -231,7 +231,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
                         transactionDate, transactionAmount, paymentDetail, transactionBooleanValues);
 
-                final String toLoanAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.toAccountNumberParamName);
+                final String toLoanAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.toAccountNoParamName);
                 final Loan toLoanAccount = this.loanAccountAssembler.assembleFrom(toLoanAccountNumber);
 
                 final Boolean isHolidayValidationDone = false;
@@ -250,7 +250,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 // FIXME - kw - ADD overpaid loan to savings account transfer
                 // support.
 
-                String fromLoanAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.fromAccountNumberParamName);
+                String fromLoanAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.fromAccountNoParamName);
                 fromLoanAccount = this.loanAccountAssembler.assembleFrom(fromLoanAccountNumber);
 
                 final LoanTransaction loanRefundTransaction = this.loanAccountDomainService.makeRefund(fromLoanAccount.getId(),
