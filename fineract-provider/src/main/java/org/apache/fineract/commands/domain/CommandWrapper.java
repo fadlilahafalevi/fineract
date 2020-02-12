@@ -45,6 +45,8 @@ public class CommandWrapper {
 
     @SuppressWarnings("unused")
     private Long templateId;
+    
+    private Long transactionBatchId;
 
     public static CommandWrapper wrap(final String actionName, final String entityName, final Long resourceId, final Long subresourceId) {
         return new CommandWrapper(null, actionName, entityName, resourceId, subresourceId, null, null);
@@ -348,6 +350,14 @@ public class CommandWrapper {
 
 	public void setAccountNumber(String accountNumber) {
 		this.accountNumber = accountNumber;
+	}
+
+	public Long getTransactionBatchId() {
+		return transactionBatchId;
+	}
+
+	public void setTransactionBatchId(Long transactionBatchId) {
+		this.transactionBatchId = transactionBatchId;
 	}
     
     

@@ -86,4 +86,8 @@ public interface SavingsAccountReadPlatformService {
 	List<SavingsAccountData> retrieveByClientId(Long clientId);
 
 	Long retrieveClientsIdBySavingsAccountNumber(String savingsAccountNumber);
+
+	Long retrieveSavingsIdByBatchId(Long batchId);
+
+	List<Long> retrieveTransactionIdByBatchId(Long batchId);
 }

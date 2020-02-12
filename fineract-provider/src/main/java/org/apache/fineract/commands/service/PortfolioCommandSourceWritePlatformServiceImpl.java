@@ -94,6 +94,7 @@ public class PortfolioCommandSourceWritePlatformServiceImpl implements Portfolio
                 wrapper.getSubentityId(), wrapper.getGroupId(), wrapper.getClientId(), wrapper.getLoanId(), wrapper.getSavingsId(),
                 wrapper.getTransactionId(), wrapper.getHref(), wrapper.getProductId(),wrapper.getCreditBureauId(),wrapper.getOrganisationCreditBureauId());
         command.setAccountNumber(wrapper.getAccountNumber());
+        command.setTransactionBatchId(wrapper.getTransactionBatchId());
         
         while (numberOfRetries <= maxNumberOfRetries) {
             try {
