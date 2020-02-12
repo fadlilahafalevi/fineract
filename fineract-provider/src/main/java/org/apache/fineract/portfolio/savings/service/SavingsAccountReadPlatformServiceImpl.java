@@ -1439,4 +1439,25 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 			throw new SavingsAccountNotFoundException(savingsId);
 		}
 	}
+	
+	@Override
+	public Long retrieveSavingsIdByBatchId(Long batchId) {
+		try {
+			final String sql = "select savings_account_id from m_savings_account_transaction where batch_id = ? limit 1";
+			return this.jdbcTemplate.queryForObject(sql, new Object[] { batchId }, Long.class);
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNotFoundException(batchId);
+		}
+	}
+	
+	@Override
+	public List<Long> retrieveTransactionIdByBatchId(Long batchId) {
+		try {
+			final String sql = "select id from m_savings_account_transaction where batch_id = ?";
+			final Object[] queryParameters = new Object[] { batchId };
+			return this.jdbcTemplate.queryForList(sql, new Object[] { batchId }, Long.class);
+		} catch (final EmptyResultDataAccessException e) {
+			throw new SavingsAccountNotFoundException(batchId);
+		}
+	}
 }
