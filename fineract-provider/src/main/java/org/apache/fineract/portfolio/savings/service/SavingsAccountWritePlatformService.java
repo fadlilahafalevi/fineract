@@ -117,6 +117,8 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult holdAmount(Long savingsId, JsonCommand command);
 
+    CommandProcessingResult holdAmountByAccountNo(JsonCommand command);
+
     CommandProcessingResult blockCredits(Long savingsId);
 
     CommandProcessingResult unblockCredits(Long savingsId);
