@@ -37,6 +37,7 @@ import org.apache.fineract.commands.service.CommandWrapperBuilder;
 import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBatchTransaction;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
@@ -100,48 +101,57 @@ public class SavingsAccountTransactionsBatchApiResource2 {
         		throw new SavingsAccountNumberNotFoundException(accountNumber);
         	}
         	
-        	if (is(commandParam, "withdrawal")) {
-        		BigDecimal amount = BigDecimal.ZERO;
-        		for (int i = 0; i < jsonArray.length(); i++) {
-        			String apiRequestBodyAsJsonArray = jsonArray.getJSONObject(i).toString();
-        			JSONObject jsonObjectAmount = new JSONObject(apiRequestBodyAsJsonArray);
-        			amount = amount.add(new BigDecimal(jsonObjectAmount.getString("transactionAmount")));
-        		}
-        		BigDecimal savingsAccountAmount = this.savingsAccountReadPlatformService.retrieveAmountBySavingsId(savingsId);
-        		if (savingsAccountAmount.compareTo(amount) < 0) {
-					throw new InsufficientAccountBalanceException("savingsAccountNumber:" + accountNumber, savingsAccountAmount, BigDecimal.ZERO, amount);
-        		}
-        	}
+			if (is(commandParam, "withdrawal")) {
+				BigDecimal amount = BigDecimal.ZERO;
+				for (int i = 0; i < jsonArray.length(); i++) {
+					String apiRequestBodyAsJsonArray = jsonArray.getJSONObject(i).toString();
+					JSONObject jsonObjectAmount = new JSONObject(apiRequestBodyAsJsonArray);
+					amount = amount.add(new BigDecimal(jsonObjectAmount.getString("transactionAmount")));
+				}
+				BigDecimal savingsAccountAmount = this.savingsAccountReadPlatformService
+						.retrieveAmountBySavingsId(savingsId);
+				if (savingsAccountAmount.compareTo(amount) < 0) {
+					throw new InsufficientAccountBalanceException("savingsAccountNumber:" + accountNumber,
+							savingsAccountAmount, BigDecimal.ZERO, amount);
+				}
+			}
         	
+			CommandProcessingResultBatchTransaction resultBatchTransaction = new CommandProcessingResultBatchTransaction();
+			
         	Collection<CommandProcessingResult> resultArray = new ArrayList<CommandProcessingResult>();
+            Long transactionBatchId = null;
         	for (int i = 0; i < jsonArray.length(); i++) {
                 String apiRequestBodyAsJsonArray = jsonArray.getJSONObject(i).toString();
                 
-            final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJsonArray);
-
-            CommandProcessingResult result = null;
-            if (is(commandParam, "deposit")) {
-                final CommandWrapper commandRequest = builder.savingsAccountDeposit(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "withdrawal")) {
-                final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, "postInterestAsOn")) {
-                final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            } else if (is(commandParam, SavingsApiConstants.COMMAND_HOLD_AMOUNT)) {
-                final CommandWrapper commandRequest = builder.holdAmount(savingsId).build();
-                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-            }
-
-            if (result == null) {
-                //
-                throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "deposit", "withdrawal", SavingsApiConstants.COMMAND_HOLD_AMOUNT });
-            }
-                       
-            resultArray.add(result);
+	            final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJsonArray);
+	
+	            CommandProcessingResult result = null;
+	            if (is(commandParam, "deposit")) {
+	                CommandWrapper commandRequest = builder.savingsAccountDepositBatchTransaction2(savingsId, transactionBatchId).build();
+	                commandRequest.setTransactionBatchId(transactionBatchId);
+	                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+	            } else if (is(commandParam, "withdrawal")) {
+	                CommandWrapper commandRequest = builder.savingsAccountWithdrawalBatchTransaction2(savingsId, transactionBatchId).build();
+	                commandRequest.setTransactionBatchId(transactionBatchId);
+	                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+	            } else if (is(commandParam, "postInterestAsOn")) {
+	                final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
+	                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+	            } else if (is(commandParam, SavingsApiConstants.COMMAND_HOLD_AMOUNT)) {
+	                final CommandWrapper commandRequest = builder.holdAmount(savingsId).build();
+	                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+	            }
+	
+	            if (result == null) {
+	                //
+	                throw new UnrecognizedQueryParamException("command", commandParam, new Object[] { "deposit", "withdrawal", SavingsApiConstants.COMMAND_HOLD_AMOUNT });
+	            }
+	            transactionBatchId = transactionBatchId == null ? result.getTransactionBatchId() : transactionBatchId;
+	            resultArray.add(result);
         	}
-            return this.toApiJsonSerializer.serialize(resultArray);
+        	resultBatchTransaction.setResultArray(resultArray);
+        	resultBatchTransaction.setTransactionBatchId(transactionBatchId);
+            return this.toApiJsonSerializer.serialize(resultBatchTransaction);
         	
         } catch (ObjectOptimisticLockingFailureException lockingFailureException) {
             throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations",
