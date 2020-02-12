@@ -117,6 +117,8 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult holdAmount(Long savingsId, JsonCommand command);
 
+    CommandProcessingResult holdAmountByAccountNo(JsonCommand command);
+
     CommandProcessingResult blockCredits(Long savingsId);
 
     CommandProcessingResult unblockCredits(Long savingsId);
@@ -130,4 +132,10 @@ public interface SavingsAccountWritePlatformService {
 	void accrualPosting(SavingsAccount account);
 
 	void postJournalEntriesForReversalAccrual(SavingsAccount savingsAccount, LocalDate accrualDate);
+
+	CommandProcessingResult depositBatchTransaction2(Long savingsId, JsonCommand command);
+
+	CommandProcessingResult withdrawalBatchTransaction2(Long savingsId, JsonCommand command);
+
+	CommandProcessingResult undoTransactionBatchTransaction(JsonCommand command);
 }

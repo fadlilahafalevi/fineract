@@ -45,7 +45,7 @@ public class CommandWrapperBuilder {
     private Long templateId;
     private Long creditBureauId;
     private Long organisationCreditBureauId;
-   
+    private Long transactionBatchId;
 
     public CommandWrapper build() {
         return new CommandWrapper(this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId, this.actionName,
@@ -1279,12 +1279,13 @@ public class CommandWrapperBuilder {
     }
     
     
-    public CommandWrapperBuilder savingsAccountDeposit(final String accountNo) {
-        this.actionName = "DEPOSIT";
-        this.entityName = "SAVINGSACCOUNTNUMBER";
-        this.accountNumber = accountNo;
+    public CommandWrapperBuilder savingsAccountDepositBatchTransaction2(final Long accountId, final Long batchId) {
+        this.actionName = "DEPOSITBATCHTRANSACTION2";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
         this.entityId = null;
-        this.href = "/savingsaccounts/batchtrx";
+        this.transactionBatchId = batchId;
+        this.href = "/savingsaccounts/batchtrx2";
         return this;
     }
     
@@ -1300,15 +1301,15 @@ public class CommandWrapperBuilder {
     
     
     
-    public CommandWrapperBuilder savingsAccountWithdrawal(final String accountNo) {
-        this.actionName = "WITHDRAWAL";
-        this.entityName = "SAVINGSACCOUNTNUMBER";
-        this.accountNumber = accountNo;
+    public CommandWrapperBuilder savingsAccountWithdrawalBatchTransaction2(final Long accountId, final Long batchId) {
+        this.actionName = "WITHDRAWALBATCHTRANSACTION2";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
         this.entityId = null;
-        this.href = "/savingsaccounts/batchtrx";
+        this.transactionBatchId = batchId;
+        this.href = "/savingsaccounts/batchtrx2";
         return this;
     }
-    
 
     public CommandWrapperBuilder undoSavingsAccountTransaction(final Long accountId, final Long transactionId) {
         this.actionName = "UNDOTRANSACTION";
@@ -1318,6 +1319,13 @@ public class CommandWrapperBuilder {
         this.subentityId = transactionId;
         this.transactionId = transactionId.toString();
         this.href = "/savingsaccounts/" + accountId + "/transactions/" + transactionId + "?command=undo";
+        return this;
+    }
+
+    public CommandWrapperBuilder undoSavingsAccountTransactionBatchTransaction() {
+        this.actionName = "UNDOTRANSACTIONBATCHTRX";
+        this.entityName = "SAVINGSACCOUNT";
+        this.href = "/savingsaccounts/reversebatchtrx";
         return this;
     }
 
@@ -3015,12 +3023,11 @@ public class CommandWrapperBuilder {
         return this;
     }
 
-    public CommandWrapperBuilder holdAmount(final Long accountId) {
+    public CommandWrapperBuilder holdAmountByAccountNumber() {
         this.actionName = "HOLDAMOUNT";
-        this.entityName = "SAVINGSACCOUNT";
-        this.savingsId = accountId;
+        this.entityName = "SAVINGSACCOUNT2";
         this.entityId = null;
-        this.href = "/savingsaccounts/" + accountId + "/transactions?command=holdAmount";
+        this.href = "/savingsaccounts/holdAmount";
         return this;
     }
 
@@ -3030,6 +3037,15 @@ public class CommandWrapperBuilder {
         this.accountNumber = accountNo;
         this.entityId = null;
         this.href = "/savingsaccounts/batchtrx?command=holdAmount";
+        return this;
+    }
+    
+    public CommandWrapperBuilder holdAmount(final Long accountId) {
+        this.actionName = "HOLDAMOUNT";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = null;
+        this.href = "/savingsaccounts/" + accountId + "/transactions?command=holdAmount";
         return this;
     }
 
@@ -3241,4 +3257,12 @@ public class CommandWrapperBuilder {
         this.href = "/self/pocket?command="+PocketApiConstants.delinkAccountsFromPocketCommandParam;
         return this;
     }
+
+	public Long getTransactionBatchId() {
+		return transactionBatchId;
+	}
+
+	public void setTransactionBatchId(Long transactionBatchId) {
+		this.transactionBatchId = transactionBatchId;
+	}
 }
