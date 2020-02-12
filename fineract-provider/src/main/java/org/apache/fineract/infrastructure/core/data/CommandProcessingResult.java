@@ -47,6 +47,7 @@ public class CommandProcessingResult implements Serializable {
     private final String resourceIdentifier;
     private final Long productId;
     private Boolean rollbackTransaction;
+    private Long transactionBatchId;
 
     public static CommandProcessingResult fromDetails(Date createdDate, final Long commandId, String accountNumber, final Long officeId, final Long groupId, final Long clientId,
             final Long loanId, final Long savingsId, final String resourceIdentifier, final Long entityId, final String transactionId,
@@ -226,6 +227,14 @@ public class CommandProcessingResult implements Serializable {
 
 	public void setCreatedDate(Date createdDate) {
 		this.createdDate = createdDate;
+	}
+
+	public Long getTransactionBatchId() {
+		return transactionBatchId;
+	}
+
+	public void setTransactionBatchId(Long transactionBatchId) {
+		this.transactionBatchId = transactionBatchId;
 	}
 
 }

@@ -44,6 +44,7 @@ public class CommandProcessingResultBuilder {
     private Long productId;
     private boolean rollbackTransaction = false;
     private List<String> transactionIds;
+    private Long transactionBatchId;
 
     public CommandProcessingResult build() {
         return CommandProcessingResult.fromDetails(this.createdDate, this.commandId, this.accountNumber, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
@@ -133,4 +134,11 @@ public class CommandProcessingResultBuilder {
         this.rollbackTransaction = this.rollbackTransaction || rollbackTransaction;
         return this;
     }
+    
+	public Long getTransactionBatchId() {
+		return transactionBatchId;
+	}
+	public void setTransactionBatchId(Long transactionBatchId) {
+		this.transactionBatchId = transactionBatchId;
+	}
 }
