@@ -903,7 +903,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         	else
             {
             	final String sql = "select " + this.transactionsMapper.schema()
-                + "where sa.account_no = ? and tr.transaction_date between ? and ? and sa.deposit_type_enum = ? and tr.is_reversed = 0 " + transactionTypeValueQuery + " order by tr.id desc limit ?"; // 
+                + "where sa.client_id = ? and tr.transaction_date between ? and ? and sa.deposit_type_enum = ? and tr.is_reversed = 0 " + transactionTypeValueQuery + " order by tr.id desc limit ?"; // 
             	transactionDataHistory = this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { clientId, startdate, enddate, depositAccountType.getValue(), pageSize});
             }
         } catch (EmptyResultDataAccessException e) {
