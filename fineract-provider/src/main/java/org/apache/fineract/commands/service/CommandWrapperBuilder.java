@@ -3023,12 +3023,11 @@ public class CommandWrapperBuilder {
         return this;
     }
 
-    public CommandWrapperBuilder holdAmount(final Long accountId) {
+    public CommandWrapperBuilder holdAmountByAccountNumber() {
         this.actionName = "HOLDAMOUNT";
-        this.entityName = "SAVINGSACCOUNT";
-        this.savingsId = accountId;
+        this.entityName = "SAVINGSACCOUNT2";
         this.entityId = null;
-        this.href = "/savingsaccounts/" + accountId + "/transactions?command=holdAmount";
+        this.href = "/savingsaccounts/holdAmount";
         return this;
     }
 
@@ -3038,6 +3037,15 @@ public class CommandWrapperBuilder {
         this.accountNumber = accountNo;
         this.entityId = null;
         this.href = "/savingsaccounts/batchtrx?command=holdAmount";
+        return this;
+    }
+    
+    public CommandWrapperBuilder holdAmount(final Long accountId) {
+        this.actionName = "HOLDAMOUNT";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = null;
+        this.href = "/savingsaccounts/" + accountId + "/transactions?command=holdAmount";
         return this;
     }
 
