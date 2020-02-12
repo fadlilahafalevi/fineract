@@ -1899,6 +1899,26 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         return new CommandProcessingResultBuilder().withEntityId(transacton.getId()).withOfficeId(account.officeId())
                 .withClientId(account.clientId()).withGroupId(account.groupId()).withSavingsId(savingsId).build();
     }
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult holdAmountByAccountNo(final JsonCommand command) {
+
+        final AppUser submittedBy = this.context.authenticatedUser();
+        final String accountNo = command.stringValueOfParameterNamed(SavingsApiConstants.transactionAccountNumberParamName);
+        
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(accountNo);
+        checkClientOrGroupActive(account);
+
+        SavingsAccountTransaction transacton = this.savingsAccountTransactionDataValidator.validateHoldAndAssembleForm(command.json(),
+                account, submittedBy);
+
+        this.savingsAccountTransactionRepository.save(transacton);
+        this.savingAccountRepositoryWrapper.saveAndFlush(account);
+
+        return new CommandProcessingResultBuilder().withEntityId(transacton.getId()).withOfficeId(account.officeId())
+                .withClientId(account.clientId()).withGroupId(account.groupId()).withAccountNumber(accountNo).build();
+    }
 
     @Transactional
     @Override
