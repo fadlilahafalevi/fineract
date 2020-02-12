@@ -90,4 +90,9 @@ public interface SavingsAccountReadPlatformService {
 	Long retrieveSavingsIdByBatchId(Long batchId);
 
 	List<Long> retrieveTransactionIdByBatchId(Long batchId);
+
+	Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistoryByClientId(String ClientId,
+			String startdate, String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize,
+			String transactionTypeValue);
+
 }
