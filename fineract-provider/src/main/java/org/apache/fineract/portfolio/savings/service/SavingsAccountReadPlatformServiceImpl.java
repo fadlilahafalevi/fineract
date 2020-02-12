@@ -876,6 +876,44 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         
         
     }
+    
+    @Override
+    public Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistoryByClientId(final String clientId, final String startdate, final String enddate, DepositAccountType depositAccountType, final Long lastId, final Long pageSize, final String transactionTypeValue) {
+    	String transactionTypeValueQuery;
+    	Collection<SavingsAccountTransactionData> transactionDataHistory = null;
+    	try {       	
+    		if (transactionTypeValue.equalsIgnoreCase("D"))
+        	{
+        		transactionTypeValueQuery = " and tr.transaction_type_enum = 1 ";
+        	} else if (transactionTypeValue.equalsIgnoreCase("W"))
+        	{
+        		transactionTypeValueQuery = " and tr.transaction_type_enum = 2 ";
+        	}
+        	else
+        	{
+        		transactionTypeValueQuery = "";
+        	}
+    		
+        	if(lastId != null)
+            {
+            	final String sql = "select " + this.transactionsMapper.schema()
+                + "where sa.client_id = ? and tr.transaction_date between ? and ? and sa.deposit_type_enum = ? and tr.id < ? and tr.is_reversed = 0 "+ transactionTypeValueQuery +" order by tr.id desc limit ?"; // 
+            	transactionDataHistory = this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { clientId, startdate, enddate, depositAccountType.getValue(), lastId, pageSize});
+            }
+        	else
+            {
+            	final String sql = "select " + this.transactionsMapper.schema()
+                + "where sa.account_no = ? and tr.transaction_date between ? and ? and sa.deposit_type_enum = ? and tr.is_reversed = 0 " + transactionTypeValueQuery + " order by tr.id desc limit ?"; // 
+            	transactionDataHistory = this.jdbcTemplate.query(sql, this.transactionsMapper, new Object[] { clientId, startdate, enddate, depositAccountType.getValue(), pageSize});
+            }
+        } catch (EmptyResultDataAccessException e) {
+        	return null;
+        }
+        return transactionDataHistory;
+        
+        
+        
+    }
 
     /*
      * @Override public Collection<SavingsAccountAnnualFeeData>
@@ -944,7 +982,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final SavingsAccountTransactionEnumData transactionType = SavingsEnumerations.transactionType(transactionTypeInt);
 
             final LocalDate date = JdbcSupport.getLocalDate(rs, "transactionDate");
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			sdf.setTimeZone(TimeZone.getDefault());
 			
             final String createdDate = sdf.format(JdbcSupport.getDate(rs, "createdDate"));
