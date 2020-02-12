@@ -67,6 +67,7 @@ public final class JsonCommand {
     private final Long creditBureauId;
     private final Long organisationCreditBureauId;
     private String accountNumber;
+    private Long transactionBatchId;
 
     public static JsonCommand from(final String jsonCommand, final JsonElement parsedCommand, final FromJsonHelper fromApiJsonHelper,
             final String entityName, final Long resourceId, final Long subresourceId, final Long groupId, final Long clientId,
@@ -619,6 +620,14 @@ public final class JsonCommand {
 
 	public void setAccountNumber(String accountNumber) {
 		this.accountNumber = accountNumber;
+	}
+
+	public Long getTransactionBatchId() {
+		return transactionBatchId;
+	}
+
+	public void setTransactionBatchId(Long transactionBatchId) {
+		this.transactionBatchId = transactionBatchId;
 	}
 
 }
