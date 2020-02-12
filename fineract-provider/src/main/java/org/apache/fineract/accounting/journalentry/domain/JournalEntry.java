@@ -94,7 +94,7 @@ public class JournalEntry extends AbstractAuditableCustom<AppUser, Long> {
     @Column(name = "type_enum", nullable = false)
     private Integer type;
 
-    @Column(name = "amount", scale = 6, precision = 19, nullable = false)
+    @Column(name = "amount", scale = 6, precision = 40, nullable = false)
     private BigDecimal amount;
 
     @Column(name = "description", length = 500)
