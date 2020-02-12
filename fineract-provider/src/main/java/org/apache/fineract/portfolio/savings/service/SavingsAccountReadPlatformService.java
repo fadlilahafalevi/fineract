@@ -69,7 +69,7 @@ public interface SavingsAccountReadPlatformService {
 			DepositAccountType depositAccountType);
 
 	Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistory(String accountNo, String startdate,
-			String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize);
+			String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize, String transactionTypeValue);
 
 	Boolean checkingMainProduct(Long clientId);
 
