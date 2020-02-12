@@ -50,17 +50,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-@Path("/savingsaccounts/transactionsHistory")
+@Path("/clients/transactionsHistory")
 @Component
 @Scope("singleton")
-public class SavingsAccountTransactionsHistoryApiResource {
+public class SavingsAccountTransactionsClientIdHistoryApiResource {
 
     private final PlatformSecurityContext context;
     private final DefaultToApiJsonSerializer<SavingsAccountTransactionHistoryData> toApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     @Autowired
-    public SavingsAccountTransactionsHistoryApiResource(final PlatformSecurityContext context,
+    public SavingsAccountTransactionsClientIdHistoryApiResource(final PlatformSecurityContext context,
             final DefaultToApiJsonSerializer<SavingsAccountTransactionHistoryData> toApiJsonSerializer,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
@@ -80,7 +80,7 @@ public class SavingsAccountTransactionsHistoryApiResource {
     	Long pageSize = null; 
     	Long lastId = null;
     	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
-    	String accountNo = jsonObject.getString("accountNo");
+    	String clientId = jsonObject.getString("clientId");
     	String startdate = jsonObject.getString("startDate");
     	String enddate = jsonObject.getString("endDate");
     	String lastid = jsonObject.getString("lastId");
@@ -110,7 +110,7 @@ public class SavingsAccountTransactionsHistoryApiResource {
         
         
         
-        Collection<SavingsAccountTransactionData> transactionDataHistory = this.savingsAccountReadPlatformService.retrieveSavingsTransactionsHistory(accountNo,
+        Collection<SavingsAccountTransactionData> transactionDataHistory = this.savingsAccountReadPlatformService.retrieveSavingsTransactionsHistoryByClientId(clientId,
         		startdate, enddate, DepositAccountType.SAVINGS_DEPOSIT, lastId, pageSize,transactionTypeValue);
         if (transactionDataHistory != null && (!(transactionDataHistory.isEmpty()))) {
 	        List<Long> listTransactionId = new ArrayList<Long>();
@@ -128,5 +128,4 @@ public class SavingsAccountTransactionsHistoryApiResource {
         return this.toApiJsonSerializer.serialize(settings, savingsAccountTransactionHistoryData,
                 SavingsApiSetConstants.SAVINGS_TRANSACTION_RESPONSE_DATA_PARAMETERS);
     }
-   
 }
