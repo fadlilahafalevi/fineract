@@ -1,4 +1,5 @@
 /**
+
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -84,6 +85,7 @@ public class SavingsAccountTransactionsHistoryApiResource {
     	String enddate = jsonObject.getString("endDate");
     	String lastid = jsonObject.getString("lastId");
     	String pagesize = jsonObject.getString("pageSize");
+    	String transactionTypeValue = jsonObject.getString("transactionTypeValue");
     	Long lastIdReponse = null;
     	//Date startDate=new SimpleDateFormat("yyyy-MM-dd").parse(startdate);
     	//Date endDate=new SimpleDateFormat("yyyy-MM-dd").parse(enddate);
@@ -101,14 +103,15 @@ public class SavingsAccountTransactionsHistoryApiResource {
     		lastIdReponse = new Long(lastid);
     		lastId = new Long(lastid);
     	}
-    		
+    	
+    	
     	
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
         
         
         
         Collection<SavingsAccountTransactionData> transactionDataHistory = this.savingsAccountReadPlatformService.retrieveSavingsTransactionsHistory(accountNo,
-        		startdate, enddate, DepositAccountType.SAVINGS_DEPOSIT, lastId, pageSize);
+        		startdate, enddate, DepositAccountType.SAVINGS_DEPOSIT, lastId, pageSize,transactionTypeValue);
         if (transactionDataHistory != null && (!(transactionDataHistory.isEmpty()))) {
 	        List<Long> listTransactionId = new ArrayList<Long>();
 	        for (SavingsAccountTransactionData transactionData : transactionDataHistory) {
