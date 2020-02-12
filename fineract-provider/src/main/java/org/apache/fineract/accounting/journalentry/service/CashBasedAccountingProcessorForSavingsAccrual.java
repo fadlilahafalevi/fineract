@@ -52,8 +52,8 @@ public class CashBasedAccountingProcessorForSavingsAccrual implements Accounting
         final Long paymentTypeId = null;
         Integer year = transactionDate.getYear() + 1900;
         Integer month = transactionDate.getMonth() + 1;
-		String transactionId = "S" + office.getId() + savingsProductId + savingsId + year + month
-				+ transactionDate.getDate() + "A";
+		String transactionId = "A" + office.getId() + savingsProductId + savingsId + year + month
+				+ transactionDate.getDate();
         
         this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
         
@@ -76,8 +76,8 @@ public class CashBasedAccountingProcessorForSavingsAccrual implements Accounting
         final Long paymentTypeId = null;
         Integer year = transactionDate.getYear() + 1900;
         Integer month = transactionDate.getMonth() + 1;
-		String transactionId = "S" + office.getId() + savingsProductId + savingsId + year + month
-				+ transactionDate.getDate() + "R";
+		String transactionId = "R" + office.getId() + savingsProductId + savingsId + year + month
+				+ transactionDate.getDate();
         
         this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
         
