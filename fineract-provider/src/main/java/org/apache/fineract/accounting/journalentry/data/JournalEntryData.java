@@ -93,6 +93,7 @@ public class JournalEntryData {
     private String routingCode;
     private String receiptNumber;
     private String bankNumber;
+    private String paymentTypeValue;
 
     public static JournalEntryData importInstance(Long officeId,LocalDate transactionDate,String currencyCode, Long paymentTypeId,
             Integer rowIndex,List<CreditDebit> credits, List<CreditDebit>debits,
@@ -259,4 +260,10 @@ public class JournalEntryData {
     public String getTransactionId() {
         return transactionId;
     }
+	public String getPaymentTypeValue() {
+		return paymentTypeValue;
+	}
+	public void setPaymentTypeValue(String paymentTypeValue) {
+		this.paymentTypeValue = paymentTypeValue;
+	}
 }
