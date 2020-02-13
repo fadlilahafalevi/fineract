@@ -97,7 +97,7 @@ public class SavingsAccountTransactionsHistoryApiResource {
     	}
     	
     	
-    	if (lastid.isEmpty()) {
+    	if (lastid.equals("0")) {
     		lastId = null;
     	} else {
     		lastIdReponse = new Long(lastid);
