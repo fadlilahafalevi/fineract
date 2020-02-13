@@ -85,18 +85,16 @@ public class SavingsAccountTransactionsClientIdHistoryApiResource {
     	String enddate = jsonObject.getString("endDate");
     	String lastid = jsonObject.getString("lastId");
     	String pagesize = jsonObject.getString("pageSize");
-    	String transactionTypeValue = jsonObject.getString("transactionTypeValue");
+    	String transactionTypeValue = "";
+    	transactionTypeValue = jsonObject.getString("transactionTypeValue");
     	Long lastIdReponse = null;
-    	//Date startDate=new SimpleDateFormat("yyyy-MM-dd").parse(startdate);
-    	//Date endDate=new SimpleDateFormat("yyyy-MM-dd").parse(enddate);
     	
     	if (pagesize.isEmpty()) {
     		pageSize = 15L;
     	} else {
     		pageSize = new Long(pagesize);
     	}
-    	
-    	
+
     	if (lastid.equals("0")) {
     		lastId = null;
     	} else {
@@ -104,11 +102,7 @@ public class SavingsAccountTransactionsClientIdHistoryApiResource {
     		lastId = new Long(lastid);
     	}
     	
-    	
-    	
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
-        
-        
         
         Collection<SavingsAccountTransactionData> transactionDataHistory = this.savingsAccountReadPlatformService.retrieveSavingsTransactionsHistoryByClientId(clientId,
         		startdate, enddate, DepositAccountType.SAVINGS_DEPOSIT, lastId, pageSize,transactionTypeValue);
