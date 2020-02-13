@@ -68,7 +68,7 @@ public class SavingsAccountTransactionDataValidator {
     private final FromJsonHelper fromApiJsonHelper;
 	private static final Set<String> SAVINGS_ACCOUNT_HOLD_AMOUNT_REQUEST_DATA_PARAMETERS = new HashSet<>(
 			Arrays.asList(transactionDateParamName, SavingsApiConstants.dateFormatParamName,
-					SavingsApiConstants.localeParamName, transactionAmountParamName, SavingsApiConstants.transactionAccountNumberParamName));
+					SavingsApiConstants.localeParamName, transactionAmountParamName, SavingsApiConstants.accountNoParamName));
 
     @Autowired
     public SavingsAccountTransactionDataValidator(final FromJsonHelper fromApiJsonHelper) {
