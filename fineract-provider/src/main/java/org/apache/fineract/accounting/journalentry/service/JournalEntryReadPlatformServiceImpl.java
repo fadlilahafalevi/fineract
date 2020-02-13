@@ -130,18 +130,29 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                         .append(" pd.routing_code as routingCode, ").append(" note.id as noteId, ")
                         .append(" note.note as transactionNote, ").append(" lt.transaction_type_enum as loanTransactionType, ")
                         .append(" st.transaction_type_enum as savingsTransactionType ");
+            } else {
+                sb.append(", pts.value as paymentTypeSavingValue, ptl.value as paymentTypeLoanValue ");
             }
             sb.append(" from acc_gl_journal_entry as journalEntry ")
-                    .append(" left join acc_gl_account as glAccount on glAccount.id = journalEntry.account_id")
-                    .append(" left join m_office as office on office.id = journalEntry.office_id")
+                    .append(" left join acc_gl_account as glAccount on glAccount.id = journalEntry.account_id ")
+                    .append(" left join m_office as office on office.id = journalEntry.office_id ")
                     .append(" left join m_appuser as creatingUser on creatingUser.id = journalEntry.createdby_id ")
                     .append(" join m_currency curr on curr.code = journalEntry.currency_code ");
+                    
             if (associationParametersData.isTransactionDetailsRequired()) {
                 sb.append(" left join m_loan_transaction as lt on journalEntry.loan_transaction_id = lt.id ")
                         .append(" left join m_savings_account_transaction as st on journalEntry.savings_transaction_id = st.id ")
                         .append(" left join m_payment_detail as pd on lt.payment_detail_id = pd.id or st.payment_detail_id = pd.id or journalEntry.payment_details_id = pd.id")
                         .append(" left join m_payment_type as pt on pt.id = pd.payment_type_id ")
                         .append(" left join m_note as note on lt.id = note.loan_transaction_id or st.id = note.savings_account_transaction_id ");
+            } else {
+            	//add new left join for payment type
+                sb.append(" left join m_savings_account_transaction sat on sat.id = journalEntry.savings_transaction_id ")
+		                .append(" left join m_payment_detail pds on pds.id = sat.payment_detail_id ")
+		                .append(" left join m_payment_type pts on pts.id = pds.payment_type_id ")
+		                .append(" left join m_loan_transaction lt on lt.id = journalEntry.loan_transaction_id ")
+		                .append(" left join m_payment_detail pdl on pdl.id = lt.payment_detail_id ")
+		                .append(" left join m_payment_type ptl on ptl.id = pdl.payment_type_id ");
             }
             return sb.toString();
 
@@ -198,6 +209,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             }
             TransactionDetailData transactionDetailData = null;
 
+            String paymentTypeValue = "";
+            
             if (associationParametersData.isTransactionDetailsRequired()) {
                 PaymentDetailData paymentDetailData = null;
                 final Long paymentTypeId = JdbcSupport.getLong(rs, "paymentTypeId");
@@ -224,7 +237,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                 }
 
                 TransactionTypeEnumData transactionTypeEnumData = null;
-
+                
                 if (PortfolioAccountType.fromInt(entityTypeId).isLoanAccount()) {
                     final LoanTransactionEnumData loanTransactionType = LoanEnumerations.transactionType(JdbcSupport.getInteger(rs,
                             "loanTransactionType"));
@@ -244,11 +257,19 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                 }
 
                 transactionDetailData = new TransactionDetailData(transaction, paymentDetailData, noteData, transactionTypeEnumData);
+            } else {
+            	if (PortfolioAccountType.fromInt(entityTypeId).isLoanAccount()) {
+                    paymentTypeValue = rs.getString("paymentTypeLoanValue");
+                } else if (PortfolioAccountType.fromInt(entityTypeId).isSavingsAccount()) {
+                    paymentTypeValue = rs.getString("paymentTypeSavingValue");
+                }
             }
-            return new JournalEntryData(id, officeId, officeName, glAccountName, glAccountId, glCode, accountType, transactionDate,
+            JournalEntryData journalEntryData = new JournalEntryData(id, officeId, officeName, glAccountName, glAccountId, glCode, accountType, transactionDate,
                     entryType, amount, transactionId, manualEntry, entityType, entityId, createdByUserId, createdDate, createdByUserName,
                     comments, reversed, referenceNumber, officeRunningBalance, organizationRunningBalance, runningBalanceComputed,
                     transactionDetailData, currency);
+            journalEntryData.setPaymentTypeValue(paymentTypeValue);
+            return journalEntryData;
         }
     }
 
