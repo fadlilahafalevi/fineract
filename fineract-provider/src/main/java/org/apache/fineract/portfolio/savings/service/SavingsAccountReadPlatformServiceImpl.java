@@ -847,7 +847,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     		if (transactionTypeValue.equalsIgnoreCase("D"))
         	{	//Deposit transactions
         		transactionTypeValueQuery = " and tr.transaction_type_enum in ( 1 , 3 ) ";
-        	} else if (transactionTypeValue.equalsIgnoreCase("C"))
+        	} else if (transactionTypeValue.equalsIgnoreCase("W"))
         	{	//Withdrawal transactions
         		transactionTypeValueQuery = " and tr.transaction_type_enum in ( 2, 4, 5, 6, 7, 18 ) ";
         	}
@@ -885,7 +885,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     		if (transactionTypeValue.equalsIgnoreCase("D"))
         	{	//Deposit transactions
         		transactionTypeValueQuery = " and tr.transaction_type_enum in ( 1 , 3 ) ";
-        	} else if (transactionTypeValue.equalsIgnoreCase("C"))
+        	} else if (transactionTypeValue.equalsIgnoreCase("W"))
         	{	//Withdrawal transactions
         		transactionTypeValueQuery = " and tr.transaction_type_enum in ( 2, 4, 5, 6, 7, 18 ) ";
         	}
