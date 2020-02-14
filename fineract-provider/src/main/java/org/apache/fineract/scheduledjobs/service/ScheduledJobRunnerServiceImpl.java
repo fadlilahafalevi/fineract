@@ -21,6 +21,8 @@ package org.apache.fineract.scheduledjobs.service;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -82,12 +84,13 @@ import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
 
 @Service(value = "scheduledJobRunnerService")
 public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService {
     @Autowired private JDBCDriverConfig driverConfig;
 
-    private final static jdk.internal.instrumentation.Logger logger = LoggerFactory.getLogger(ScheduledJobRunnerServiceImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(ScheduledJobRunnerServiceImpl.class);
     private final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
     private final DateTimeFormatter formatterWithTime = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -624,8 +627,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		
 		LocalDate today = DateUtils.getLocalDateOfTenant();
 		LocalDate startDate = today.withDayOfMonth(1);
-		LocalDate endDate = today.withDayOfMonth(today.lengthOfMonth());
-		String currentMonth = String.valueOf(today.getMonthValue());
+		LocalDate endDate = today.plusMonths(1).withDayOfMonth(1).minusDays(1);
+		String currentMonth = String.valueOf(today.getMonthOfYear());
 		String currentYear = String.valueOf(today.getYear());
 		
 		String outUrl = System.getProperty("user.home") + File.separator + "eStatement" + File.separator + currentMonth + "-" + currentYear;
