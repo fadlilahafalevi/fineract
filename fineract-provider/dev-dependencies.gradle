@@ -93,7 +93,8 @@ dependencies {
 
                 [group: 'io.swagger', name: 'swagger-jersey-jaxrs', version: '1.5.15'],
                 [group: 'org.springframework', name:'spring-jms'],
-                [group: 'org.apache.activemq', name: 'activemq-broker']
+                [group: 'org.apache.activemq', name: 'activemq-broker'],
+                [group: 'net.sf.jasperreports', name: 'jasperreports', version: '6.11.0']
     )
 
      testCompile 'junit:junit:4.11',

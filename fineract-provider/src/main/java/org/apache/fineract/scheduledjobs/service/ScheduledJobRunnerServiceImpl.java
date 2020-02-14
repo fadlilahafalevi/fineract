@@ -644,7 +644,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				
 				String pdfFileName = File.separator + outUrl + accountNumber + ".pdf";
 				
-				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl + "eStatementReport.jrxml");
+				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl + "eStatement_R.jrxml");
 				
 				FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
 				final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
@@ -671,6 +671,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				hm.put("accountNumber", accountNumber);
 				hm.put("startDate", startDate);
 				hm.put("endDate", endDate);
+				hm.put("period", currentMonth + "-" + currentYear);
 
 				// Generate jasper print
 				JasperPrint jprint = (JasperPrint) JasperFillManager.fillReport(jasperReport, hm, conn);
