@@ -150,32 +150,31 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         if(transactionDate.equals(todayDate))
         {
         	if (isSavingsToSavingsAccountTransfer(fromAccountType, toAccountType)) {
+                fromSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.fromAccountNoParamName);
+                fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountNumber);
+            	final Boolean isFromSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(fromSavingsAccount.getId());
+
+                final String toSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.toAccountNoParamName);
+                final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsAccountNumber);
+            	final Boolean isToSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(toSavingsAccount.getId());
+            	final Integer savingsAccountType = toSavingsAccount.depositAccountType().getValue();
+
         		final String paymentTypeFromName = command.stringValueOfParameterNamed(paymentTypeFromParamName);
             	final String paymentTypeToName = command.stringValueOfParameterNamed(paymentTypeToParamName);
             	
             	PaymentDetail paymentDetailFrom = null;
             	PaymentDetail paymentDetailTo = null;
             	
-            	if (!paymentTypeFromName.isEmpty() && !paymentTypeToName.isEmpty()) {
+            	if ((!paymentTypeFromName.isEmpty() && !paymentTypeToName.isEmpty()) && (isFromSavingsMainAccount && isToSavingsMainAccount)) {
+            		final Map<String, Object> changes = new LinkedHashMap<>();
+            		paymentDetailFrom = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByNameAndSavings(command, changes, paymentTypeFromName, toSavingsAccount);
+            		paymentDetailTo = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByNameAndSavings(command, changes, paymentTypeToName, fromSavingsAccount);
+            	} else if (!paymentTypeFromName.isEmpty() && !paymentTypeToName.isEmpty()) {
             		final Map<String, Object> changes = new LinkedHashMap<>();
             		paymentDetailFrom = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeFromName);
             		paymentDetailTo = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeToName);
             	}
 
-                fromSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.fromAccountNoParamName);
-                fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(fromSavingsAccountNumber);
-            	final Boolean isFromSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(fromSavingsAccount.getId());
-
-                final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
-                        isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
-                final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
-                        transactionDate, transactionAmount, paymentDetailFrom, transactionBooleanValues);
-
-                final String toSavingsAccountNumber = command.stringValueOfParameterNamed(AccountDetailConstants.toAccountNoParamName);
-                final SavingsAccount toSavingsAccount = this.savingsAccountAssembler.assembleFrom(toSavingsAccountNumber);
-            	final Boolean isToSavingsMainAccount = this.savingsAccountReadPlatformService.isMainProduct(toSavingsAccount.getId());
-            	final Integer savingsAccountType = toSavingsAccount.depositAccountType().getValue();
-            	
             	Boolean processTransfer = false;
             	
 				if ((isFromSavingsMainAccount && isToSavingsMainAccount) || (isFromSavingsMainAccount
@@ -209,6 +208,10 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             		throw new MainSavingsAccountNotMatchException();
             	}
 
+                final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
+                        isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), isInterestTransfer, isWithdrawBalance);
+                final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
+                        transactionDate, transactionAmount, paymentDetailFrom, transactionBooleanValues);
                 final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount, fmt,
                         transactionDate, transactionAmount, paymentDetailTo, isAccountTransfer, isRegularTransaction);
 
