@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 
 public interface PaymentDetailWritePlatformService {
 
@@ -34,4 +35,10 @@ public interface PaymentDetailWritePlatformService {
 	PaymentDetail createPaymentDetailByName(JsonCommand command, Map<String, Object> changes, String name);
 
 	PaymentDetail createAndPersistPaymentDetailByName(JsonCommand command, Map<String, Object> changes, String name);
+
+	PaymentDetail createPaymentDetailByNameAndSavings(JsonCommand command, Map<String, Object> changes, String name,
+			SavingsAccount savingsAccount);
+
+	PaymentDetail createAndPersistPaymentDetailByNameAndSavings(JsonCommand command, Map<String, Object> changes,
+			String name, SavingsAccount savingsAccount);
 }
