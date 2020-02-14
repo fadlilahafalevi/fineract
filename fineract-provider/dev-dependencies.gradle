@@ -102,6 +102,7 @@ dependencies {
                  'com.jayway.restassured:rest-assured:2.3.3',
                  [group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: springBootVersion],
                  [group: 'com.mockrunner', name: 'mockrunner-jms', version: '1.0.6'],
-                 [group: 'com.mockrunner', name: 'mockrunner-jdbc', version: '1.0.6']
+                 [group: 'com.mockrunner', name: 'mockrunner-jdbc', version: '1.0.6'],
+                 [group: 'net.sf.jasperreports', name: 'jasperreports', version: '6.11.0']
 
 }
