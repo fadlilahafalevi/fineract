@@ -845,11 +845,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     	Collection<SavingsAccountTransactionData> transactionDataHistory = null;
     	try {       	
     		if (transactionTypeValue.equalsIgnoreCase("D"))
-        	{
-        		transactionTypeValueQuery = " and tr.transaction_type_enum = 1 ";
+        	{	//Deposit transactions
+        		transactionTypeValueQuery = " and tr.transaction_type_enum in ( 1 , 3 ) ";
         	} else if (transactionTypeValue.equalsIgnoreCase("W"))
-        	{
-        		transactionTypeValueQuery = " and tr.transaction_type_enum = 2 ";
+        	{	//Withdrawal transactions
+        		transactionTypeValueQuery = " and tr.transaction_type_enum in ( 2, 4, 5, 6, 7, 18 ) ";
         	}
         	else
         	{
@@ -883,11 +883,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     	Collection<SavingsAccountTransactionData> transactionDataHistory = null;
     	try {       	
     		if (transactionTypeValue.equalsIgnoreCase("D"))
-        	{
-        		transactionTypeValueQuery = " and tr.transaction_type_enum = 1 ";
+        	{	//Deposit transactions
+        		transactionTypeValueQuery = " and tr.transaction_type_enum in ( 1 , 3 ) ";
         	} else if (transactionTypeValue.equalsIgnoreCase("W"))
-        	{
-        		transactionTypeValueQuery = " and tr.transaction_type_enum = 2 ";
+        	{	//Withdrawal transactions
+        		transactionTypeValueQuery = " and tr.transaction_type_enum in ( 2, 4, 5, 6, 7, 18 ) ";
         	}
         	else
         	{

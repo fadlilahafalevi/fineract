@@ -2096,7 +2096,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     public CommandProcessingResult holdAmountByAccountNo(final JsonCommand command) {
 
         final AppUser submittedBy = this.context.authenticatedUser();
-        final String accountNo = command.stringValueOfParameterNamed(SavingsApiConstants.transactionAccountNumberParamName);
+        final String accountNo = command.stringValueOfParameterNamed(SavingsApiConstants.accountNoParamName);
         
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(accountNo);
         checkClientOrGroupActive(account);
