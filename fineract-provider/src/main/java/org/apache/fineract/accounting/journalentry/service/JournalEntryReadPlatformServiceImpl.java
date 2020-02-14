@@ -131,7 +131,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                         .append(" note.note as transactionNote, ").append(" lt.transaction_type_enum as loanTransactionType, ")
                         .append(" st.transaction_type_enum as savingsTransactionType ");
             } else {
-                sb.append(", pts.value as paymentTypeSavingValue, ptl.value as paymentTypeLoanValue ");
+                sb.append(", pts.value as paymentTypeSavingValue, ptl.value as paymentTypeLoanValue, ")
+                	.append(" sat.is_reversed as isReversedSavings, lt.is_reversed as isReversedLoans ");
             }
             sb.append(" from acc_gl_journal_entry as journalEntry ")
                     .append(" left join acc_gl_account as glAccount on glAccount.id = journalEntry.account_id ")
@@ -210,6 +211,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             TransactionDetailData transactionDetailData = null;
 
             String paymentTypeValue = "";
+            Boolean isTransactionReversed = false;
             
             if (associationParametersData.isTransactionDetailsRequired()) {
                 PaymentDetailData paymentDetailData = null;
@@ -260,8 +262,10 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             } else {
             	if (PortfolioAccountType.fromInt(entityTypeId).isLoanAccount()) {
                     paymentTypeValue = rs.getString("paymentTypeLoanValue");
+                    isTransactionReversed = rs.getBoolean("isReversedLoans");
                 } else if (PortfolioAccountType.fromInt(entityTypeId).isSavingsAccount()) {
                     paymentTypeValue = rs.getString("paymentTypeSavingValue");
+                    isTransactionReversed = rs.getBoolean("isReversedSavings");
                 }
             }
             JournalEntryData journalEntryData = new JournalEntryData(id, officeId, officeName, glAccountName, glAccountId, glCode, accountType, transactionDate,
@@ -269,6 +273,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                     comments, reversed, referenceNumber, officeRunningBalance, organizationRunningBalance, runningBalanceComputed,
                     transactionDetailData, currency);
             journalEntryData.setPaymentTypeValue(paymentTypeValue);
+            journalEntryData.setIsTransactionReversed(isTransactionReversed);
             return journalEntryData;
         }
     }
