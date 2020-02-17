@@ -640,9 +640,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				logger.debug("Start ...." + accountNumber);
 				
 				// Get jasper report
-				String reportUrl = System.getProperty("user.dir") + File.separator + "src" + File.separator + "main" + File.separator;
+				String reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "report" + File.separator;
 				
-				String pdfFileName = File.separator + outUrl + accountNumber + ".pdf";
+				String pdfFileName = outUrl + File.separator + accountNumber + ".pdf";
 				
 				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl + "eStatement_R.jrxml");
 				
