@@ -94,7 +94,8 @@ dependencies {
 
                 [group: 'io.swagger', name: 'swagger-jersey-jaxrs', version: '1.5.15'],
                 [group: 'org.springframework', name:'spring-jms'],
-                [group: 'org.apache.activemq', name: 'activemq-broker']
+                [group: 'org.apache.activemq', name: 'activemq-broker'],
+                [group: 'net.sf.jasperreports', name: 'jasperreports', version: '6.11.0']
     )
 
      testCompile 'junit:junit:4.11',
@@ -103,6 +104,7 @@ dependencies {
                  'com.jayway.restassured:rest-assured:2.3.3',
                  [group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: springBootVersion],
                  [group: 'com.mockrunner', name: 'mockrunner-jms', version: '1.0.6'],
-                 [group: 'com.mockrunner', name: 'mockrunner-jdbc', version: '1.0.6']
+                 [group: 'com.mockrunner', name: 'mockrunner-jdbc', version: '1.0.6'],
+                [group: 'net.sf.jasperreports', name: 'jasperreports', version: '6.11.0']
 
 }

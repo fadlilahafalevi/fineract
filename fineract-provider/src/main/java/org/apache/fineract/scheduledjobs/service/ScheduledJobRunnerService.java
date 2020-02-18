@@ -43,4 +43,6 @@ public interface ScheduledJobRunnerService {
     void updateTrialBalanceDetails()  throws JobExecutionException;
 
 	void generateLoanCollectibility();
+
+	void generateEstatement();
 }
