@@ -345,6 +345,9 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     @Column(name = "total_accrual_amount", nullable = true)
     protected BigDecimal totalAccrualAmount;
     
+    @Column(name = "payment_type_deposito_withdraw", nullable = true)
+    protected String paymentTypeDepositoWithdraw;
+    
     protected SavingsAccount() {
         //
     }
@@ -3174,4 +3177,18 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
 		this.interestCompoundingPeriodType = interestCompoundingPeriodType;
 	}
 
+	/**
+	 * @return the paymentTypeDepositoWithdraw
+	 */
+	public String getPaymentTypeDepositoWithdraw() {
+		return paymentTypeDepositoWithdraw;
+	}
+
+	/**
+	 * @param paymentTypeDepositoWithdraw the paymentTypeDepositoWithdraw to set
+	 */
+	public void setPaymentTypeDepositoWithdraw(String paymentTypeDepositoWithdraw) {
+		this.paymentTypeDepositoWithdraw = paymentTypeDepositoWithdraw;
+	}
+	
 }

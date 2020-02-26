@@ -801,7 +801,7 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     @Override
-    protected boolean isTransferInterestToOtherAccount() {
+	public boolean isTransferInterestToOtherAccount() {
         return this.accountTermAndPreClosure.isTransferInterestToLinkedAccount();
     }
 

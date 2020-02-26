@@ -50,6 +50,7 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.productI
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.submittedOnDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.paymentTypeParamName;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -361,6 +362,7 @@ public class DepositAccountAssembler {
         final String accountNo = this.fromApiJsonHelper.extractStringNamed(accountNoParamName, element);
         final String externalId = this.fromApiJsonHelper.extractStringNamed(externalIdParamName, element);
         final Long productId = this.fromApiJsonHelper.extractLongNamed(productIdParamName, element);
+        final String paymentType = this.fromApiJsonHelper.extractStringNamed(paymentTypeParamName, element);
 
         SavingsProduct product = null;
         if (depositAccountType.isFixedDeposit()) {
@@ -477,6 +479,7 @@ public class DepositAccountAssembler {
                     accountTermAndPreClosure, accountChart, withHoldTax);
             accountTermAndPreClosure.updateAccountReference(fdAccount);
             fdAccount.setInterestCompoundingTypeEnum(interestCompoundingType); 
+            fdAccount.setPaymentTypeDepositoWithdraw(paymentType);
             fdAccount.validateDomainRules();
             account = fdAccount;
         } else if (depositAccountType.isRecurringDeposit()) {

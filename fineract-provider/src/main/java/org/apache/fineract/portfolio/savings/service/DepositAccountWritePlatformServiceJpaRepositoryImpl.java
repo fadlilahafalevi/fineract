@@ -229,9 +229,16 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                     final SavingsAccount fromSavingsAccount = null;
                     boolean isRegularTransaction = false;
                     final boolean isExceptionForBalanceCheck = false;
+                    
+                    PaymentDetail paymentType = null;
+                    
+                    final String paymentTypeWithdraw = account.getPaymentTypeDepositoWithdraw();
+                    if (!paymentTypeWithdraw.isEmpty() && account.isTransferInterestToOtherAccount()) {
+                    	paymentType = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeWithdraw);
+                    }
                     final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(account.getActivationLocalDate(),
                             amountForDeposit.getAmount(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS,
-                            portfolioAccountData.accountId(), account.getId(), "Account Transfer", locale, fmt, null, null, null, null,
+                            portfolioAccountData.accountId(), account.getId(), "Account Transfer", locale, fmt, paymentType, null, null, null,
                             null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, account, fromSavingsAccount,
                             isRegularTransaction, isExceptionForBalanceCheck);
                     this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
