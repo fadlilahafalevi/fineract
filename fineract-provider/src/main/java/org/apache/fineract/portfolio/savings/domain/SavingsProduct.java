@@ -214,6 +214,9 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
   	
   	@Column(name = "is_main_product", nullable = true)
   	protected Boolean isMainProduct;
+  	
+    @Column(name = "last_sequence_account_number", nullable = true)
+    protected Integer lastSequenceAccountNumber;
 
     public static SavingsProduct createNew(final String name, final String shortName, final String description,
             final MonetaryCurrency currency, final BigDecimal interestRate,
@@ -787,4 +790,17 @@ public class SavingsProduct extends AbstractPersistableCustom<Long> {
 		this.isMainProduct = isMainProduct;
 	}
 
+	/**
+	 * @return the lastSequenceAccountNumber
+	 */
+	public Integer getLastSequenceAccountNumber() {
+		return lastSequenceAccountNumber;
+	}
+
+	/**
+	 * @param lastSequenceAccountNumber the lastSequenceAccountNumber to set
+	 */
+	public void setLastSequenceAccountNumber(Integer lastSequenceAccountNumber) {
+		this.lastSequenceAccountNumber = lastSequenceAccountNumber;
+	}
 }
