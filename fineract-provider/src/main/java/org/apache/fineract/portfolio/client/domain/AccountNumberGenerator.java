@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.client.domain;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormat;
@@ -28,7 +29,9 @@ import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -38,8 +41,14 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AccountNumberGenerator {
+	private SavingsProductRepository savingsProductRepository;
+	
+	@Autowired
+	public AccountNumberGenerator(final SavingsProductRepository savingsProductRepository) {
+		this.savingsProductRepository = savingsProductRepository;
+	}
 
-    private final static int maxLength = 15;
+    private final static int maxLength = 7;
 
     private final static String ID = "id";
     private final static String CLIENT_TYPE = "clientType";
@@ -47,6 +56,7 @@ public class AccountNumberGenerator {
     private final static String LOAN_PRODUCT_SHORT_NAME = "loanProductShortName";
     private final static String SAVINGS_PRODUCT_SHORT_NAME = "savingsProductShortName";
     private final static String SHARE_PRODUCT_SHORT_NAME = "sharesProductShortName" ;
+    private final static String LAST_SEQUENCE = "lastSequence";
     
     public String generate(Client client, AccountNumberFormat accountNumberFormat) {
         Map<String, String> propertyMap = new HashMap<>();
@@ -72,7 +82,20 @@ public class AccountNumberGenerator {
         propertyMap.put(ID, savingsAccount.getId().toString());
         propertyMap.put(OFFICE_NAME, savingsAccount.office().getName());
         propertyMap.put(SAVINGS_PRODUCT_SHORT_NAME, savingsAccount.savingsProduct().getShortName());
-        return generateAccountNumber(propertyMap, accountNumberFormat);
+        
+        Integer lastSequence = savingsAccount.savingsProduct().getLastSequenceAccountNumber();
+        if ((lastSequence != null) && lastSequence >= 0) {
+        	lastSequence++;
+        } else {
+        	lastSequence = 1;
+        }
+        savingsAccount.savingsProduct().setLastSequenceAccountNumber(lastSequence);
+        this.savingsProductRepository.saveAndFlush(savingsAccount.savingsProduct());
+        
+        String lastSequenceString = String.valueOf(lastSequence);
+        
+        propertyMap.put(LAST_SEQUENCE, lastSequenceString);
+        return generateAccountNumber2(propertyMap, accountNumberFormat);
     }
 
     public String generate(ShareAccount shareaccount, AccountNumberFormat accountNumberFormat) {
@@ -118,6 +141,32 @@ public class AccountNumberGenerator {
             accountNumber = StringUtils.overlay(accountNumber, prefix, 0, 0);
         }
         return accountNumber;
+    }
+    
+    private String generateAccountNumber2(Map<String, String> propertyMap, AccountNumberFormat accountNumberFormat) {
+    	String accountNumber = propertyMap.get(SAVINGS_PRODUCT_SHORT_NAME) + StringUtils.leftPad(propertyMap.get(LAST_SEQUENCE), AccountNumberGenerator.maxLength, '0');
+    	accountNumber = accountNumber + generateCheckDigit(accountNumber);
+    	return accountNumber;
+    }
+    
+    private String generateCheckDigit(String param) {
+		int[] arrWeightDigit = {5,3,2,7,5,3,2,7,5,3,2,7,5,3,2,7,5,3,2,7,5,3,2,7};
+		String[] arrCheckDigit = param.split("(?!^)");
+		int[] arrConvertCheckDigit = parseIntArray(arrCheckDigit);
+		int result = 0;
+		int dump = 0;
+		
+		for (int i = 0; i < arrConvertCheckDigit.length; i++){
+			dump = arrWeightDigit[i] * arrConvertCheckDigit[i];
+			result += dump;
+		}
+		
+		result = result % 10;
+		return String.valueOf(result);
+	}
+    
+    private static int[] parseIntArray(String[] arr){
+		return Stream.of(arr).mapToInt(Integer::parseInt).toArray();
     }
     
     public String generateGroupAccountNumber(Group group, AccountNumberFormat accountNumberFormat) {
