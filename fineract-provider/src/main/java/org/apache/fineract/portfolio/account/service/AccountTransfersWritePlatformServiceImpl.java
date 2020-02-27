@@ -420,6 +420,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             SavingsAccount fromSavingsAccount = null;
             SavingsAccount toSavingsAccount = null;
+            PaymentDetail paymentDetailTo = null;
+            PaymentDetail paymentDetailFrom = null;
             if (accountTransferDetails == null) {
                 if (accountTransferDTO.getFromSavingsAccount() == null) {
                     fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(accountTransferDTO.getFromAccountId());
@@ -439,6 +441,18 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 toSavingsAccount = accountTransferDetails.toSavingsAccount();
                 this.savingsAccountAssembler.setHelpers(toSavingsAccount);
             }
+            
+            if (accountTransferDTO.getPaymentDetailTo() != null) {
+            	paymentDetailTo = accountTransferDTO.getPaymentDetailTo();
+            } else {
+            	if (accountTransferDTO.getPaymentDetail() != null) {
+            		paymentDetailTo = accountTransferDTO.getPaymentDetail();
+            	}
+            	if ((accountTransferDTO.getToSavingsAccount() != null) && accountTransferDTO.getToSavingsAccount().depositAccountType().isFixedDeposit()) {
+            		paymentDetailTo = null;
+            	}
+            	paymentDetailFrom = accountTransferDTO.getPaymentDetail();
+            }
 
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                     isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), AccountTransferType.fromInt(
@@ -446,11 +460,11 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
-                    accountTransferDTO.getPaymentDetail(), transactionBooleanValues);
+                    paymentDetailFrom, transactionBooleanValues);
 
             final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
-                    accountTransferDTO.getPaymentDetail(), isAccountTransfer, isRegularTransaction);
+                    paymentDetailTo, isAccountTransfer, isRegularTransaction);
 
             accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSavingsTransfer(accountTransferDTO, fromSavingsAccount,
                     toSavingsAccount, withdrawal, deposit);
