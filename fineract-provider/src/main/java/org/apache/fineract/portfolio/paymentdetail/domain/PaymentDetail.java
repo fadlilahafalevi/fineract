@@ -28,11 +28,12 @@ import javax.persistence.Table;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.portfolio.paymentdetail.PaymentDetailConstants;
 import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.domain.PaymentType;
-import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 
 @Entity
 @Table(name = "m_payment_detail")
@@ -68,6 +69,34 @@ public final class PaymentDetail extends AbstractPersistableCustom<Long> {
         final String routingCode = command.stringValueOfParameterNamed(PaymentDetailConstants.routingCodeParamName);
         final String receiptNumber = command.stringValueOfParameterNamed(PaymentDetailConstants.receiptNumberParamName);
         final String bankNumber = command.stringValueOfParameterNamed(PaymentDetailConstants.bankNumberParamName);
+
+        if (StringUtils.isNotBlank(accountNumber)) {
+            changes.put(PaymentDetailConstants.accountNumberParamName, accountNumber);
+        }
+        if (StringUtils.isNotBlank(checkNumber)) {
+            changes.put(PaymentDetailConstants.checkNumberParamName, checkNumber);
+        }
+        if (StringUtils.isNotBlank(routingCode)) {
+            changes.put(PaymentDetailConstants.routingCodeParamName, routingCode);
+        }
+        if (StringUtils.isNotBlank(receiptNumber)) {
+            changes.put(PaymentDetailConstants.receiptNumberParamName, receiptNumber);
+        }
+        if (StringUtils.isNotBlank(bankNumber)) {
+            changes.put(PaymentDetailConstants.bankNumberParamName, bankNumber);
+        }
+        final PaymentDetail paymentDetail = new PaymentDetail(paymentType, accountNumber, checkNumber, routingCode, receiptNumber,
+                bankNumber);
+        return paymentDetail;
+    }
+
+    public static PaymentDetail generatePaymentDetailWithSavings(final PaymentType paymentType, final JsonCommand command,
+            final Map<String, Object> changes, SavingsAccount savingsAccount) {
+        final String accountNumber = savingsAccount.getClient().getDisplayName();
+        final String checkNumber = null;
+        final String routingCode = null;
+        final String receiptNumber = null;
+        final String bankNumber = "Bank R";
 
         if (StringUtils.isNotBlank(accountNumber)) {
             changes.put(PaymentDetailConstants.accountNumberParamName, accountNumber);

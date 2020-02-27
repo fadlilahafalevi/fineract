@@ -53,7 +53,8 @@ public enum JobName {
     UPDATE_TRAIL_BALANCE_DETAILS("Update Trial Balance Details"),
 	GENERATE_LOAN_COLLECTIBILITY("Generate Loan Collectibility"),
 	ACCRUAL_INTEREST_FOR_SAVINGS("Accrual Interest For Savings"),
-	CLIENTS_SAVINGS_SUMMARY_TAX("Clients Savings Summary Tax");
+	CLIENTS_SAVINGS_SUMMARY_TAX("Clients Savings Summary Tax"),
+	GENERATE_ESTATEMENT("Generate eStatement");
 
     private final String name;
 

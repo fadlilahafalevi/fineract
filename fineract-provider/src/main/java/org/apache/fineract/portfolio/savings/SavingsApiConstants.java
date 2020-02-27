@@ -138,6 +138,7 @@ public class    SavingsApiConstants {
     public static final String taxGroupIdParamName = "taxGroupId";
     public static final String interestCompoundingTypeParamName = "interestCompoundingType";
     public static final String isMainProduct = "isMainProduct";
+    public static final String paymentTypeParamName = "paymentType";
 
     // transaction parameters
     public static final String transactionDateParamName = "transactionDate";

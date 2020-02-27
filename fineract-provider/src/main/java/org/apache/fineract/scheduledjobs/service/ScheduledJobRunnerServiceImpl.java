@@ -18,11 +18,15 @@
  */
 package org.apache.fineract.scheduledjobs.service;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,8 +41,10 @@ import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.joda.time.LocalDate;
 import org.joda.time.DateTime;
-
+import org.apache.fineract.infrastructure.core.boot.JDBCDriverConfig;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
+import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSourceServiceFactory;
@@ -54,6 +60,7 @@ import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepository;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
@@ -73,8 +80,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+
 @Service(value = "scheduledJobRunnerService")
 public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService {
+    @Autowired private JDBCDriverConfig driverConfig;
 
     private final static Logger logger = LoggerFactory.getLogger(ScheduledJobRunnerServiceImpl.class);
     private final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
@@ -93,6 +107,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final LoanCollectibilityReadService loanCollectibilityReadService;
     private final ProvisioningCriteriaReadPlatformService provisioningCriteriaReadPlatformService;
     private final LoanRepositoryWrapper loanRepositoryWrapper;
+    private final SavingsAccountRepository savingsAccountRepository;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -107,7 +122,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final LoanCollectibilityRepositoryWrapper loanCollectibilityRepositoryWrapper,
             final LoanCollectibilityReadService loanCollectibilityReadService,
             final ProvisioningCriteriaReadPlatformService provisioningCriteriaReadPlatformService,
-            final LoanRepositoryWrapper loanRepositoryWrapper) {
+            final LoanRepositoryWrapper loanRepositoryWrapper,
+            final SavingsAccountRepository savingsAccountRepository) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -121,6 +137,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.loanCollectibilityReadService = loanCollectibilityReadService;
         this.provisioningCriteriaReadPlatformService = provisioningCriteriaReadPlatformService;
         this.loanRepositoryWrapper = loanRepositoryWrapper;
+        this.savingsAccountRepository = savingsAccountRepository;
     }
 
     @Transactional
@@ -602,5 +619,70 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 			}
 		}
 	}
+	
+	@Override
+	@CronTarget(jobName = JobName.GENERATE_ESTATEMENT)
+	public void generateEstatement() {
+		Collection<String> listSavingsAccountNumber = this.savingsAccountRepository.findSavingAccountNumberByStatus(300);
+		
+		LocalDate today = DateUtils.getLocalDateOfTenant();
+		LocalDate startDate = today.withDayOfMonth(1);
+		LocalDate endDate = today.plusMonths(1).withDayOfMonth(1).minusDays(1);
+		String currentMonth = String.valueOf(today.getMonthOfYear());
+		String currentYear = String.valueOf(today.getYear());
+		
+		String outUrl = System.getProperty("user.home") + File.separator + "eStatement" + File.separator + currentMonth + "-" + currentYear;
+		File outDir = new File(outUrl);
+		outDir.mkdirs();
+		
+		for (String accountNumber : listSavingsAccountNumber) {
+			try {
+				logger.debug("Start ...." + accountNumber);
+				
+				// Get jasper report
+				String reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "report" + File.separator;
+				
+				String pdfFileName = outUrl + File.separator + accountNumber + ".pdf";
+				
+				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl + "eStatement_R.jrxml");
+				
+				FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
+				final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
+				String tenantUrl = driverConfig.constructProtocol(tenantConnection.getSchemaServer(),
+						tenantConnection.getSchemaServerPort(), tenantConnection.getSchemaName());
 
+				// String dbUrl = props.getProperty("jdbc.url");
+				String dbUrl = tenantUrl;
+				// String dbDriver = props.getProperty("jdbc.driver");
+				String dbDriver = driverConfig.getDriverClassName();
+				// String dbUname = props.getProperty("db.username");
+				String dbUname = tenantConnection.getSchemaUsername();
+				// String dbPwd = props.getProperty("db.password");
+				String dbPwd = tenantConnection.getSchemaPassword();
+
+				// Load the JDBC driver
+				Class.forName(dbDriver);
+				// Get the connection
+				Connection conn = DriverManager.getConnection(dbUrl, dbUname, dbPwd);
+
+				// Create arguments
+				// Map params = new HashMap();
+				HashMap<String, Object> hm = new HashMap<String, Object>();
+				hm.put("accountNumber", accountNumber);
+				hm.put("startDate", startDate);
+				hm.put("endDate", endDate);
+				hm.put("period", currentMonth + "-" + currentYear);
+
+				// Generate jasper print
+				JasperPrint jprint = (JasperPrint) JasperFillManager.fillReport(jasperReport, hm, conn);
+
+				// Export pdf file
+				JasperExportManager.exportReportToPdfFile(jprint, pdfFileName);
+
+				logger.debug("Done exporting reports to pdf for " + accountNumber);
+			} catch (Exception e) {
+				System.out.print("Exceptiion" + e);
+			}
+		}
+	}
 }

@@ -40,7 +40,8 @@ public class AccountTransferDTO {
     private final String description;
     private final Locale locale;
     private final DateTimeFormatter fmt;
-    private final PaymentDetail paymentDetail;
+    private PaymentDetail paymentDetailFrom;
+    private PaymentDetail paymentDetailTo;
     private final Integer fromTransferType;
     private final Integer toTransferType;
     private final Long chargeId;
@@ -73,7 +74,7 @@ public class AccountTransferDTO {
         this.description = description;
         this.locale = locale;
         this.fmt = fmt;
-        this.paymentDetail = paymentDetail;
+        this.paymentDetailFrom = paymentDetail;
         this.fromTransferType = fromTransferType;
         this.toTransferType = toTransferType;
         this.chargeId = chargeId;
@@ -105,7 +106,7 @@ public class AccountTransferDTO {
         this.description = description;
         this.locale = locale;
         this.fmt = fmt;
-        this.paymentDetail = null;
+        this.paymentDetailFrom = null;
         this.fromTransferType = fromTransferType;
         this.toTransferType = toTransferType;
         this.chargeId = null;
@@ -160,7 +161,7 @@ public class AccountTransferDTO {
     }
 
     public PaymentDetail getPaymentDetail() {
-        return this.paymentDetail;
+        return this.paymentDetailFrom;
     }
 
     public Integer getFromTransferType() {
@@ -223,4 +224,24 @@ public class AccountTransferDTO {
         return this.isExceptionForBalanceCheck;
     }
 
+	/**
+	 * @param paymentDetail the paymentDetail to set
+	 */
+	public void setPaymentDetail(PaymentDetail paymentDetail) {
+		this.paymentDetailFrom = paymentDetail;
+	}
+
+	/**
+	 * @return the paymentDetailTo
+	 */
+	public PaymentDetail getPaymentDetailTo() {
+		return paymentDetailTo;
+	}
+
+	/**
+	 * @param paymentDetailTo the paymentDetailTo to set
+	 */
+	public void setPaymentDetailTo(PaymentDetail paymentDetailTo) {
+		this.paymentDetailTo = paymentDetailTo;
+	}
 }

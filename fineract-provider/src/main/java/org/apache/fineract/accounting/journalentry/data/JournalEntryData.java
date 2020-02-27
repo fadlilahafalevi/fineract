@@ -94,6 +94,7 @@ public class JournalEntryData {
     private String receiptNumber;
     private String bankNumber;
     private String paymentTypeValue;
+    private Boolean isTransactionReversed;
 
     public static JournalEntryData importInstance(Long officeId,LocalDate transactionDate,String currencyCode, Long paymentTypeId,
             Integer rowIndex,List<CreditDebit> credits, List<CreditDebit>debits,
@@ -265,5 +266,11 @@ public class JournalEntryData {
 	}
 	public void setPaymentTypeValue(String paymentTypeValue) {
 		this.paymentTypeValue = paymentTypeValue;
+	}
+	public Boolean getIsTransactionReversed() {
+		return isTransactionReversed;
+	}
+	public void setIsTransactionReversed(Boolean isTransactionReversed) {
+		this.isTransactionReversed = isTransactionReversed;
 	}
 }

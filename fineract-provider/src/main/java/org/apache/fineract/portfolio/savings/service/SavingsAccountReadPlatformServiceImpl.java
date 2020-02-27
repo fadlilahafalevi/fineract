@@ -982,7 +982,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final SavingsAccountTransactionEnumData transactionType = SavingsEnumerations.transactionType(transactionTypeInt);
 
             final LocalDate date = JdbcSupport.getLocalDate(rs, "transactionDate");
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 			sdf.setTimeZone(TimeZone.getDefault());
 			
             final String createdDate = sdf.format(JdbcSupport.getDate(rs, "createdDate"));
