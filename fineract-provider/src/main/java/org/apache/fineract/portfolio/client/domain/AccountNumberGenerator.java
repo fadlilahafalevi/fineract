@@ -95,7 +95,7 @@ public class AccountNumberGenerator {
         String lastSequenceString = String.valueOf(lastSequence);
         
         propertyMap.put(LAST_SEQUENCE, lastSequenceString);
-        return generateAccountNumber2(propertyMap, accountNumberFormat);
+        return generateSavingsAccountNumber(propertyMap, accountNumberFormat);
     }
 
     public String generate(ShareAccount shareaccount, AccountNumberFormat accountNumberFormat) {
@@ -143,7 +143,7 @@ public class AccountNumberGenerator {
         return accountNumber;
     }
     
-    private String generateAccountNumber2(Map<String, String> propertyMap, AccountNumberFormat accountNumberFormat) {
+    private String generateSavingsAccountNumber(Map<String, String> propertyMap, AccountNumberFormat accountNumberFormat) {
     	String accountNumber = propertyMap.get(SAVINGS_PRODUCT_SHORT_NAME) + StringUtils.leftPad(propertyMap.get(LAST_SEQUENCE), AccountNumberGenerator.maxLength, '0');
     	accountNumber = accountNumber + generateCheckDigit(accountNumber);
     	return accountNumber;
