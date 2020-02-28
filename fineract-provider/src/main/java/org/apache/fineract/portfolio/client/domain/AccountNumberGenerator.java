@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormat;
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormatEnumerations.AccountNumberPrefixType;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
@@ -48,7 +49,7 @@ public class AccountNumberGenerator {
 		this.savingsProductRepository = savingsProductRepository;
 	}
 
-    private final static int maxLength = 7;
+    private final static int maxLength = 9;
 
     private final static String ID = "id";
     private final static String CLIENT_TYPE = "clientType";
@@ -144,6 +145,10 @@ public class AccountNumberGenerator {
     }
     
     private String generateSavingsAccountNumber(Map<String, String> propertyMap, AccountNumberFormat accountNumberFormat) {
+    	String shortName = propertyMap.get(SAVINGS_PRODUCT_SHORT_NAME);
+    	if (!StringUtils.isNumeric(shortName)) {
+    		throw new PlatformApiDataValidationException("error.msg.short.product.name.must.numeric", "Short Product Name must numeric", null);
+    	}
     	String accountNumber = propertyMap.get(SAVINGS_PRODUCT_SHORT_NAME) + StringUtils.leftPad(propertyMap.get(LAST_SEQUENCE), AccountNumberGenerator.maxLength, '0');
     	accountNumber = accountNumber + generateCheckDigit(accountNumber);
     	return accountNumber;
