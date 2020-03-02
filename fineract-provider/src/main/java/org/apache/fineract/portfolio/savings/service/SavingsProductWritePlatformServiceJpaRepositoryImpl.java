@@ -39,6 +39,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.apache.fineract.infrastructure.core.service.RoutingDataSourceServiceFactory;
 import org.apache.fineract.infrastructure.entityaccess.domain.FineractEntityAccessType;
 import org.apache.fineract.infrastructure.entityaccess.service.FineractEntityAccessUtil;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -54,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,13 +69,15 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
     private final SavingsProductAssembler savingsProductAssembler;
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
     private final FineractEntityAccessUtil fineractEntityAccessUtil;
+    private final RoutingDataSourceServiceFactory dataSourceServiceFactory;
 
     @Autowired
     public SavingsProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final SavingsProductRepository savingProductRepository, final SavingsProductDataValidator fromApiJsonDataValidator,
             final SavingsProductAssembler savingsProductAssembler,
             final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
-            final FineractEntityAccessUtil fineractEntityAccessUtil) {
+            final FineractEntityAccessUtil fineractEntityAccessUtil,
+            final RoutingDataSourceServiceFactory dataSourceServiceFactory) {
         this.context = context;
         this.savingProductRepository = savingProductRepository;
         this.fromApiJsonDataValidator = fromApiJsonDataValidator;
@@ -81,6 +85,7 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         this.logger = LoggerFactory.getLogger(SavingsProductWritePlatformServiceJpaRepositoryImpl.class);
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
         this.fineractEntityAccessUtil = fineractEntityAccessUtil;
+        this.dataSourceServiceFactory = dataSourceServiceFactory;
     }
 
     /*
@@ -120,6 +125,8 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             final SavingsProduct product = this.savingsProductAssembler.assemble(command);
 
             this.savingProductRepository.save(product);
+            
+            this.createTableForSequenceAccountNumber(product.getShortName());
 
             // save accounting mappings
             this.accountMappingWritePlatformService.createSavingProductToGLAccountMapping(product.getId(), command,
@@ -143,6 +150,26 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         	return CommandProcessingResult.empty();
         }
     }
+
+    @Override
+	public void createTableForSequenceAccountNumber(final String shortProductName) {
+		final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+		
+		StringBuilder updateSqlBuilder = new StringBuilder(900);
+		updateSqlBuilder.append("CREATE TABLE `s_sp_").append(shortProductName).append("` (");
+		updateSqlBuilder.append("`id` BIGINT NOT NULL AUTO_INCREMENT,");
+		updateSqlBuilder.append("`account_number` varchar(40) NOT NULL DEFAULT 1, ");
+		updateSqlBuilder.append("PRIMARY KEY (`id`)");
+		updateSqlBuilder.append(");");
+		
+		jdbcTemplate.update(updateSqlBuilder.toString());
+		
+		updateSqlBuilder = new StringBuilder(900);
+		updateSqlBuilder.append("CREATE UNIQUE INDEX `s_sp").append(shortProductName).append("_unq`");
+		updateSqlBuilder.append("ON `s_sp_").append(shortProductName).append("` (`account_number`)");
+		
+		jdbcTemplate.update(updateSqlBuilder.toString());
+	}
 
     @Transactional
     @Override
