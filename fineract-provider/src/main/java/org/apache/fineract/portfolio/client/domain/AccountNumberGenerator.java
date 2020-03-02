@@ -18,6 +18,10 @@
  */
 package org.apache.fineract.portfolio.client.domain;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -27,12 +31,17 @@ import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumb
 import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormatEnumerations.AccountNumberPrefixType;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.service.RoutingDataSourceServiceFactory;
+import org.apache.fineract.infrastructure.security.service.RandomPasswordGenerator;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
+import org.apache.fineract.portfolio.savings.service.SavingsProductWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -42,11 +51,14 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AccountNumberGenerator {
-	private SavingsProductRepository savingsProductRepository;
+	private SavingsProductWritePlatformService savingsProductWritePlatformService;
+	private final RoutingDataSourceServiceFactory dataSourceServiceFactory;
 	
 	@Autowired
-	public AccountNumberGenerator(final SavingsProductRepository savingsProductRepository) {
-		this.savingsProductRepository = savingsProductRepository;
+	public AccountNumberGenerator(final SavingsProductWritePlatformService savingsProductWritePlatformService,
+			final RoutingDataSourceServiceFactory dataSourceServiceFactory) {
+		this.savingsProductWritePlatformService = savingsProductWritePlatformService;
+		this.dataSourceServiceFactory = dataSourceServiceFactory;
 	}
 
     private final static int maxLength = 9;
@@ -84,20 +96,58 @@ public class AccountNumberGenerator {
         propertyMap.put(OFFICE_NAME, savingsAccount.office().getName());
         propertyMap.put(SAVINGS_PRODUCT_SHORT_NAME, savingsAccount.savingsProduct().getShortName());
         
-        Integer lastSequence = savingsAccount.savingsProduct().getLastSequenceAccountNumber();
-        if ((lastSequence != null) && lastSequence >= 0) {
-        	lastSequence++;
-        } else {
-        	lastSequence = 1;
+		/*
+		 * Integer lastSequence =
+		 * savingsAccount.savingsProduct().getLastSequenceAccountNumber(); if
+		 * ((lastSequence != null) && lastSequence >= 0) { lastSequence++; } else {
+		 * lastSequence = 1; }
+		 * savingsAccount.savingsProduct().setLastSequenceAccountNumber(lastSequence);
+		 * this.savingsProductRepository.saveAndFlush(savingsAccount.savingsProduct());
+		 */
+        
+        String accountNumber = null;
+        
+        try {
+        	accountNumber = assembleAccountNumber(savingsAccount.savingsProduct().getShortName(), accountNumberFormat, propertyMap);
+        } catch (SQLException e) {
+        	e.printStackTrace();
         }
-        savingsAccount.savingsProduct().setLastSequenceAccountNumber(lastSequence);
-        this.savingsProductRepository.saveAndFlush(savingsAccount.savingsProduct());
         
-        String lastSequenceString = String.valueOf(lastSequence);
-        
-        propertyMap.put(LAST_SEQUENCE, lastSequenceString);
-        return generateSavingsAccountNumber(propertyMap, accountNumberFormat);
+        return accountNumber;
     }
+
+	public String assembleAccountNumber(String shortProductName, AccountNumberFormat accountNumberFormat,
+			Map<String, String> propertyMap) throws SQLException {
+		final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+        
+    	final Connection connection = DataSourceUtils.getConnection(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
+    	DatabaseMetaData md = connection.getMetaData();
+    	ResultSet rs = md.getTables(null, null, "s_sp_" + shortProductName, null);
+    	
+    	if (!rs.next()) {
+    		this.savingsProductWritePlatformService.createTableForSequenceAccountNumber(shortProductName);
+    	}
+    	
+        final StringBuilder insertSqlBuilder = new StringBuilder(900);
+        insertSqlBuilder.append("INSERT INTO s_sp_").append(shortProductName).append(" (`account_number`) VALUES ('");
+        insertSqlBuilder.append(new RandomPasswordGenerator(19).generate()).append("')");
+        jdbcTemplate.update(insertSqlBuilder.toString());
+    	
+    	final Long autoIncrement = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+        
+        propertyMap.put(LAST_SEQUENCE, String.valueOf(autoIncrement));
+        
+        String accountNumberGenerated = generateSavingsAccountNumber(propertyMap, accountNumberFormat);
+        
+        final StringBuilder updateSqlBuilder = new StringBuilder(900);
+        updateSqlBuilder.append("UPDATE s_sp_").append(shortProductName);
+        updateSqlBuilder.append(" SET `account_number` = '").append(accountNumberGenerated).append("'");
+        updateSqlBuilder.append(" WHERE `id` = ").append(autoIncrement);
+        
+        jdbcTemplate.update(updateSqlBuilder.toString());
+
+		return accountNumberGenerated;
+	}
 
     public String generate(ShareAccount shareaccount, AccountNumberFormat accountNumberFormat) {
     	Map<String, String> propertyMap = new HashMap<>();
