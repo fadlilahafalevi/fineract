@@ -668,8 +668,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				// Map params = new HashMap();
 				HashMap<String, Object> hm = new HashMap<String, Object>();
 				hm.put("accountNumber", accountNumber);
-				hm.put("startDate", startDate);
-				hm.put("endDate", endDate);
+				hm.put("startDate", startDate.toString());
+				hm.put("endDate", endDate.toString());
 				hm.put("period", currentMonth + "-" + currentYear);
 
 				// Generate jasper print
