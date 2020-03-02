@@ -36,7 +36,7 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
     @Query("select s_acc from SavingsAccount s_acc where s_acc.status = :status")
     List<SavingsAccount> findSavingAccountByStatus(@Param("status") Integer status);
     
-    @Query("select s_acc.accountNumber from SavingsAccount s_acc where s_acc.status = :status")
+    @Query("select s_acc.accountNumber from SavingsAccount s_acc where s_acc.status = :status and s_acc.depositType = 100")
     List<String> findSavingAccountNumberByStatus(@Param("status") Integer status);
 
     @Query("select sa from SavingsAccount sa where sa.client.id = :clientId and sa.group.id = :groupId")

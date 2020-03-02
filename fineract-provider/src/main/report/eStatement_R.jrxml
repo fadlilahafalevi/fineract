@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.6.0.final using JasperReports Library version 6.6.0  -->
+<!-- Created with Jaspersoft Studio version 6.11.0.final using JasperReports Library version 6.11.0-0c4056ccaa4d25a5a8c45672d2f764ea3498bebb  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="eStatement_R" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="9977f2fa-ce0e-4d59-b3cc-1f9c4caae898">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="New Data Adapter "/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sample DB"/>
 	<parameter name="accountNumber" class="java.lang.String"/>
 	<parameter name="startDate" class="java.lang.String"/>
 	<parameter name="endDate" class="java.lang.String"/>
 	<parameter name="period" class="java.lang.String"/>
 	<queryString>
 		<![CDATA[select 
-			c.display_name as ASMA,
+			c.display_name as NAME,
 			sp.name as PRODUCTNAME,
 			sa.account_no as ACCOUNTNO,
 			sa.currency_code AS CURRENCY,
 			sat.id AS SAVINGSID,
 			DATE(sat.created_date) AS DATE,
 			TIME(sat.created_date) AS TIME,
-			rev.enum_value AS DESCRIPTION,
-			sat.amount AS AMMOUNT,
-			sat2.running_balance_derived AS SALDOAWAL,
-            sat3.running_balance_derived AS SALDOAKHIR
+			rev.enum_value AS TRANSACTION_TYPE,
+			sat.amount AS AMOUNT,
+			IFNULL(sat2.running_balance_derived,0) AS SALDOAWAL,
+			IFNULL(sat3.running_balance_derived,0) AS SALDOAKHIR
 			from m_savings_account_transaction sat
 			left join m_savings_account sa on sa.id = sat.savings_account_id
 			left join m_client c on c.id = sa.client_id
@@ -27,7 +27,7 @@
 			select max(sat.id) from m_savings_account_transaction sat left join m_savings_account sa on sa.id = sat.savings_account_id where sa.account_no = $P{accountNumber} and sat.created_date < $P{startDate}
 			)
 			left join m_savings_account_transaction sat3 on sat3.id = (
-			select max(sat.id) from m_savings_account_transaction sat left join m_savings_account sa on sa.id = sat.savings_account_id where sa.account_no = $P{accountNumber}
+			select max(sat.id) from m_savings_account_transaction sat left join m_savings_account sa on sa.id = sat.savings_account_id where sa.account_no = $P{accountNumber} and sat.created_date <= $P{endDate}
 			)
 			left join r_enum_value rev on rev.enum_name = 'savings_transaction_type_enum' and rev.enum_id = sat.transaction_type_enum
 			where 
@@ -37,15 +37,15 @@
 			sa.account_no = $P{accountNumber}
 			order by sat.created_date]]>
 	</queryString>
-	<field name="ASMA" class="java.lang.String"/>
+	<field name="NAME" class="java.lang.String"/>
 	<field name="PRODUCTNAME" class="java.lang.String"/>
 	<field name="SAVINGSID" class="java.lang.String"/>
 	<field name="ACCOUNTNO" class="java.lang.String"/>
+	<field name="TRANSACTION_TYPE" class="java.lang.String"/>
 	<field name="CURRENCY" class="java.lang.String"/>
-	<field name="DESCRIPTION" class="java.lang.String"/>
 	<field name="DATE" class="java.lang.String"/>
 	<field name="TIME" class="java.lang.String"/>
-	<field name="AMMOUNT" class="java.math.BigDecimal"/>
+	<field name="AMOUNT" class="java.math.BigDecimal"/>
 	<field name="SALDOAWAL" class="java.math.BigDecimal"/>
 	<field name="SALDOAKHIR" class="java.math.BigDecimal"/>
 	<background>
@@ -61,35 +61,35 @@
 				</textElement>
 				<text><![CDATA[ROYAL]]></text>
 			</staticText>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="10" width="221" height="32" uuid="7dacea8b-feb4-40d0-bea4-bf2728becc55"/>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="0" y="10" width="221" height="32" forecolor="#828282" uuid="7dacea8b-feb4-40d0-bea4-bf2728becc55"/>
 				<textElement verticalAlignment="Middle" markup="none">
 					<font size="16"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{ASMA}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{NAME}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement stretchType="RelativeToTallestObject" x="420" y="53" width="100" height="12" forecolor="#828282" uuid="cabf6801-b62c-4bb2-884a-daca4e087e24"/>
+				<reportElement stretchType="RelativeToTallestObject" x="420" y="67" width="100" height="12" forecolor="#828282" uuid="cabf6801-b62c-4bb2-884a-daca4e087e24"/>
 				<textElement verticalAlignment="Top" markup="none">
 					<font fontName="Arial" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Nomor Kartu Debit]]></text>
 			</staticText>
-			<textField isBlankWhenNull="true">
-				<reportElement x="420" y="65" width="130" height="12" uuid="c0321590-e9ca-4a3b-b22d-b85c2b262759"/>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="420" y="78" width="130" height="12" uuid="c0321590-e9ca-4a3b-b22d-b85c2b262759"/>
 				<textElement>
 					<font fontName="Consolas" isUnderline="true"/>
 				</textElement>
 			</textField>
 			<staticText>
-				<reportElement x="420" y="34" width="45" height="12" uuid="9d90a338-ca03-4c0c-a7db-afa57beec2da"/>
+				<reportElement x="410" y="34" width="55" height="12" uuid="9d90a338-ca03-4c0c-a7db-afa57beec2da"/>
 				<textElement verticalAlignment="Middle">
 					<font size="8"/>
 					<paragraph lineSpacing="Proportional"/>
 				</textElement>
 				<text><![CDATA[E-Statement]]></text>
 			</staticText>
-			<textField>
+			<textField textAdjust="StretchHeight">
 				<reportElement x="466" y="34" width="25" height="12" uuid="9824ddbb-9de4-4518-9325-cfcaf3745924"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8"/>
@@ -103,8 +103,8 @@
 				</textElement>
 				<text><![CDATA[Dari]]></text>
 			</staticText>
-			<textField evaluationTime="Report">
-				<reportElement x="510" y="34" width="35" height="12" uuid="9c549c90-f50a-479b-8e1e-94c07744c028"/>
+			<textField textAdjust="StretchHeight" evaluationTime="Report">
+				<reportElement x="520" y="34" width="25" height="12" uuid="9c549c90-f50a-479b-8e1e-94c07744c028"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="8"/>
 				</textElement>
@@ -121,7 +121,7 @@
 				</textElement>
 				<text><![CDATA[Nomor Rekening]]></text>
 			</staticText>
-			<textField isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="2" y="-14" width="158" height="12" uuid="bcf12ad2-cb6e-4d3c-be30-92aa3f5fcc1a"/>
 				<textElement>
 					<font fontName="Consolas" isUnderline="true"/>
@@ -135,9 +135,9 @@
 				</textElement>
 				<text><![CDATA[Periode]]></text>
 			</staticText>
-			<textField isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="2" y="18" width="158" height="12" uuid="35b6d2e7-fdc9-43ab-ba69-e32b2c9eeea8"/>
-				<textElement>
+				<textElement verticalAlignment="Bottom">
 					<font fontName="Consolas" isUnderline="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{period}]]></textFieldExpression>
@@ -149,14 +149,14 @@
 				</textElement>
 				<text><![CDATA[Mata Uang]]></text>
 			</staticText>
-			<textField isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="420" y="18" width="130" height="12" uuid="a1ab4d68-6316-4cd8-94a1-29d2a016a6bd"/>
 				<textElement>
 					<font fontName="Consolas" isUnderline="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{CURRENCY}]]></textFieldExpression>
 			</textField>
-			<textField>
+			<textField textAdjust="StretchHeight">
 				<reportElement mode="Opaque" x="0" y="36" width="550" height="25" forecolor="#FFFFFF" backcolor="#4476AA" uuid="37f57d1c-dd5d-418f-8ee4-1ce476bb2d76"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
 					<font size="14" isBold="true"/>
@@ -166,7 +166,7 @@
 		</band>
 	</pageHeader>
 	<columnHeader>
-		<band height="65" splitType="Stretch">
+		<band height="73" splitType="Stretch">
 			<staticText>
 				<reportElement x="0" y="7" width="110" height="30" uuid="3275b524-6929-4aa6-afb6-c4b8560be194"/>
 				<textElement verticalAlignment="Middle">
@@ -196,64 +196,74 @@
 				<text><![CDATA[Detail Transaksi | Ref]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="111" y="37" width="309" height="21" uuid="4c21f59a-013a-4e6c-9b66-a38fba2e9abb"/>
+				<reportElement x="110" y="45" width="309" height="21" uuid="dbb3a5ac-e3cf-478b-b2b2-98429aa394d8"/>
 				<textElement verticalAlignment="Middle">
 					<font isBold="false"/>
 				</textElement>
 				<text><![CDATA[SALDO AWAL]]></text>
 			</staticText>
-			<textField>
-				<reportElement x="424" y="36" width="125" height="29" uuid="0a9c4dce-c6cd-4bfb-aea3-ac8578bb834e"/>
-				<textElement textAlignment="Right" verticalAlignment="Bottom" markup="none">
-					<font fontName="Consolas" isBold="false"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{SALDOAWAL}.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString()]]></textFieldExpression>
+			<textField textAdjust="StretchHeight" pattern="#,##0.00">
+				<reportElement x="420" y="44" width="131" height="20" uuid="71557fe3-2847-4934-8885-5abed58f27cc"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{SALDOAWAL}]]></textFieldExpression>
 			</textField>
+			<line>
+				<reportElement x="2" y="69" width="551" height="1" forecolor="#6F8AAD" uuid="60b10a09-b26d-4378-ba15-cee3b8cce67c"/>
+				<graphicElement>
+					<pen lineWidth="1.5"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement x="0" y="40" width="551" height="1" forecolor="#6F8AAD" uuid="90375e2c-c528-41ea-980b-3ff5e655e4eb"/>
+				<graphicElement>
+					<pen lineWidth="1.5"/>
+				</graphicElement>
+			</line>
 		</band>
 	</columnHeader>
 	<detail>
-		<band height="37" splitType="Stretch">
-			<textField>
-				<reportElement x="0" y="2" width="110" height="15" uuid="ea0ca50b-da8f-4cae-907b-e6d42b8a8af1"/>
+		<band height="33" splitType="Stretch">
+			<textField textAdjust="StretchHeight" pattern="MMMM d, yyyy" isBlankWhenNull="false">
+				<reportElement x="0" y="1" width="110" height="15" uuid="ea0ca50b-da8f-4cae-907b-e6d42b8a8af1"/>
 				<textElement verticalAlignment="Middle">
 					<font size="11"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{DATE}]]></textFieldExpression>
 			</textField>
-			<textField>
-				<reportElement x="0" y="17" width="110" height="15" forecolor="#878787" uuid="26982632-5ffb-4e16-9cec-7f8dd1e31a1f"/>
+			<textField textAdjust="StretchHeight">
+				<reportElement x="0" y="16" width="110" height="15" forecolor="#878787" uuid="26982632-5ffb-4e16-9cec-7f8dd1e31a1f"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{TIME}]]></textFieldExpression>
 			</textField>
-			<textField>
-				<reportElement x="110" y="17" width="309" height="15" forecolor="#959595" uuid="4316df07-1c05-469b-97ce-2cff239c59bf"/>
+			<textField textAdjust="StretchHeight">
+				<reportElement x="110" y="16" width="309" height="15" forecolor="#959595" uuid="4316df07-1c05-469b-97ce-2cff239c59bf"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
 			</textField>
-			<textField>
-				<reportElement x="110" y="2" width="309" height="15" uuid="72765a6f-3423-4d0d-8ea7-3c85a34da1d0"/>
+			<textField textAdjust="StretchHeight">
+				<reportElement x="110" y="1" width="309" height="15" uuid="72765a6f-3423-4d0d-8ea7-3c85a34da1d0"/>
 				<textElement verticalAlignment="Middle">
 					<font size="11" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{DESCRIPTION}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{TRANSACTION_TYPE}]]></textFieldExpression>
 			</textField>
-			<textField>
-				<reportElement x="420" y="2" width="130" height="29" uuid="53d40822-0e48-4afc-bc2d-62c731d79baa"/>
-				<textElement textAlignment="Right" verticalAlignment="Bottom" markup="none">
+			<textField textAdjust="StretchHeight" pattern="#,##0.00;-#,##0.00">
+				<reportElement x="420" y="1" width="130" height="29" uuid="53d40822-0e48-4afc-bc2d-62c731d79baa"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
 					<font fontName="Consolas" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{AMMOUNT}.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString()]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{AMOUNT}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement x="0" y="36" width="551" height="1" forecolor="#6F8AAD" uuid="113b2105-d31c-4d59-941b-9a13314df927"/>
+				<reportElement x="0" y="31" width="551" height="1" forecolor="#6F8AAD" uuid="113b2105-d31c-4d59-941b-9a13314df927"/>
 			</line>
 		</band>
 	</detail>
 	<columnFooter>
-		<band height="39" splitType="Stretch"/>
+		<band splitType="Stretch"/>
 	</columnFooter>
 	<pageFooter>
 		<band height="54" splitType="Stretch">
@@ -289,19 +299,31 @@
 		</band>
 	</pageFooter>
 	<summary>
-		<band height="42" splitType="Stretch">
-			<textField>
-				<reportElement x="424" y="6" width="125" height="20" uuid="082d3b61-3a21-401d-92b3-9ab4ac005571"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle"/>
-				<textFieldExpression><![CDATA[$F{SALDOAKHIR}.setScale(2, BigDecimal.ROUND_HALF_DOWN).toString()]]></textFieldExpression>
-			</textField>
+		<band height="68" splitType="Stretch">
 			<staticText>
-				<reportElement x="110" y="6" width="314" height="21" uuid="e64d16ec-67fa-40d2-9956-6a586c653efe"/>
+				<reportElement x="110" y="4" width="309" height="21" uuid="4a26f81a-dfea-4e2b-923e-a42d9d1f0dad"/>
 				<textElement verticalAlignment="Middle">
 					<font isBold="false"/>
 				</textElement>
 				<text><![CDATA[SALDO AKHIR]]></text>
 			</staticText>
+			<textField textAdjust="StretchHeight" pattern="#,##0.00">
+				<reportElement x="419" y="4" width="131" height="20" uuid="1eabaa3f-3ead-47c1-b1e5-685071368b6a"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{SALDOAKHIR}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="0" width="551" height="1" forecolor="#6F8AAD" uuid="c7bd66ee-8003-4a99-80f9-8c4e9af74321"/>
+				<graphicElement>
+					<pen lineWidth="1.5"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement x="0" y="29" width="551" height="1" forecolor="#6F8AAD" uuid="c3632c4a-aa15-4442-b823-77184072cc40"/>
+				<graphicElement>
+					<pen lineWidth="1.5"/>
+				</graphicElement>
+			</line>
 		</band>
 	</summary>
 </jasperReport>

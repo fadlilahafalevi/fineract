@@ -635,16 +635,15 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		File outDir = new File(outUrl);
 		outDir.mkdirs();
 		
+		// Get jasper report
+		String reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "report" + File.separator + "eStatement_R.jrxml";
+		
 		for (String accountNumber : listSavingsAccountNumber) {
 			try {
 				logger.debug("Start ...." + accountNumber);
-				
-				// Get jasper report
-				String reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "report" + File.separator;
-				
 				String pdfFileName = outUrl + File.separator + accountNumber + ".pdf";
 				
-				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl + "eStatement_R.jrxml");
+				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl);
 				
 				FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
 				final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
@@ -669,8 +668,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				// Map params = new HashMap();
 				HashMap<String, Object> hm = new HashMap<String, Object>();
 				hm.put("accountNumber", accountNumber);
-				hm.put("startDate", startDate);
-				hm.put("endDate", endDate);
+				hm.put("startDate", startDate.toString());
+				hm.put("endDate", endDate.toString());
 				hm.put("period", currentMonth + "-" + currentYear);
 
 				// Generate jasper print
