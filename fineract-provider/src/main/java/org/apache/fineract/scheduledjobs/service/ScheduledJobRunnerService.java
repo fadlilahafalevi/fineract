@@ -44,5 +44,5 @@ public interface ScheduledJobRunnerService {
 
 	void generateLoanCollectibility();
 
-	void generateEstatement();
+	void generateEstatement() throws JobExecutionException;
 }
