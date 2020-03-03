@@ -626,7 +626,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 	@Override
 	@CronTarget(jobName = JobName.GENERATE_ESTATEMENT)
 	public void generateEstatement() throws JobExecutionException {
-		Collection<String> listSavingsAccountNumber = this.savingsAccountRepository.findSavingAccountNumberByStatus(300);
+		Collection<String> listMainSavingsAccountNumber = this.savingsAccountRepository.findMainSavingAccountNumberByStatus(300);
+		Collection<String> listSubSavingsAccountNumber = this.savingsAccountRepository.findSubSavingAccountNumberByStatus(300);
 		
 		LocalDate today = DateUtils.getLocalDateOfTenant();
 		LocalDate startDate = today.withDayOfMonth(1);
@@ -635,6 +636,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		String currentYear = String.valueOf(today.getYear());
 		StringBuilder errorMsg = new StringBuilder();
 		String reportUrl = null;
+		String reportNameMainSavings = "eStatement_R.jrxml";
+		String reportNameSubSavings = "eStatementSub_R.jrxml";
 		
 		String outUrl = System.getProperty("user.home") + File.separator + "eStatement" + File.separator + currentMonth + "-" + currentYear;
 		File outDir = new File(outUrl);
@@ -660,16 +663,18 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		}
 		
 		if (tenantConnection.getSchemaServer().contains("localhost") || tenantConnection.getSchemaServer().contains("127.0.0.1")) {
-			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "report" + File.separator + "eStatement_R.jrxml";
+			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "report" + File.separator;
 		} else {
-			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "WEB-INF" + File.separator + "classes" + File.separator + "report" + File.separator + "eStatement_R.jrxml";
+			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "WEB-INF" + File.separator + "classes" + File.separator + "report" + File.separator;
 			reportUrl = reportUrl.replace("bin", "webapps");
 		}
 
-		for (String accountNumber : listSavingsAccountNumber) {
+		for (String accountNumber : listMainSavingsAccountNumber) {
 			try {
 				logger.debug("Start ...." + accountNumber);
+				
 				String pdfFileName = outUrl + File.separator + accountNumber + ".pdf";
+				reportUrl = reportUrl + reportNameMainSavings;
 				
 				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl);
 				
@@ -691,6 +696,37 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				errorMsg.append("Error for ").append(accountNumber).append(e.getMessage().toString());
 			}
 		}
+		
+		for (String accountNumber : listSubSavingsAccountNumber) {
+			try {
+				logger.debug("Start ...." + accountNumber);
+				
+				String pdfFileName = outUrl + File.separator + accountNumber + ".pdf";
+				reportUrl = reportUrl + reportNameSubSavings;
+				
+				/*
+				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl);
+				
+				// Create arguments
+				HashMap<String, Object> hm = new HashMap<String, Object>();
+				hm.put("accountNumber", accountNumber);
+				hm.put("startDate", startDate.toString());
+				hm.put("endDate", endDate.toString());
+				hm.put("period", currentMonth + " " + currentYear);
+
+				// Generate jasper print
+				JasperPrint jprint = (JasperPrint) JasperFillManager.fillReport(jasperReport, hm, conn);
+
+				// Export pdf file
+				JasperExportManager.exportReportToPdfFile(jprint, pdfFileName);
+				*/
+
+				logger.debug("Done exporting reports to pdf for " + accountNumber);
+			} catch (Exception e) {
+				errorMsg.append("Error for ").append(accountNumber).append(e.getMessage().toString());
+			}
+		}
+		
 		if (errorMsg.length() > 0) {
 			throw new JobExecutionException(errorMsg.toString());
 		}
