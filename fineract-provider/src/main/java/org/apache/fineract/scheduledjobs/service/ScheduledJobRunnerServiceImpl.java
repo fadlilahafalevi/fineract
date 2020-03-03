@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -633,29 +634,38 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		String currentMonth = String.valueOf(today.monthOfYear().getAsText());
 		String currentYear = String.valueOf(today.getYear());
 		StringBuilder errorMsg = new StringBuilder();
+		String reportUrl = null;
 		
 		String outUrl = System.getProperty("user.home") + File.separator + "eStatement" + File.separator + currentMonth + "-" + currentYear;
 		File outDir = new File(outUrl);
 		outDir.mkdirs();
 		
-		String localhost = null;
-		String reportUrl = null;
+		FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
+		final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
+		String tenantUrl = driverConfig.constructProtocol(tenantConnection.getSchemaServer(),
+				tenantConnection.getSchemaServerPort(), tenantConnection.getSchemaName());
+
+		String dbUrl = tenantUrl;
+		String dbDriver = driverConfig.getDriverClassName();
+		String dbUname = tenantConnection.getSchemaUsername();
+		String dbPwd = tenantConnection.getSchemaPassword();
 		
+		// Load the JDBC driver
+		Connection conn = null;
 		try {
-			localhost = InetAddress.getLocalHost().getHostAddress();
-		} catch (UnknownHostException e1) {
-			// TODO Auto-generated catch block
+			Class.forName(dbDriver);
+			conn = DriverManager.getConnection(dbUrl, dbUname, dbPwd);
+		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
 		
-		if (localhost.contains("localhost") || localhost.contains("127.0.0.1")) {
-			// Get jasper report
+		if (tenantConnection.getSchemaServer().contains("localhost") || tenantConnection.getSchemaServer().contains("127.0.0.1")) {
 			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "report" + File.separator + "eStatement_R.jrxml";
 		} else {
 			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "WEB-INF" + File.separator + "classes" + File.separator + "report" + File.separator + "eStatement_R.jrxml";
 			reportUrl = reportUrl.replace("bin", "webapps");
 		}
-		
+
 		for (String accountNumber : listSavingsAccountNumber) {
 			try {
 				logger.debug("Start ...." + accountNumber);
@@ -663,27 +673,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				
 				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl);
 				
-				FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
-				final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
-				String tenantUrl = driverConfig.constructProtocol(tenantConnection.getSchemaServer(),
-						tenantConnection.getSchemaServerPort(), tenantConnection.getSchemaName());
-
-				// String dbUrl = props.getProperty("jdbc.url");
-				String dbUrl = tenantUrl;
-				// String dbDriver = props.getProperty("jdbc.driver");
-				String dbDriver = driverConfig.getDriverClassName();
-				// String dbUname = props.getProperty("db.username");
-				String dbUname = tenantConnection.getSchemaUsername();
-				// String dbPwd = props.getProperty("db.password");
-				String dbPwd = tenantConnection.getSchemaPassword();
-
-				// Load the JDBC driver
-				Class.forName(dbDriver);
-				// Get the connection
-				Connection conn = DriverManager.getConnection(dbUrl, dbUname, dbPwd);
-
 				// Create arguments
-				// Map params = new HashMap();
 				HashMap<String, Object> hm = new HashMap<String, Object>();
 				hm.put("accountNumber", accountNumber);
 				hm.put("startDate", startDate.toString());
