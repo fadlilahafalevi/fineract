@@ -21,6 +21,8 @@ package org.apache.fineract.scheduledjobs.service;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
@@ -628,7 +630,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		LocalDate today = DateUtils.getLocalDateOfTenant();
 		LocalDate startDate = today.withDayOfMonth(1);
 		LocalDate endDate = today.plusMonths(1).withDayOfMonth(1).minusDays(1);
-		String currentMonth = String.valueOf(today.getMonthOfYear());
+		String currentMonth = String.valueOf(today.monthOfYear().getAsText());
 		String currentYear = String.valueOf(today.getYear());
 		StringBuilder errorMsg = new StringBuilder();
 		
@@ -636,8 +638,23 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		File outDir = new File(outUrl);
 		outDir.mkdirs();
 		
-		// Get jasper report
-		String reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "report" + File.separator + "eStatement_R.jrxml";
+		String localhost = null;
+		String reportUrl = null;
+		
+		try {
+			localhost = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		if (localhost.contains("localhost") || localhost.contains("127.0.0.1")) {
+			// Get jasper report
+			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "report" + File.separator + "eStatement_R.jrxml";
+		} else {
+			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "WEB-INF" + File.separator + "classes" + File.separator + "report" + File.separator + "eStatement_R.jrxml";
+			reportUrl = reportUrl.replace("bin", "webapps");
+		}
 		
 		for (String accountNumber : listSavingsAccountNumber) {
 			try {
@@ -671,7 +688,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				hm.put("accountNumber", accountNumber);
 				hm.put("startDate", startDate.toString());
 				hm.put("endDate", endDate.toString());
-				hm.put("period", currentMonth + "-" + currentYear);
+				hm.put("period", currentMonth + " " + currentYear);
 
 				// Generate jasper print
 				JasperPrint jprint = (JasperPrint) JasperFillManager.fillReport(jasperReport, hm, conn);
