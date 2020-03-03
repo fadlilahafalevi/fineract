@@ -45,6 +45,7 @@
 			where 
 			sa.status_enum = 300 AND
 			sa.deposit_type_enum = 100 AND
+			sat.is_reversed = false AND
 			sa.account_no = $P{accountNumber}
 			order by sat.created_date]]>
 	</queryString>
