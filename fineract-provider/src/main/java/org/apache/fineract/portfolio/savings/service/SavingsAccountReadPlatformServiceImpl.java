@@ -823,22 +823,22 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     }
     
     @Override
-    public SavingsAccountTransactionData retrieveSavingsTransactionByRecipt(final Long savingsId, final String receiptNumber,
+    public SavingsAccountTransactionData retrieveSavingsTransactionByReceipt(String accountNo, final String receiptNumber,
             DepositAccountType depositAccountType) {
 
-        final String sql = "select " + this.transactionsMapper.schema() + " where sa.id = ? and sa.deposit_type_enum = ? and pd.receipt_number= ?";
+        final String sql = "select " + this.transactionsMapper.schema() + " where sa.account_no = ? and sa.deposit_type_enum = ? and pd.receipt_number= ?";
         
         SavingsAccountTransactionData transactionData = null;
         try {
-        	transactionData = this.jdbcTemplate.queryForObject(sql, this.transactionsMapper, new Object[] { savingsId, depositAccountType.getValue(),
+        	transactionData = this.jdbcTemplate.queryForObject(sql, this.transactionsMapper, new Object[] { accountNo, depositAccountType.getValue(),
                     receiptNumber });
         } catch (EmptyResultDataAccessException e) {
-        	throw new SavingsAccountTransactioninqNotFoundException(savingsId, receiptNumber);
+        	throw new SavingsAccountTransactioninqNotFoundException(accountNo, receiptNumber);
         }
         
         return transactionData;
     }
-    
+
     @Override
     public Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistory(final String accountNo, final String startdate, final String enddate, DepositAccountType depositAccountType, final Long lastId, final Long pageSize, final String transactionTypeValue) {
     	String transactionTypeValueQuery;

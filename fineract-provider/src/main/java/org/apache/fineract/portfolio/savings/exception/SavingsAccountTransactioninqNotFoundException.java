@@ -22,9 +22,9 @@ import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourc
 
 public class SavingsAccountTransactioninqNotFoundException extends AbstractPlatformResourceNotFoundException {
 
-	public SavingsAccountTransactioninqNotFoundException(final Long savingsId, final String receiptNumber) {
-        super("error.msg.saving.account.trasaction.id.invalid", "Savings account with savings identifier " + savingsId
-                + " and receipt identifier " + receiptNumber + " does not exist", savingsId, receiptNumber);
+	public SavingsAccountTransactioninqNotFoundException(final String accountNo, final String receiptNumber) {
+        super("error.msg.saving.account.trasaction.id.invalid", "Savings account with savings number " + accountNo
+                + " and receipt identifier " + receiptNumber + " does not exist", accountNo, receiptNumber);
     }
 
 }
