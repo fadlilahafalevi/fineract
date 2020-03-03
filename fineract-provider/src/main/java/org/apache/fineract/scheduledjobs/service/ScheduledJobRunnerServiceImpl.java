@@ -622,7 +622,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 	
 	@Override
 	@CronTarget(jobName = JobName.GENERATE_ESTATEMENT)
-	public void generateEstatement() {
+	public void generateEstatement() throws JobExecutionException {
 		Collection<String> listSavingsAccountNumber = this.savingsAccountRepository.findSavingAccountNumberByStatus(300);
 		
 		LocalDate today = DateUtils.getLocalDateOfTenant();
@@ -630,6 +630,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		LocalDate endDate = today.plusMonths(1).withDayOfMonth(1).minusDays(1);
 		String currentMonth = String.valueOf(today.getMonthOfYear());
 		String currentYear = String.valueOf(today.getYear());
+		StringBuilder errorMsg = new StringBuilder();
 		
 		String outUrl = System.getProperty("user.home") + File.separator + "eStatement" + File.separator + currentMonth + "-" + currentYear;
 		File outDir = new File(outUrl);
@@ -680,8 +681,11 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
 				logger.debug("Done exporting reports to pdf for " + accountNumber);
 			} catch (Exception e) {
-				System.out.print("Exceptiion" + e);
+				errorMsg.append("Error for ").append(accountNumber).append(e.getMessage().toString());
 			}
+		}
+		if (errorMsg.length() > 0) {
+			throw new JobExecutionException(errorMsg.toString());
 		}
 	}
 }
