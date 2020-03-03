@@ -65,7 +65,7 @@ public interface SavingsAccountReadPlatformService {
     
 	String retrieveAccountNumberByAccountId(Long accountId);
 
-	SavingsAccountTransactionData retrieveSavingsTransactionByRecipt(Long savingsId, String receiptNumber,
+	SavingsAccountTransactionData retrieveSavingsTransactionByReceipt(String accountNo, String receiptNumber,
 			DepositAccountType depositAccountType);
 
 	Collection<SavingsAccountTransactionData> retrieveSavingsTransactionsHistory(String accountNo, String startdate,

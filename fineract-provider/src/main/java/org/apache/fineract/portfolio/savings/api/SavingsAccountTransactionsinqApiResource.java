@@ -48,7 +48,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
 
-@Path("/savingsaccounts/{savingsId}/transactionsinq")
+@Path("/savingsaccounts/transactionsinq")
 @Component
 @Scope("singleton")
 public class SavingsAccountTransactionsinqApiResource {
@@ -76,18 +76,19 @@ public class SavingsAccountTransactionsinqApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveOne(@PathParam("savingsId") final Long savingsId,
+    public String retrieveOne( //@PathParam("savingsId") final Long savingsId,
     		final String apiRequestBodyAsJson, @Context final UriInfo uriInfo) throws JSONException {
     	
     	
     	JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
     	String receiptNumber = jsonObject.getString("receiptNumber");
+        String accountNo = jsonObject.getString("accountNo");
     	    	
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
         
         
         
-        SavingsAccountTransactionData transactionData = this.savingsAccountReadPlatformService.retrieveSavingsTransactionByRecipt(savingsId, receiptNumber,
+        SavingsAccountTransactionData transactionData = this.savingsAccountReadPlatformService.retrieveSavingsTransactionByReceipt(accountNo, receiptNumber,
         		DepositAccountType.SAVINGS_DEPOSIT);
         
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
