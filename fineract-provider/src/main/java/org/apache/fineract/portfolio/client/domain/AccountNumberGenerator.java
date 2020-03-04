@@ -35,6 +35,7 @@ import org.apache.fineract.infrastructure.core.service.RoutingDataSourceServiceF
 import org.apache.fineract.infrastructure.security.service.RandomPasswordGenerator;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.service.SavingsProductWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
@@ -51,6 +52,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AccountNumberGenerator {
 	private SavingsProductWritePlatformService savingsProductWritePlatformService;
+	private SavingsAccount savingsAccount;
 	private final RoutingDataSourceServiceFactory dataSourceServiceFactory;
 	
 	@Autowired
@@ -105,9 +107,14 @@ public class AccountNumberGenerator {
 		 */
         
         String accountNumber = null;
+        Boolean isDepositoAccount = false;
+        
+        if (savingsAccount instanceof FixedDepositAccount) {
+        	isDepositoAccount = true;
+        }
         
         try {
-        	accountNumber = assembleAccountNumber(savingsAccount.savingsProduct().getShortName(), accountNumberFormat, propertyMap, savingsAccount.depositAccountType().isFixedDeposit());
+        	accountNumber = assembleAccountNumber(savingsAccount.savingsProduct().getShortName(), accountNumberFormat, propertyMap, isDepositoAccount);
         } catch (SQLException e) {
         	e.printStackTrace();
         }
