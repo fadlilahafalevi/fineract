@@ -43,6 +43,7 @@
 			select max(sat.id) from m_savings_account_transaction sat left join m_savings_account sa on sa.id = sat.savings_account_id where sa.account_no = $P{accountNumber} and sat.created_date <= $P{endDate}
 			)
 			left join r_enum_value rev on rev.enum_name = 'savings_transaction_type_enum' and rev.enum_id = sat.transaction_type_enum
+			left join m_organisation_currency oc on oc.code = sa.currency_code
 			where 
 			sa.status_enum = 300 AND
 			sa.deposit_type_enum = 100 AND
