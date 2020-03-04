@@ -30,7 +30,7 @@
 			IFNULL(sat2.running_balance_derived,0) AS SALDOAWAL,
 			IFNULL(sat3.running_balance_derived,0) AS SALDOAKHIR
 			from m_savings_account sa
-			left join m_savings_account_transaction sat on sa.id = sat.savings_account_id and sat.created_date between $P{startDate} and $P{endDate}
+			left join m_savings_account_transaction sat on sa.id = sat.savings_account_id and sat.created_date between $P{startDate} and $P{endDate} AND sat.is_reversed = false
 			left join m_payment_detail pd on pd.id = sat.payment_detail_id
 			left join m_payment_type pt on pt.id = pd.payment_type_id
 			left join m_client c on c.id = sa.client_id
@@ -45,7 +45,6 @@
 			where 
 			sa.status_enum = 300 AND
 			sa.deposit_type_enum = 100 AND
-			sat.is_reversed = false AND
 			sa.account_no = $P{accountNumber}
 			order by sat.created_date]]>
 	</queryString>
@@ -71,7 +70,7 @@
 	<pageHeader>
 		<band height="159" splitType="Stretch">
 			<staticText>
-				<reportElement x="2" y="101" width="100" height="12" forecolor="#828282" uuid="1533f6a5-a588-410e-b584-e341c07e9ca6">
+				<reportElement x="2" y="102" width="100" height="12" forecolor="#828282" uuid="1533f6a5-a588-410e-b584-e341c07e9ca6">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement>
@@ -87,7 +86,7 @@
 				<textFieldExpression><![CDATA[$P{period}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="420" y="101" width="100" height="12" forecolor="#828282" uuid="fc2744fa-d29a-4b81-9097-18a4d3fad099">
+				<reportElement x="420" y="102" width="100" height="12" forecolor="#828282" uuid="fc2744fa-d29a-4b81-9097-18a4d3fad099">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement>
@@ -114,7 +113,7 @@
 			<staticText>
 				<reportElement x="453" y="0" width="91" height="30" forecolor="#5DC4C6" uuid="9f4cc8a4-abb2-4df0-8f85-b81fb1134739"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
-					<font size="22" isBold="true" isItalic="true" isUnderline="false"/>
+					<font fontName="Arial" size="22" isBold="true" isItalic="true" isUnderline="false"/>
 					<paragraph lineSpacing="Proportional"/>
 				</textElement>
 				<text><![CDATA[ROYAL]]></text>
@@ -185,7 +184,7 @@
 		</band>
 	</pageHeader>
 	<columnHeader>
-		<band height="73" splitType="Stretch">
+		<band height="74" splitType="Stretch">
 			<staticText>
 				<reportElement x="0" y="7" width="140" height="30" uuid="3275b524-6929-4aa6-afb6-c4b8560be194"/>
 				<textElement verticalAlignment="Middle">
@@ -215,25 +214,25 @@
 				<text><![CDATA[Detail Transaksi | Ref]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="140" y="45" width="279" height="21" uuid="dbb3a5ac-e3cf-478b-b2b2-98429aa394d8"/>
+				<reportElement x="140" y="48" width="279" height="21" uuid="dbb3a5ac-e3cf-478b-b2b2-98429aa394d8"/>
 				<textElement verticalAlignment="Middle">
 					<font isBold="false"/>
 				</textElement>
 				<text><![CDATA[SALDO AWAL]]></text>
 			</staticText>
 			<textField textAdjust="StretchHeight" pattern="#,##0.00">
-				<reportElement x="420" y="44" width="131" height="20" uuid="71557fe3-2847-4934-8885-5abed58f27cc"/>
+				<reportElement x="420" y="47" width="131" height="20" uuid="71557fe3-2847-4934-8885-5abed58f27cc"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{SALDOAWAL}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement x="1" y="69" width="551" height="1" forecolor="#6F8AAD" uuid="60b10a09-b26d-4378-ba15-cee3b8cce67c"/>
+				<reportElement x="1" y="72" width="551" height="1" forecolor="#6F8AAD" uuid="60b10a09-b26d-4378-ba15-cee3b8cce67c"/>
 				<graphicElement>
 					<pen lineWidth="1.5"/>
 				</graphicElement>
 			</line>
 			<line>
-				<reportElement x="0" y="40" width="551" height="1" forecolor="#6F8AAD" uuid="90375e2c-c528-41ea-980b-3ff5e655e4eb"/>
+				<reportElement x="0" y="43" width="551" height="1" forecolor="#6F8AAD" uuid="90375e2c-c528-41ea-980b-3ff5e655e4eb"/>
 				<graphicElement>
 					<pen lineWidth="1.5"/>
 				</graphicElement>

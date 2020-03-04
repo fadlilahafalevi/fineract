@@ -673,10 +673,10 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 			try {
 				logger.debug("Start ...." + accountNumber);
 				
-				String pdfFileName = outUrl + File.separator + accountNumber + ".pdf";
-				reportUrl = reportUrl + reportNameMainSavings;
+				String pdfFileName = outUrl + File.separator + "Main_" + accountNumber + ".pdf";
+				String reportMainUrl = reportUrl + reportNameMainSavings;
 				
-				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl);
+				JasperReport jasperReport = JasperCompileManager.compileReport(reportMainUrl);
 				
 				// Create arguments
 				HashMap<String, Object> hm = new HashMap<String, Object>();
@@ -701,8 +701,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 			try {
 				logger.debug("Start ...." + accountNumber);
 				
-				String pdfFileName = outUrl + File.separator + accountNumber + ".pdf";
-				reportUrl = reportUrl + reportNameSubSavings;
+				String pdfFileName = outUrl + File.separator + "Sub_" + accountNumber + ".pdf";
+				String reportMainUrl = reportUrl + reportNameSubSavings;
 				
 				/*
 				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl);
