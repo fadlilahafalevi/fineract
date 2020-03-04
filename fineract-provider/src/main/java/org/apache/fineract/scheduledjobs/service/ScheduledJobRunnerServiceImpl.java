@@ -19,6 +19,8 @@
 package org.apache.fineract.scheduledjobs.service;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -693,7 +695,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
 				logger.debug("Done exporting reports to pdf for " + accountNumber);
 			} catch (Exception e) {
-				errorMsg.append("Error for ").append(accountNumber).append(e.getMessage().toString());
+				StringWriter errors = new StringWriter();
+				e.printStackTrace(new PrintWriter(errors));
+				errorMsg.append("Error for Main Account : ").append(accountNumber).append(" , " + errors.toString());
 			}
 		}
 		
@@ -721,7 +725,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
 				logger.debug("Done exporting reports to pdf for " + accountNumber);
 			} catch (Exception e) {
-				errorMsg.append("Error for ").append(accountNumber).append(e.getMessage().toString());
+				StringWriter errors = new StringWriter();
+				e.printStackTrace(new PrintWriter(errors));
+				errorMsg.append("Error for Sub Account : ").append(accountNumber).append(" , " + errors.toString());
 			}
 		}
 		
