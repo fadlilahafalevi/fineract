@@ -36,7 +36,6 @@ import org.apache.fineract.infrastructure.security.service.RandomPasswordGenerat
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
-import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.service.SavingsProductWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +70,6 @@ public class AccountNumberGenerator {
     private final static String SAVINGS_PRODUCT_SHORT_NAME = "savingsProductShortName";
     private final static String SHARE_PRODUCT_SHORT_NAME = "sharesProductShortName" ;
     private final static String LAST_SEQUENCE = "lastSequence";
-    private final static String IS_SAVINGS_ACCOUNT = "isSavingsAccount";
     
     public String generate(Client client, AccountNumberFormat accountNumberFormat) {
         Map<String, String> propertyMap = new HashMap<>();
