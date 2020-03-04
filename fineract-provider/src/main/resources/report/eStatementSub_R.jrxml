@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.11.0.final using JasperReports Library version 6.11.0-0c4056ccaa4d25a5a8c45672d2f764ea3498bebb  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="eStatement_R" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="9977f2fa-ce0e-4d59-b3cc-1f9c4caae898">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="eStatementSub_R" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="fbce5252-856f-4891-ba04-08d4930c5603">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sample DB"/>
 	<style name="ColorAmountStyle">
 		<conditionalStyle>
@@ -42,7 +43,6 @@
 			select max(sat.id) from m_savings_account_transaction sat left join m_savings_account sa on sa.id = sat.savings_account_id where sa.account_no = $P{accountNumber} and sat.created_date <= $P{endDate}
 			)
 			left join r_enum_value rev on rev.enum_name = 'savings_transaction_type_enum' and rev.enum_id = sat.transaction_type_enum
-			left join m_organisation_currency oc on oc.code = sa.currency_code
 			where 
 			sa.status_enum = 300 AND
 			sa.deposit_type_enum = 100 AND
@@ -69,7 +69,7 @@
 		<band height="3" splitType="Stretch"/>
 	</title>
 	<pageHeader>
-		<band height="159" splitType="Stretch">
+		<band height="132" splitType="Stretch">
 			<staticText>
 				<reportElement x="2" y="102" width="100" height="12" forecolor="#828282" uuid="1533f6a5-a588-410e-b584-e341c07e9ca6">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -87,7 +87,7 @@
 				<textFieldExpression><![CDATA[$P{period}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="420" y="102" width="100" height="12" forecolor="#828282" uuid="fc2744fa-d29a-4b81-9097-18a4d3fad099">
+				<reportElement x="180" y="74" width="100" height="12" forecolor="#828282" uuid="fc2744fa-d29a-4b81-9097-18a4d3fad099">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement>
@@ -96,20 +96,13 @@
 				<text><![CDATA[Mata Uang]]></text>
 			</staticText>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="420" y="113" width="130" height="12" uuid="a1ab4d68-6316-4cd8-94a1-29d2a016a6bd">
+				<reportElement x="180" y="85" width="130" height="12" uuid="a1ab4d68-6316-4cd8-94a1-29d2a016a6bd">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement>
 					<font fontName="Arial" isUnderline="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{CURRENCY}]]></textFieldExpression>
-			</textField>
-			<textField textAdjust="StretchHeight">
-				<reportElement mode="Opaque" x="0" y="130" width="550" height="25" forecolor="#FFFFFF" backcolor="#5DC4C6" uuid="37f57d1c-dd5d-418f-8ee4-1ce476bb2d76"/>
-				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
-					<font size="14" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{PRODUCTNAME}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="453" y="0" width="91" height="30" forecolor="#5DC4C6" uuid="9f4cc8a4-abb2-4df0-8f85-b81fb1134739"/>
@@ -120,20 +113,7 @@
 				<text><![CDATA[ROYAL]]></text>
 			</staticText>
 			<staticText>
-				<reportElement stretchType="RelativeToTallestObject" x="420" y="74" width="100" height="12" forecolor="#828282" uuid="c0f3b5f7-d317-4df1-9d80-58566bba34da"/>
-				<textElement verticalAlignment="Top" markup="none">
-					<font fontName="Arial" isBold="true"/>
-				</textElement>
-				<text><![CDATA[Nomor Kartu Debit]]></text>
-			</staticText>
-			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="420" y="85" width="130" height="12" uuid="a6b512de-aa64-4423-96fc-7f8841511f3b"/>
-				<textElement>
-					<font fontName="Arial" isUnderline="true"/>
-				</textElement>
-			</textField>
-			<staticText>
-				<reportElement x="419" y="34" width="55" height="12" uuid="69b50149-e12c-4e06-ba81-5f3e82cc2bbd"/>
+				<reportElement x="441" y="34" width="55" height="12" uuid="69b50149-e12c-4e06-ba81-5f3e82cc2bbd"/>
 				<textElement verticalAlignment="Middle">
 					<font size="8"/>
 					<paragraph lineSpacing="Proportional"/>
@@ -141,21 +121,23 @@
 				<text><![CDATA[E-Statement]]></text>
 			</staticText>
 			<textField textAdjust="StretchHeight">
-				<reportElement x="474" y="34" width="25" height="12" uuid="1db6ba9e-9c62-4c1f-b81f-c37235897058"/>
+				<reportElement x="496" y="34" width="14" height="12" uuid="1db6ba9e-9c62-4c1f-b81f-c37235897058">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
 					<font size="8" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="499" y="34" width="19" height="12" uuid="00066435-3bae-4a8c-9356-031488b96d51"/>
+				<reportElement x="511" y="34" width="19" height="12" uuid="00066435-3bae-4a8c-9356-031488b96d51"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8"/>
 				</textElement>
 				<text><![CDATA[Dari]]></text>
 			</staticText>
 			<textField textAdjust="StretchHeight" evaluationTime="Report">
-				<reportElement x="519" y="34" width="25" height="12" uuid="e9086030-2c51-4665-8be2-11ea3a5badc4"/>
+				<reportElement x="530" y="34" width="14" height="12" uuid="e9086030-2c51-4665-8be2-11ea3a5badc4"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8" isBold="true"/>
 				</textElement>
@@ -181,6 +163,40 @@
 					<font fontName="Arial" isUnderline="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{ACCOUNTNO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="180" y="101" width="100" height="12" forecolor="#828282" uuid="c0818c99-fdba-4662-be7d-e61aa9cf485b">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tanggal Pencapaian]]></text>
+			</staticText>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="180" y="113" width="130" height="12" uuid="8b0353dd-dda8-4030-875b-e5d1864dcb5d">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" isUnderline="false"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement x="451" y="101" width="100" height="12" forecolor="#828282" uuid="e56178b4-b5a8-4e3c-a676-701634e30451">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nominal Goal]]></text>
+			</staticText>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="421" y="113" width="130" height="12" uuid="d2c6b17e-e785-410f-b690-11d55305d219">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Arial" isUnderline="false"/>
+				</textElement>
 			</textField>
 		</band>
 	</pageHeader>
@@ -234,6 +250,12 @@
 			</line>
 			<line>
 				<reportElement x="0" y="43" width="551" height="1" forecolor="#6F8AAD" uuid="90375e2c-c528-41ea-980b-3ff5e655e4eb"/>
+				<graphicElement>
+					<pen lineWidth="1.5"/>
+				</graphicElement>
+			</line>
+			<line>
+				<reportElement x="0" y="0" width="551" height="1" forecolor="#6F8AAD" uuid="f143e828-0827-4c44-805c-7ddd76032614"/>
 				<graphicElement>
 					<pen lineWidth="1.5"/>
 				</graphicElement>

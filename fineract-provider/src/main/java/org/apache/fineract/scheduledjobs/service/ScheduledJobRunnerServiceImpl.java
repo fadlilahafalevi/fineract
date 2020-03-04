@@ -702,10 +702,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				logger.debug("Start ...." + accountNumber);
 				
 				String pdfFileName = outUrl + File.separator + "Sub_" + accountNumber + ".pdf";
-				String reportMainUrl = reportUrl + reportNameSubSavings;
+				String reportSubUrl = reportUrl + reportNameSubSavings;
 				
-				/*
-				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl);
+				JasperReport jasperReport = JasperCompileManager.compileReport(reportSubUrl);
 				
 				// Create arguments
 				HashMap<String, Object> hm = new HashMap<String, Object>();
@@ -719,7 +718,6 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
 				// Export pdf file
 				JasperExportManager.exportReportToPdfFile(jprint, pdfFileName);
-				*/
 
 				logger.debug("Done exporting reports to pdf for " + accountNumber);
 			} catch (Exception e) {
