@@ -36,7 +36,6 @@ import org.apache.fineract.infrastructure.security.service.RandomPasswordGenerat
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
-import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.service.SavingsProductWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +61,7 @@ public class AccountNumberGenerator {
 	}
 
     private final static int maxLength = 9;
+    private final static int maxLengthDeposito = 12;
 
     private final static String ID = "id";
     private final static String CLIENT_TYPE = "clientType";
@@ -95,7 +95,6 @@ public class AccountNumberGenerator {
         propertyMap.put(ID, savingsAccount.getId().toString());
         propertyMap.put(OFFICE_NAME, savingsAccount.office().getName());
         propertyMap.put(SAVINGS_PRODUCT_SHORT_NAME, savingsAccount.savingsProduct().getShortName());
-        
 		/*
 		 * Integer lastSequence =
 		 * savingsAccount.savingsProduct().getLastSequenceAccountNumber(); if
@@ -108,7 +107,7 @@ public class AccountNumberGenerator {
         String accountNumber = null;
         
         try {
-        	accountNumber = assembleAccountNumber(savingsAccount.savingsProduct().getShortName(), accountNumberFormat, propertyMap);
+        	accountNumber = assembleAccountNumber(savingsAccount.savingsProduct().getShortName(), accountNumberFormat, propertyMap, savingsAccount.depositAccountType().isFixedDeposit());
         } catch (SQLException e) {
         	e.printStackTrace();
         }
@@ -117,7 +116,7 @@ public class AccountNumberGenerator {
     }
 
 	public String assembleAccountNumber(String shortProductName, AccountNumberFormat accountNumberFormat,
-			Map<String, String> propertyMap) throws SQLException {
+			Map<String, String> propertyMap, Boolean isDepositoAccount) throws SQLException {
 		final JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
         
     	final Connection connection = DataSourceUtils.getConnection(this.dataSourceServiceFactory.determineDataSourceService().retrieveDataSource());
@@ -134,10 +133,14 @@ public class AccountNumberGenerator {
         jdbcTemplate.update(insertSqlBuilder.toString());
     	
     	final Long autoIncrement = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
-        
         propertyMap.put(LAST_SEQUENCE, String.valueOf(autoIncrement));
         
-        String accountNumberGenerated = generateSavingsAccountNumber(propertyMap, accountNumberFormat);
+        int maxLengthSequence = AccountNumberGenerator.maxLength;
+        if (isDepositoAccount) {
+        	maxLengthSequence = AccountNumberGenerator.maxLengthDeposito;
+        }
+        
+        String accountNumberGenerated = generateSavingsAccountNumber(propertyMap, accountNumberFormat, maxLengthSequence);
         
         final StringBuilder updateSqlBuilder = new StringBuilder(900);
         updateSqlBuilder.append("UPDATE s_sp_").append(shortProductName);
@@ -194,12 +197,12 @@ public class AccountNumberGenerator {
         return accountNumber;
     }
     
-    private String generateSavingsAccountNumber(Map<String, String> propertyMap, AccountNumberFormat accountNumberFormat) {
+    private String generateSavingsAccountNumber(Map<String, String> propertyMap, AccountNumberFormat accountNumberFormat, int maxLengthSequence) {
     	String shortName = propertyMap.get(SAVINGS_PRODUCT_SHORT_NAME);
     	if (!StringUtils.isNumeric(shortName)) {
     		throw new PlatformApiDataValidationException("error.msg.short.product.name.must.numeric", "Short Product Name must numeric", null);
     	}
-    	String accountNumber = propertyMap.get(SAVINGS_PRODUCT_SHORT_NAME) + StringUtils.leftPad(propertyMap.get(LAST_SEQUENCE), AccountNumberGenerator.maxLength, '0');
+    	String accountNumber = propertyMap.get(SAVINGS_PRODUCT_SHORT_NAME) + StringUtils.leftPad(propertyMap.get(LAST_SEQUENCE), maxLengthSequence, '0');
     	accountNumber = accountNumber + generateCheckDigit(accountNumber);
     	return accountNumber;
     }
