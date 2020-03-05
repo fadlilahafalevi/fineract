@@ -18,12 +18,12 @@
 			sp.name as PRODUCTNAME,
 			sa.account_no as ACCOUNTNO,
 			concat(sa.currency_code, '(', oc.name, ')') AS CURRENCY,
-			DATE(sa.activatedon_date) AS TANGGALMULAI,
+			DATE(NOW()) AS TANGGALMULAI,
 			CONCAT(datp.deposit_period, ' ', rev.enum_value) AS TENOR,
 			datp.maturity_date AS TGLJATUHTEMPO,
 			CONCAT(FORMAT(sa.nominal_annual_interest_rate,2), ' % p.a.') AS SUKUBUNGA,
 			datp.deposit_amount AS JUMLAHPOKOK,
-			CONCAT(UCASE(SUBSTRING(CONCAT(f_terbilang(datp.deposit_amount), 'Rupiah'), 1, 1)), LOWER(SUBSTRING(CONCAT(f_terbilang(datp.deposit_amount), 'Rupiah'), 2))) AS TERBILANG
+			UPPER(CONCAT(f_terbilang(datp.deposit_amount) , 'rupiah')) AS TERBILANG
 			
 			from m_savings_account sa 
 			left join m_deposit_account_term_and_preclosure datp on sa.id = datp.savings_account_id
@@ -32,7 +32,7 @@
 			left join m_organisation_currency oc on oc.code = sa.currency_code
 			left join r_enum_value rev on rev.enum_name = 'term_period_frequency_enum' and rev.enum_id = datp.deposit_period_frequency_enum
 			
-			WHERE sa.status_enum = 300 AND sa.deposit_type_enum = 200 AND sa.account_no = $P{accountNo}]]>
+			WHERE sa.deposit_type_enum = 200 AND sa.account_no = $P{accountNo}]]>
 	</queryString>
 	<field name="CLIENTNAME" class="java.lang.String"/>
 	<field name="PRODUCTNAME" class="java.lang.String"/>
@@ -45,7 +45,7 @@
 	<field name="JUMLAHPOKOK" class="java.math.BigDecimal"/>
 	<field name="TERBILANG" class="java.lang.String"/>
 	<title>
-		<band height="530" splitType="Stretch">
+		<band height="550" splitType="Stretch">
 			<staticText>
 				<reportElement positionType="Float" x="0" y="10" width="110" height="40" forecolor="#4BA6A8" uuid="063259d8-09d0-4637-92f8-d088a81ac37c"/>
 				<textElement verticalAlignment="Middle">
@@ -93,9 +93,12 @@
 				<textFieldExpression><![CDATA[$F{ACCOUNTNO}]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight">
-				<reportElement mode="Opaque" x="0" y="120" width="380" height="30" forecolor="#FFFFFF" backcolor="#4BA6A8" uuid="ddd54dc3-a10a-4b31-a5a1-90ae5072d7fc"/>
+				<reportElement mode="Opaque" x="0" y="120" width="380" height="30" forecolor="#FFFFFF" backcolor="#4BA6A8" uuid="ddd54dc3-a10a-4b31-a5a1-90ae5072d7fc">
+					<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
 					<font size="14" isBold="true"/>
+					<paragraph leftIndent="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{PRODUCTNAME}]]></textFieldExpression>
 			</textField>
@@ -174,6 +177,9 @@
 			</textField>
 			<rectangle>
 				<reportElement x="1" y="220" width="379" height="30" forecolor="rgba(0, 0, 0, 0.0)" backcolor="#4BA6A8" uuid="23049585-c424-463b-b0b2-4a3fb05aa9cf"/>
+				<graphicElement>
+					<pen lineWidth="0.0"/>
+				</graphicElement>
 			</rectangle>
 			<staticText>
 				<reportElement x="0" y="220" width="190" height="30" forecolor="#FFFFFF" uuid="410be36f-be1e-462d-9a43-085188f157e0"/>
@@ -214,10 +220,13 @@
 				<textFieldExpression><![CDATA[$F{TERBILANG}]]></textFieldExpression>
 			</textField>
 			<rectangle>
-				<reportElement x="-19" y="480" width="419" height="50" forecolor="rgba(0, 0, 0, 0.0)" backcolor="#4BA6A8" uuid="77c3e4ac-c242-4d04-b668-3a98e427aada"/>
+				<reportElement x="-20" y="500" width="419" height="50" forecolor="rgba(0, 0, 0, 0.0)" backcolor="#4BA6A8" uuid="77c3e4ac-c242-4d04-b668-3a98e427aada"/>
+				<graphicElement>
+					<pen lineWidth="0.0"/>
+				</graphicElement>
 			</rectangle>
 			<staticText>
-				<reportElement x="2" y="490" width="79" height="30" forecolor="#FFFFFF" uuid="2aeeabd9-f716-47cc-9675-b7e0f4bbeebf"/>
+				<reportElement x="1" y="510" width="79" height="30" forecolor="#FFFFFF" uuid="2aeeabd9-f716-47cc-9675-b7e0f4bbeebf"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
 					<font fontName="Arial" size="22" isBold="true" isItalic="false" isUnderline="false"/>
 					<paragraph lineSpacing="Proportional"/>
@@ -225,21 +234,21 @@
 				<text><![CDATA[ROYAL]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="93" y="480" width="158" height="48" forecolor="#FFFFFF" uuid="0390158e-b1de-487f-ac54-4ab6c3bd938c"/>
+				<reportElement x="92" y="500" width="158" height="48" forecolor="#FFFFFF" uuid="0390158e-b1de-487f-ac54-4ab6c3bd938c"/>
 				<textElement verticalAlignment="Middle">
 					<font size="7"/>
 				</textElement>
 				<text><![CDATA[PT. Bank Royal Tbk terdaftar dan diawasi oleh  Otoritas Jasa Keuangan (OJK) dan dijamin oleh Lembaga Penjamin Simpanan (LPS)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="256" y="480" width="79" height="48" forecolor="#FFFFFF" uuid="78545729-9f6e-4265-8f14-082a48ae47df"/>
+				<reportElement x="255" y="500" width="79" height="48" forecolor="#FFFFFF" uuid="78545729-9f6e-4265-8f14-082a48ae47df"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8"/>
 				</textElement>
 				<text><![CDATA[Customer Service 1500-365]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="337" y="496" width="58" height="19" forecolor="#FFFFFF" uuid="aa7cd5b6-9398-435c-8173-84bfbb89cc57"/>
+				<reportElement x="336" y="516" width="58" height="19" forecolor="#FFFFFF" uuid="aa7cd5b6-9398-435c-8173-84bfbb89cc57"/>
 				<textElement textAlignment="Center" verticalAlignment="Top">
 					<font size="7" isItalic="true"/>
 				</textElement>

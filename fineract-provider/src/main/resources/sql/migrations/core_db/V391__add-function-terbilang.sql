@@ -1,5 +1,5 @@
 DELIMITER //
-CREATE FUNCTION `f_terbilang`(angka BIGINT) RETURNS text DETERMINISTIC 
+CREATE FUNCTION `f_terbilang`(angka BIGINT) RETURNS varchar(255) DETERMINISTIC 
 BEGIN
     DECLARE v_result TEXT;
     CALL p_terbilang(angka, v_result);
