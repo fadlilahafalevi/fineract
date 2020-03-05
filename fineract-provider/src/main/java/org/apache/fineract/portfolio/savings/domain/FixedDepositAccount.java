@@ -589,8 +589,15 @@ public class FixedDepositAccount extends SavingsAccount {
                 isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
 
         final Money accountBalance = Money.of(getCurrency(), getAccountBalance());
-        final Money maturityAmount = accountBalance.minus(interestPostedToDate).plus(interestEarnedTillDate);
+        Money maturityAmount = accountBalance.minus(interestPostedToDate).plus(interestEarnedTillDate);
 
+        final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
+        
+        if (postingPeriodType.getValue().equals(SavingsPostingInterestPeriodType.ENDOFPERIOD.getValue())
+        		&& !preMatureDate.equals(this.accountTermAndPreClosure.getMaturityLocalDate())) {
+        	maturityAmount = Money.of(getCurrency(), this.accountTermAndPreClosure.depositAmount());
+        }
+        
         return maturityAmount.getAmount();
     }
 
