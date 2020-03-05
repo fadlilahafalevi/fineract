@@ -19,10 +19,15 @@
 package org.apache.fineract.scheduledjobs.service;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -622,56 +627,68 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 	
 	@Override
 	@CronTarget(jobName = JobName.GENERATE_ESTATEMENT)
-	public void generateEstatement() {
-		Collection<String> listSavingsAccountNumber = this.savingsAccountRepository.findSavingAccountNumberByStatus(300);
+	public void generateEstatement() throws JobExecutionException {
+		Collection<String> listMainSavingsAccountNumber = this.savingsAccountRepository.findMainSavingAccountNumberByStatus(300);
+		Collection<String> listSubSavingsAccountNumber = this.savingsAccountRepository.findSubSavingAccountNumberByStatus(300);
 		
 		LocalDate today = DateUtils.getLocalDateOfTenant();
 		LocalDate startDate = today.withDayOfMonth(1);
 		LocalDate endDate = today.plusMonths(1).withDayOfMonth(1).minusDays(1);
-		String currentMonth = String.valueOf(today.getMonthOfYear());
+		String currentMonth = String.valueOf(today.monthOfYear().getAsText());
 		String currentYear = String.valueOf(today.getYear());
+		StringBuilder errorMsg = new StringBuilder();
+		String reportUrl = null;
+		String reportNameMainSavings = "eStatement_R.jrxml";
+		String reportNameSubSavings = "eStatementSub_R.jrxml";
+		String reportMainUrl = null;
+		String reportSubUrl = null;
 		
 		String outUrl = System.getProperty("user.home") + File.separator + "eStatement" + File.separator + currentMonth + "-" + currentYear;
 		File outDir = new File(outUrl);
 		outDir.mkdirs();
 		
-		for (String accountNumber : listSavingsAccountNumber) {
+		FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
+		final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
+		String tenantUrl = driverConfig.constructProtocol(tenantConnection.getSchemaServer(),
+				tenantConnection.getSchemaServerPort(), tenantConnection.getSchemaName());
+
+		String dbUrl = tenantUrl;
+		String dbDriver = driverConfig.getDriverClassName();
+		String dbUname = tenantConnection.getSchemaUsername();
+		String dbPwd = tenantConnection.getSchemaPassword();
+		
+		// Load the JDBC driver
+		Connection conn = null;
+		try {
+			Class.forName(dbDriver);
+			conn = DriverManager.getConnection(dbUrl, dbUname, dbPwd);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		
+		if (tenantConnection.getSchemaServer().contains("localhost") || tenantConnection.getSchemaServer().contains("127.0.0.1")) {
+			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "report" + File.separator;
+		} else {
+			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "WEB-INF" + File.separator + "classes" + File.separator + "report" + File.separator;
+			reportUrl = reportUrl.replace("bin", "webapps");
+		}
+		
+
+		for (String accountNumber : listMainSavingsAccountNumber) {
 			try {
 				logger.debug("Start ...." + accountNumber);
 				
-				// Get jasper report
-				String reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "report" + File.separator;
+				String pdfFileName = outUrl + File.separator + "Main_" + accountNumber + ".pdf";
+				reportMainUrl = reportUrl + reportNameMainSavings;
 				
-				String pdfFileName = outUrl + File.separator + accountNumber + ".pdf";
+				JasperReport jasperReport = JasperCompileManager.compileReport(reportMainUrl);
 				
-				JasperReport jasperReport = JasperCompileManager.compileReport(reportUrl + "eStatement_R.jrxml");
-				
-				FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
-				final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
-				String tenantUrl = driverConfig.constructProtocol(tenantConnection.getSchemaServer(),
-						tenantConnection.getSchemaServerPort(), tenantConnection.getSchemaName());
-
-				// String dbUrl = props.getProperty("jdbc.url");
-				String dbUrl = tenantUrl;
-				// String dbDriver = props.getProperty("jdbc.driver");
-				String dbDriver = driverConfig.getDriverClassName();
-				// String dbUname = props.getProperty("db.username");
-				String dbUname = tenantConnection.getSchemaUsername();
-				// String dbPwd = props.getProperty("db.password");
-				String dbPwd = tenantConnection.getSchemaPassword();
-
-				// Load the JDBC driver
-				Class.forName(dbDriver);
-				// Get the connection
-				Connection conn = DriverManager.getConnection(dbUrl, dbUname, dbPwd);
-
 				// Create arguments
-				// Map params = new HashMap();
 				HashMap<String, Object> hm = new HashMap<String, Object>();
 				hm.put("accountNumber", accountNumber);
-				hm.put("startDate", startDate);
-				hm.put("endDate", endDate);
-				hm.put("period", currentMonth + "-" + currentYear);
+				hm.put("startDate", startDate.toString());
+				hm.put("endDate", endDate.toString());
+				hm.put("period", currentMonth + " " + currentYear);
 
 				// Generate jasper print
 				JasperPrint jprint = (JasperPrint) JasperFillManager.fillReport(jasperReport, hm, conn);
@@ -681,8 +698,50 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
 				logger.debug("Done exporting reports to pdf for " + accountNumber);
 			} catch (Exception e) {
-				System.out.print("Exceptiion" + e);
+				logger.debug("Error for Main Account : " + accountNumber);
+				logger.debug("JRXML File : " + reportMainUrl);
+				StringWriter errors = new StringWriter();
+				e.printStackTrace(new PrintWriter(errors));
+				e.printStackTrace();
+				errorMsg.append("Error for Main Account : ").append(accountNumber).append(" , " + errors.toString());
 			}
+		}
+		
+		for (String accountNumber : listSubSavingsAccountNumber) {
+			try {
+				logger.debug("Start ...." + accountNumber);
+				
+				String pdfFileName = outUrl + File.separator + "Sub_" + accountNumber + ".pdf";
+				reportSubUrl = reportUrl + reportNameSubSavings;
+				
+				JasperReport jasperReport = JasperCompileManager.compileReport(reportSubUrl);
+				
+				// Create arguments
+				HashMap<String, Object> hm = new HashMap<String, Object>();
+				hm.put("accountNumber", accountNumber);
+				hm.put("startDate", startDate.toString());
+				hm.put("endDate", endDate.toString());
+				hm.put("period", currentMonth + " " + currentYear);
+
+				// Generate jasper print
+				JasperPrint jprint = (JasperPrint) JasperFillManager.fillReport(jasperReport, hm, conn);
+
+				// Export pdf file
+				JasperExportManager.exportReportToPdfFile(jprint, pdfFileName);
+
+				logger.debug("Done exporting reports to pdf for " + accountNumber);
+			} catch (Exception e) {
+				logger.debug("Error for Sub Account " + accountNumber);
+				logger.debug("JRXML File : " + reportMainUrl);
+				StringWriter errors = new StringWriter();
+				e.printStackTrace(new PrintWriter(errors));
+				e.printStackTrace();
+				errorMsg.append("Error for Sub Account : ").append(accountNumber).append(" , " + errors.toString());
+			}
+		}
+		
+		if (errorMsg.length() > 0) {
+			throw new JobExecutionException(errorMsg.toString());
 		}
 	}
 }
