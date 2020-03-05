@@ -211,7 +211,7 @@ public class DepositProductDataValidator {
         baseDataValidator.reset().parameter(nameParamName).value(name).notBlank().notExceedingLengthOf(100);
 
         final String shortName = fromApiJsonHelper.extractStringNamed(shortNameParamName, element);
-        baseDataValidator.reset().parameter(shortNameParamName).value(shortName).notBlank().notExceedingLengthOf(4);
+        baseDataValidator.reset().parameter(shortNameParamName).value(shortName).notBlank().notExceedingLengthOf(2).matchesRegularExpression("^[0-9]*$");
 
         final String description = fromApiJsonHelper.extractStringNamed(descriptionParamName, element);
         baseDataValidator.reset().parameter(descriptionParamName).value(description).notBlank().notExceedingLengthOf(500);
@@ -419,7 +419,7 @@ public class DepositProductDataValidator {
 
         if (fromApiJsonHelper.parameterExists(shortNameParamName, element)) {
             final String shortName = fromApiJsonHelper.extractStringNamed(shortNameParamName, element);
-            baseDataValidator.reset().parameter(shortNameParamName).value(shortName).notBlank().notExceedingLengthOf(4);
+            baseDataValidator.reset().parameter(shortNameParamName).value(shortName).notBlank().notExceedingLengthOf(2).matchesRegularExpression("^[0-9]*$");;
         }
 
         if (fromApiJsonHelper.parameterExists(descriptionParamName, element)) {

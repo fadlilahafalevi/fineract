@@ -28,4 +28,6 @@ public interface SavingsProductWritePlatformService {
     CommandProcessingResult update(Long productId, JsonCommand command);
 
     CommandProcessingResult delete(Long productId);
+
+	void createTableForSequenceAccountNumber(String shortProductName);
 }
