@@ -19,6 +19,8 @@
 package org.apache.fineract.scheduledjobs.service;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -638,6 +640,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 		String reportUrl = null;
 		String reportNameMainSavings = "eStatement_R.jrxml";
 		String reportNameSubSavings = "eStatementSub_R.jrxml";
+		String reportMainUrl = null;
+		String reportSubUrl = null;
 		
 		String outUrl = System.getProperty("user.home") + File.separator + "eStatement" + File.separator + currentMonth + "-" + currentYear;
 		File outDir = new File(outUrl);
@@ -668,13 +672,14 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "WEB-INF" + File.separator + "classes" + File.separator + "report" + File.separator;
 			reportUrl = reportUrl.replace("bin", "webapps");
 		}
+		
 
 		for (String accountNumber : listMainSavingsAccountNumber) {
 			try {
 				logger.debug("Start ...." + accountNumber);
 				
 				String pdfFileName = outUrl + File.separator + "Main_" + accountNumber + ".pdf";
-				String reportMainUrl = reportUrl + reportNameMainSavings;
+				reportMainUrl = reportUrl + reportNameMainSavings;
 				
 				JasperReport jasperReport = JasperCompileManager.compileReport(reportMainUrl);
 				
@@ -693,7 +698,12 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
 				logger.debug("Done exporting reports to pdf for " + accountNumber);
 			} catch (Exception e) {
-				errorMsg.append("Error for ").append(accountNumber).append(e.getMessage().toString());
+				logger.debug("Error for Main Account : " + accountNumber);
+				logger.debug("JRXML File : " + reportMainUrl);
+				StringWriter errors = new StringWriter();
+				e.printStackTrace(new PrintWriter(errors));
+				e.printStackTrace();
+				errorMsg.append("Error for Main Account : ").append(accountNumber).append(" , " + errors.toString());
 			}
 		}
 		
@@ -702,7 +712,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				logger.debug("Start ...." + accountNumber);
 				
 				String pdfFileName = outUrl + File.separator + "Sub_" + accountNumber + ".pdf";
-				String reportSubUrl = reportUrl + reportNameSubSavings;
+				reportSubUrl = reportUrl + reportNameSubSavings;
 				
 				JasperReport jasperReport = JasperCompileManager.compileReport(reportSubUrl);
 				
@@ -721,7 +731,12 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
 				logger.debug("Done exporting reports to pdf for " + accountNumber);
 			} catch (Exception e) {
-				errorMsg.append("Error for ").append(accountNumber).append(e.getMessage().toString());
+				logger.debug("Error for Sub Account " + accountNumber);
+				logger.debug("JRXML File : " + reportMainUrl);
+				StringWriter errors = new StringWriter();
+				e.printStackTrace(new PrintWriter(errors));
+				e.printStackTrace();
+				errorMsg.append("Error for Sub Account : ").append(accountNumber).append(" , " + errors.toString());
 			}
 		}
 		
