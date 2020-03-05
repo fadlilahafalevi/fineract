@@ -834,7 +834,21 @@ public class FixedDepositAccount extends SavingsAccount {
         return null;
     }
     
-    @Override
+    /**
+	 * @return the accountTermAndPreClosure
+	 */
+	public DepositAccountTermAndPreClosure getAccountTermAndPreClosure() {
+		return accountTermAndPreClosure;
+	}
+
+	/**
+	 * @param accountTermAndPreClosure the accountTermAndPreClosure to set
+	 */
+	public void setAccountTermAndPreClosure(DepositAccountTermAndPreClosure accountTermAndPreClosure) {
+		this.accountTermAndPreClosure = accountTermAndPreClosure;
+	}
+
+	@Override
     public void loadLazyCollections() {
     	super.loadLazyCollections();
     	this.chart.getId() ;

@@ -300,6 +300,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     }
 
 	public void generateEbilyet(final FixedDepositAccount account) {
+		
 		String outUrl = System.getProperty("user.home") + File.separator + "eBilyet";
 		File outDir = new File(outUrl);
 		outDir.mkdirs();
@@ -344,6 +345,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 			// Create arguments
 			HashMap<String, Object> hm = new HashMap<String, Object>();
 			hm.put("accountNo", account.getAccountNumber());
+			hm.put("maturityDate", account.getAccountTermAndPreClosure().getMaturityLocalDate().toDate());
+			hm.put("activationDate", account.getActivationLocalDate().toDate());
 
 			// Generate jasper print
 			JasperPrint jprint = (JasperPrint) JasperFillManager.fillReport(jasperReport, hm, conn);

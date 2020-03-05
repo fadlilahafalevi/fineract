@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.11.0.final using JasperReports Library version 6.11.0-0c4056ccaa4d25a5a8c45672d2f764ea3498bebb  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="eBilyet" pageWidth="420" pageHeight="595" columnWidth="380" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="e4aeb712-be71-452c-befd-c3d4466cda37">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="eBilyet" pageWidth="420" pageHeight="595" columnWidth="380" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="0" uuid="e4aeb712-be71-452c-befd-c3d4466cda37">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sample DB"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
@@ -10,17 +11,16 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sample DB"/>
 	<parameter name="accountNo" class="java.lang.String"/>
+	<parameter name="maturityDate" class="java.util.Date"/>
+	<parameter name="activationDate" class="java.util.Date"/>
 	<queryString>
 		<![CDATA[select 
 			c.display_name as CLIENTNAME,
-			sp.name as PRODUCTNAME,
+			UPPER(sp.name) as PRODUCTNAME,
 			sa.account_no as ACCOUNTNO,
 			concat(sa.currency_code, '(', oc.name, ')') AS CURRENCY,
-			DATE(NOW()) AS TANGGALMULAI,
 			CONCAT(datp.deposit_period, ' ', rev.enum_value) AS TENOR,
-			datp.maturity_date AS TGLJATUHTEMPO,
 			CONCAT(FORMAT(sa.nominal_annual_interest_rate,2), ' % p.a.') AS SUKUBUNGA,
 			datp.deposit_amount AS JUMLAHPOKOK,
 			UPPER(CONCAT(f_terbilang(datp.deposit_amount) , 'rupiah')) AS TERBILANG
@@ -38,14 +38,12 @@
 	<field name="PRODUCTNAME" class="java.lang.String"/>
 	<field name="ACCOUNTNO" class="java.lang.String"/>
 	<field name="CURRENCY" class="java.lang.String"/>
-	<field name="TANGGALMULAI" class="java.util.Date"/>
-	<field name="TGLJATUHTEMPO" class="java.util.Date"/>
 	<field name="SUKUBUNGA" class="java.lang.String"/>
 	<field name="TENOR" class="java.lang.String"/>
 	<field name="JUMLAHPOKOK" class="java.math.BigDecimal"/>
 	<field name="TERBILANG" class="java.lang.String"/>
 	<title>
-		<band height="550" splitType="Stretch">
+		<band height="555" splitType="Stretch">
 			<staticText>
 				<reportElement positionType="Float" x="0" y="10" width="110" height="40" forecolor="#4BA6A8" uuid="063259d8-09d0-4637-92f8-d088a81ac37c"/>
 				<textElement verticalAlignment="Middle">
@@ -61,7 +59,7 @@
 				<textFieldExpression><![CDATA[$F{CLIENTNAME}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement stretchType="RelativeToTallestObject" x="1" y="73" width="100" height="12" forecolor="#828282" uuid="cf9d6593-fd6f-4f54-a523-64948209d319"/>
+				<reportElement stretchType="RelativeToTallestObject" x="0" y="73" width="100" height="12" forecolor="#828282" uuid="cf9d6593-fd6f-4f54-a523-64948209d319"/>
 				<textElement verticalAlignment="Top" markup="none">
 					<font fontName="Arial" isBold="true"/>
 				</textElement>
@@ -116,7 +114,7 @@
 				<textElement textAlignment="Center">
 					<font fontName="Arial" size="9" isUnderline="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{TANGGALMULAI}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{activationDate}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement x="90" y="160" width="1" height="23" forecolor="#4BA6A8" uuid="56a59708-13a7-4fdd-848a-85ebb3f3c610"/>
@@ -154,7 +152,7 @@
 				<textElement textAlignment="Center">
 					<font fontName="Arial" size="9" isUnderline="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{TGLJATUHTEMPO}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{maturityDate}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement x="280" y="160" width="1" height="23" forecolor="#4BA6A8" uuid="79cdaf47-c990-46f0-80ed-c649a0fb2b00"/>
@@ -220,7 +218,10 @@
 				<textFieldExpression><![CDATA[$F{TERBILANG}]]></textFieldExpression>
 			</textField>
 			<rectangle>
-				<reportElement x="-20" y="500" width="419" height="50" forecolor="rgba(0, 0, 0, 0.0)" backcolor="#4BA6A8" uuid="77c3e4ac-c242-4d04-b668-3a98e427aada"/>
+				<reportElement x="-20" y="500" width="420" height="55" forecolor="rgba(0, 0, 0, 0.0)" backcolor="#4BA6A8" uuid="77c3e4ac-c242-4d04-b668-3a98e427aada">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
 				<graphicElement>
 					<pen lineWidth="0.0"/>
 				</graphicElement>
