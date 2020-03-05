@@ -82,7 +82,9 @@ import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.group.exception.GroupNotActiveException;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
+import org.apache.fineract.portfolio.paymentdetail.PaymentDetailConstants;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetailRepository;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
@@ -156,6 +158,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final BusinessEventNotifierService businessEventNotifierService;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
+    private final PaymentDetailRepository paymentDetailRepository;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -179,7 +182,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final AppUserRepositoryWrapper appuserRepository, final StandingInstructionRepository standingInstructionRepository,
             final BusinessEventNotifierService businessEventNotifierService,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-            final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService) {
+            final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService,
+            final PaymentDetailRepository paymentDetailRepository) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -207,6 +211,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.businessEventNotifierService = businessEventNotifierService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
+        this.paymentDetailRepository = paymentDetailRepository;
     }
 
     @Transactional
@@ -351,6 +356,15 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 		if (transactionDate.equals(todayDate)) {
 
 			final Map<String, Object> changes = new LinkedHashMap<>();
+			
+			final String receiptNumber = command.stringValueOfParameterNamed(PaymentDetailConstants.receiptNumberParamName);
+			if (receiptNumber != null && !StringUtils.isEmpty(receiptNumber)) {
+				String paymentDetailReceiptNumber = this.paymentDetailRepository.findPaymentDetailBasedOnReceiptNumber(receiptNumber);
+				if (paymentDetailReceiptNumber != null) {
+					throw new PlatformApiDataValidationException("error.msg.receipt.number.duplicate", "Duplicate Receipt Number : '" + paymentDetailReceiptNumber +"'", null);
+				}
+			}
+			
 			final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService
 					.createAndPersistPaymentDetail(command, changes);
 			boolean isAccountTransfer = false;
@@ -603,6 +617,15 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 		final LocalDate todayDate = LocalDate.now();
 		if (transactionDate.equals(todayDate)) {
 			final Map<String, Object> changes = new LinkedHashMap<>();
+			final String receiptNumber = command.stringValueOfParameterNamed(PaymentDetailConstants.receiptNumberParamName);
+			
+			if (receiptNumber != null) {
+				String paymentDetailReceiptNumber = this.paymentDetailRepository.findPaymentDetailBasedOnReceiptNumber(receiptNumber);
+				if (paymentDetailReceiptNumber != null) {
+					throw new PlatformApiDataValidationException("error.msg.receipt.number.duplicate", "Duplicate Receipt Number : '" + paymentDetailReceiptNumber + "'", null);
+				}
+			}
+			
 			final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService
 					.createAndPersistPaymentDetail(command, changes);
 			checkClientOrGroupActive(account);
