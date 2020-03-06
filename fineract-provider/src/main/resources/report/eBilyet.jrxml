@@ -23,7 +23,7 @@
 			CONCAT(datp.deposit_period, ' ', rev.enum_value) AS TENOR,
 			CONCAT(FORMAT(sa.nominal_annual_interest_rate,2), ' % p.a.') AS SUKUBUNGA,
 			datp.deposit_amount AS JUMLAHPOKOK,
-			UPPER(CONCAT(f_terbilang(datp.deposit_amount) , 'rupiah')) AS TERBILANG
+			proper_case(CONCAT(f_terbilang(datp.deposit_amount) , 'rupiah')) AS TERBILANG
 			
 			from m_savings_account sa 
 			left join m_deposit_account_term_and_preclosure datp on sa.id = datp.savings_account_id
