@@ -589,8 +589,15 @@ public class FixedDepositAccount extends SavingsAccount {
                 isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
 
         final Money accountBalance = Money.of(getCurrency(), getAccountBalance());
-        final Money maturityAmount = accountBalance.minus(interestPostedToDate).plus(interestEarnedTillDate);
+        Money maturityAmount = accountBalance.minus(interestPostedToDate).plus(interestEarnedTillDate);
 
+        final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
+        
+        if (postingPeriodType.getValue().equals(SavingsPostingInterestPeriodType.ENDOFPERIOD.getValue())
+        		&& !preMatureDate.equals(this.accountTermAndPreClosure.getMaturityLocalDate())) {
+        	maturityAmount = Money.of(getCurrency(), this.accountTermAndPreClosure.depositAmount());
+        }
+        
         return maturityAmount.getAmount();
     }
 
@@ -624,7 +631,11 @@ public class FixedDepositAccount extends SavingsAccount {
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate  postAsInterestOn) {
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+        LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+        
+        if(this.interestPostingPeriodType.equals(SavingsPostingInterestPeriodType.ENDOFPERIOD.getValue())) {
+        	interestPostingUpToDate = calculateMaturityDate();
+        }
         return super.calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postAsInterestOn);
     }
