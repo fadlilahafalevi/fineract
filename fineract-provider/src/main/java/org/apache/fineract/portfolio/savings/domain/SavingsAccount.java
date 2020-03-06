@@ -493,7 +493,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate,
             final Boolean isTaxApplicable) {
         final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer,
-                isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, false);
         Money interestPostedToDate = Money.zero(this.currency);
 
         boolean recalucateDailyBalanceDetails = false;
@@ -691,13 +691,13 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
      * calculate the amount of interest due at the end of each 'crediting'
      * period check if an existing 'interest posting' transaction exists for
      * date and matches the amount posted
-     * 
      * @param isInterestTransfer
      *            TODO
+     * @param isAccrualPosting TODO
      */   
        
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate upToInterestCalculationDate,
-            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate) {
+            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate, boolean isAccrualPosting) {
 
         // no openingBalance concept supported yet but probably will to allow
         // for migrations.
@@ -797,8 +797,8 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
     //afad
     //this method is using for passing the fixed deposit accrual
     public List<PostingPeriod> calculateInterestUsingFixedDepositAccrual(final MathContext mc, final LocalDate upToInterestCalculationDate,
-            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate) {
-    	return this.calculateInterestUsing(mc, upToInterestCalculationDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate postInterestOnDate, boolean isAccrualPosting) {
+    	return this.calculateInterestUsing(mc, upToInterestCalculationDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, isAccrualPosting);
     }
 
     private BigDecimal getEffectiveOverdraftInterestRateAsFraction(MathContext mc) {
@@ -2246,7 +2246,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
             } else {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
                 this.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                        financialYearBeginningMonth, postInterestAsOnDate);
+                        financialYearBeginningMonth, postInterestAsOnDate, false);
             }
         }
     }
