@@ -631,7 +631,11 @@ public class FixedDepositAccount extends SavingsAccount {
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
             final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate  postAsInterestOn) {
-        final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+        LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
+        
+        if(this.interestPostingPeriodType.equals(SavingsPostingInterestPeriodType.ENDOFPERIOD.getValue())) {
+        	interestPostingUpToDate = calculateMaturityDate();
+        }
         return super.calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
                 financialYearBeginningMonth, postAsInterestOn);
     }
