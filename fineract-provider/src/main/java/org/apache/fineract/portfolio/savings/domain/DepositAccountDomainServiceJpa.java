@@ -278,7 +278,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         }
 
         account.close(user, command, tenantsTodayDate, changes);
-        this.savingsAccountRepository.save(account);
+        this.savingsAccountRepository.saveAndFlush(account);
 
 //        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
 

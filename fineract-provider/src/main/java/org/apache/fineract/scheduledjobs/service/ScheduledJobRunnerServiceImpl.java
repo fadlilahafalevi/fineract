@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,11 +47,14 @@ import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.joda.time.LocalDate;
 import org.joda.time.DateTime;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.boot.JDBCDriverConfig;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.RoutingDataSourceServiceFactory;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
@@ -61,8 +65,10 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.organisation.provisioning.data.ProvisioningCriteriaData;
 import org.apache.fineract.organisation.provisioning.data.ProvisioningCriteriaDefinitionData;
 import org.apache.fineract.organisation.provisioning.service.ProvisioningCriteriaReadPlatformService;
+import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
+import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepository;
@@ -84,6 +90,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import com.google.gson.JsonElement;
 
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
@@ -111,8 +119,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final LoanCollectibilityRepositoryWrapper loanCollectibilityRepositoryWrapper; 
     private final LoanCollectibilityReadService loanCollectibilityReadService;
     private final ProvisioningCriteriaReadPlatformService provisioningCriteriaReadPlatformService;
-    private final LoanRepositoryWrapper loanRepositoryWrapper;
     private final SavingsAccountRepository savingsAccountRepository;
+	private final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer;
+	private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -127,8 +136,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final LoanCollectibilityRepositoryWrapper loanCollectibilityRepositoryWrapper,
             final LoanCollectibilityReadService loanCollectibilityReadService,
             final ProvisioningCriteriaReadPlatformService provisioningCriteriaReadPlatformService,
-            final LoanRepositoryWrapper loanRepositoryWrapper,
-            final SavingsAccountRepository savingsAccountRepository) {
+            final SavingsAccountRepository savingsAccountRepository,
+            final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer,
+            final FromJsonHelper fromApiJsonHelper) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -141,8 +151,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.loanCollectibilityRepositoryWrapper = loanCollectibilityRepositoryWrapper;
         this.loanCollectibilityReadService = loanCollectibilityReadService;
         this.provisioningCriteriaReadPlatformService = provisioningCriteriaReadPlatformService;
-        this.loanRepositoryWrapper = loanRepositoryWrapper;
         this.savingsAccountRepository = savingsAccountRepository;
+        this.toApiJsonSerializer = toApiJsonSerializer;
+        this.fromApiJsonHelper = fromApiJsonHelper;
     }
 
     @Transactional
@@ -737,6 +748,43 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				e.printStackTrace(new PrintWriter(errors));
 				e.printStackTrace();
 				errorMsg.append("Error for Sub Account : ").append(accountNumber).append(" , " + errors.toString());
+			}
+		}
+		
+		if (errorMsg.length() > 0) {
+			throw new JobExecutionException(errorMsg.toString());
+		}
+	}
+	
+	@Override
+	@CronTarget(jobName = JobName.AUTO_CLOSE_DEPOSITS_ACCOUNT)
+	public void autoCloseDepositsAccount() throws JobExecutionException {
+		final LocalDate closedOnDate = DateUtils.getLocalDateOfTenant();
+		StringBuilder errorMsg = new StringBuilder();
+		
+		final Collection<DepositAccountData> depositAccounts = this.depositAccountReadPlatformService.retrieveForMaturedAccount();
+		
+		for (final DepositAccountData depositAccount : depositAccounts) {
+			try {
+				Map<String, Object> req = new LinkedHashMap<>();
+				req.put(DepositsApiConstants.closedOnDateParamName, formatter.print(closedOnDate));
+				req.put(DepositsApiConstants.onAccountClosureIdParamName, DepositAccountOnClosureType.TRANSFER_TO_SAVINGS.getValue());
+				req.put(DepositsApiConstants.toSavingsAccountIdParamName, depositAccount.getLinkedSavingsAccountId());
+				req.put(DepositsApiConstants.transferDescriptionParamName, "Post Interest From Deposits Account : "+ depositAccount.accountNo() + ", To Main Acccount : " + depositAccount.getLinkedSavingsAccountId());
+				req.put(DepositsApiConstants.localeParamName, "en");
+				req.put(DepositsApiConstants.dateFormatParamName, "yyyy-MM-dd");
+		
+				String apiRequestBodyAsJson = this.toApiJsonSerializer.serialize(req);
+				final JsonElement parsedCommand = this.fromApiJsonHelper.parse(apiRequestBodyAsJson);
+				JsonCommand command = JsonCommand.from(apiRequestBodyAsJson, parsedCommand, this.fromApiJsonHelper, null,
+						null, null, null, null, null, depositAccount.id(), null, null, null, null, null);
+				
+				this.depositAccountWritePlatformService.closeFDAccount(depositAccount.id(), command);
+			} catch (Exception e) {
+				StringWriter errors = new StringWriter();
+				e.printStackTrace(new PrintWriter(errors));
+				e.printStackTrace();
+				errorMsg.append("==== Error for close depositsaccount : ").append(depositAccount.accountNo()).append(" , " + errors.toString());
 			}
 		}
 		

@@ -54,7 +54,8 @@ public enum JobName {
 	GENERATE_LOAN_COLLECTIBILITY("Generate Loan Collectibility"),
 	ACCRUAL_INTEREST_FOR_SAVINGS("Accrual Interest For Savings"),
 	CLIENTS_SAVINGS_SUMMARY_TAX("Clients Savings Summary Tax"),
-	GENERATE_ESTATEMENT("Generate eStatement");
+	GENERATE_ESTATEMENT("Generate eStatement"),
+	AUTO_CLOSE_DEPOSITS_ACCOUNT("Auto Close Deposits Account");
 
     private final String name;
 
