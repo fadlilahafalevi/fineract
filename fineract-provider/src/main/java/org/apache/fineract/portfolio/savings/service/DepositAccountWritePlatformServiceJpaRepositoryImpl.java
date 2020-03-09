@@ -831,6 +831,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
     }
 
     @Override
+    @Transactional
     public CommandProcessingResult closeFDAccount(final Long savingsId, final JsonCommand command) {
         final AppUser user = this.context.authenticatedUser();
         final boolean isPreMatureClose = false;

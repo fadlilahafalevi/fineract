@@ -64,6 +64,7 @@ public class DepositAccountData {
     protected final boolean withHoldTax;
     protected final TaxGroupData taxGroup;
     protected EnumOptionData interestCompoundingType;
+    protected Long linkedSavingsAccountId;
 
     // associations
     protected final SavingsAccountSummaryData summary;
@@ -374,5 +375,19 @@ public class DepositAccountData {
 
 	public void setInterestCompoundingTypeOptions(Collection<EnumOptionData> interestCompoundingTypeOptions) {
 		this.interestCompoundingTypeOptions = interestCompoundingTypeOptions;
+	}
+
+	/**
+	 * @return the linkedSavingsAccountId
+	 */
+	public Long getLinkedSavingsAccountId() {
+		return linkedSavingsAccountId;
+	}
+
+	/**
+	 * @param linkedSavingsAccountId the linkedSavingsAccountId to set
+	 */
+	public void setLinkedSavingsAccountId(Long linkedSavingsAccountId) {
+		this.linkedSavingsAccountId = linkedSavingsAccountId;
 	}
 }
