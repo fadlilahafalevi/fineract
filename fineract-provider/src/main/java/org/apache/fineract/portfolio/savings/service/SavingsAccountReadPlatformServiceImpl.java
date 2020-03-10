@@ -251,6 +251,18 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             throw new SavingsAccountNotFoundException(accountId);
         }
     }
+    
+    @Override
+    public SavingsAccountData retrieveOneByAccountNumber(final String accountNo) {
+
+        try {
+            final String sql = "select " + this.savingAccountMapper.schema() + " where sa.account_no = ?";
+
+            return this.jdbcTemplate.queryForObject(sql, this.savingAccountMapper, new Object[] { accountNo });
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(accountNo);
+        }
+    }
 
     @Override
     public List<SavingsAccountData> retrieveByClientId(final Long clientId) {
@@ -274,7 +286,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.deposit_type_enum as depositType, ");
             sqlBuilder.append("c.id as clientId, c.display_name as clientName, ");
             sqlBuilder.append("g.id as groupId, g.display_name as groupName, ");
-            sqlBuilder.append("sp.id as productId, sp.name as productName, ");
+            sqlBuilder.append("sp.id as productId, sp.name as productName, sp.short_name as shortProductName, ");
             sqlBuilder.append("s.id fieldOfficerId, s.display_name as fieldOfficerName, ");
             sqlBuilder.append("sa.status_enum as statusEnum, ");
             sqlBuilder.append("sa.sub_status_enum as subStatusEnum, ");
@@ -392,6 +404,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
             final Long productId = rs.getLong("productId");
             final String productName = rs.getString("productName");
+            final String shortProductName = rs.getString("shortProductName");
 
             final Long fieldOfficerId = rs.getLong("fieldOfficerId");
             final String fieldOfficerName = rs.getString("fieldOfficerName");
@@ -595,6 +608,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     minBalanceForInterestCalculation, onHoldFunds, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, 
                     taxGroupData, lastActiveTransactionDate, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, onHoldAmount);
             savingsAccountData.setInterestCompoundingType(interestCompoundingType);
+            savingsAccountData.setShortProductName(shortProductName);
             return savingsAccountData;
         }
     }

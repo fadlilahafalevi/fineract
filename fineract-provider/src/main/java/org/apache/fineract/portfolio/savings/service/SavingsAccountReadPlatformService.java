@@ -95,4 +95,6 @@ public interface SavingsAccountReadPlatformService {
 			String startdate, String enddate, DepositAccountType depositAccountType, Long lastId, Long pageSize,
 			String transactionTypeValue);
 
+	SavingsAccountData retrieveOneByAccountNumber(String accountNo);
+
 }

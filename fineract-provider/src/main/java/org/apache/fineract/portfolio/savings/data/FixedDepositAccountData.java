@@ -52,6 +52,7 @@ public class FixedDepositAccountData extends DepositAccountData {
     private BigDecimal depositAmount;
     private BigDecimal maturityAmount;
     private LocalDate maturityDate;
+    private String maturityDate2;
     private Integer depositPeriod;
     private EnumOptionData depositPeriodFrequency;
     private BigDecimal activationCharge;
@@ -528,4 +529,32 @@ public class FixedDepositAccountData extends DepositAccountData {
     public void setActivationCharge(BigDecimal activationCharge) {
         this.activationCharge = activationCharge;
     }
+
+	/**
+	 * @return the maturityDate2
+	 */
+	public String getMaturityDate2() {
+		return maturityDate2;
+	}
+
+	/**
+	 * @param maturityDate2 the maturityDate2 to set
+	 */
+	public void setMaturityDate2(String maturityDate2) {
+		this.maturityDate2 = maturityDate2;
+	}
+
+	/**
+	 * @return the maturityDate
+	 */
+	public LocalDate getMaturityDate() {
+		return maturityDate;
+	}
+
+	/**
+	 * @param maturityDate the maturityDate to set
+	 */
+	public void setMaturityDate(LocalDate maturityDate) {
+		this.maturityDate = maturityDate;
+	}
 }
