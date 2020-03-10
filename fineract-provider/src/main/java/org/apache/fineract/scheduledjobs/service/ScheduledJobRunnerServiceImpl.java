@@ -787,7 +787,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				this.depositAccountWritePlatformService.closeFDAccount(depositAccount.id(), command);
 			} catch (Exception e) {
 				e.printStackTrace();
-				errorMsg.append("==== Error for close depositsaccount : ").append(depositAccount.accountNo());
+				errorMsg.append(" ==== Error for close depositsaccount : ").append(depositAccount.accountNo());
 			}
 		}
 		
