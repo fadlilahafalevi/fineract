@@ -1438,7 +1438,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Long id = rs.getLong("id");
             final String name = rs.getString("accountNumber");
             final Integer depositTypeId = JdbcSupport.getInteger(rs, "depositTypeId");
-            final Long linkedSavingsAccountId = rs.getLong("linkedSavingsAccountId");
+            final Long linkedSavingsAccountId = JdbcSupport.getLongDefaultToNullIfZero(rs, "linkedSavingsAccountId");
             final EnumOptionData depositType = (depositTypeId == null) ? null : SavingsEnumerations.depositType(depositTypeId);
 
             DepositAccountData depositAccountData = DepositAccountData.lookup(id, name, depositType);
