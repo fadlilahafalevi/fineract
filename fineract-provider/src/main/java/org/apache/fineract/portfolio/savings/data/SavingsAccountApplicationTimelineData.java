@@ -44,6 +44,7 @@ public class SavingsAccountApplicationTimelineData {
     private final String approvedByFirstname;
     private final String approvedByLastname;
     private final LocalDate activatedOnDate;
+    private String activatedOnDate2;
     private final String activatedByUsername;
     private final String activatedByFirstname;
     private final String activatedByLastname;
@@ -123,4 +124,18 @@ public class SavingsAccountApplicationTimelineData {
     public LocalDate getActivatedOnDate() {
         return activatedOnDate;
     }
+
+	/**
+	 * @return the activatedOnDate2
+	 */
+	public String getActivatedOnDate2() {
+		return activatedOnDate2;
+	}
+
+	/**
+	 * @param activatedOnDate2 the activatedOnDate2 to set
+	 */
+	public void setActivatedOnDate2(String activatedOnDate2) {
+		this.activatedOnDate2 = activatedOnDate2;
+	}
 }

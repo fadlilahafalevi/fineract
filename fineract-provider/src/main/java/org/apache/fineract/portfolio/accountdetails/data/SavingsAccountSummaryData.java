@@ -44,7 +44,7 @@ public class SavingsAccountSummaryData {
     private final BigDecimal accountBalance;
     //differentiate Individual, JLG or Group account
     private final EnumOptionData accountType;
-    private final SavingsAccountApplicationTimelineData timeline;
+    private SavingsAccountApplicationTimelineData timeline;
     private final SavingsAccountSubStatusEnumData subStatus;
     private final LocalDate lastActiveTransactionDate;
 
@@ -88,5 +88,19 @@ public class SavingsAccountSummaryData {
 
 	public Long getId() {
 		return id;
+	}
+
+	/**
+	 * @return the timeline
+	 */
+	public SavingsAccountApplicationTimelineData getTimeline() {
+		return timeline;
+	}
+
+	/**
+	 * @param timeline the timeline to set
+	 */
+	public void setTimeline(SavingsAccountApplicationTimelineData timeline) {
+		this.timeline = timeline;
 	}
 }

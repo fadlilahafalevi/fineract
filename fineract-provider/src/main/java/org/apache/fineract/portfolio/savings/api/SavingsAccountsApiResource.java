@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.savings.api;
 
 import io.swagger.annotations.*;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,6 +37,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -52,6 +54,7 @@ import org.apache.fineract.infrastructure.bulkimport.service.BulkImportWorkbookS
 import org.apache.fineract.infrastructure.core.api.ApiParameterHelper;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
@@ -65,8 +68,13 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -144,6 +152,45 @@ public class SavingsAccountsApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 		return this.toApiJsonSerializer.serialize(settings, products,
 				SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
+    }
+    
+    @POST
+    @Path("list")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String inquiryMultiAccount(final String apiRequestBodyAsJson, @Context final UriInfo uriInfo) throws JSONException {
+    	try {
+    		this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+    		
+    		JSONObject jsonObject = new JSONObject(apiRequestBodyAsJson);
+        	JSONArray jsonArray =  jsonObject.getJSONArray("accountNo");
+        	Collection<SavingsAccountData> savingsAccounts = new ArrayList<>();
+        	
+        	for(int i = 0; i < jsonArray.length(); i++) {
+        		String accountNo = jsonArray.getString(i);
+        		final SavingsAccountData savingsAccount = this.savingsAccountReadPlatformService.retrieveOneByAccountNumber(accountNo);
+        		SavingsAccountData modifiedSavingsAccount = SavingsAccountData.lookup(null, accountNo, savingsAccount.getDepositType());
+        		modifiedSavingsAccount.setShortProductName(savingsAccount.getShortProductName());
+        		modifiedSavingsAccount.setSavingsProductId(savingsAccount.getSavingsProductId());
+        		modifiedSavingsAccount.setSavingsProductName(savingsAccount.getSavingsProductName());
+        		modifiedSavingsAccount.setCurrency(savingsAccount.getCurrency());
+        		modifiedSavingsAccount.setStatus(savingsAccount.getStatus());
+        		modifiedSavingsAccount.setSubStatus(savingsAccount.getSubStatus());
+        		modifiedSavingsAccount.setAccountBalance(savingsAccount.getSummary().getAccountBalance());
+        		
+        		savingsAccounts.add(modifiedSavingsAccount);
+        	}
+        		
+            final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+    		return this.toApiJsonSerializer.serialize(settings, savingsAccounts,
+    				SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
+        } catch (ObjectOptimisticLockingFailureException lockingFailureException) {
+            throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations",
+                    "Concurrent Transactions being made on this savings account: " + lockingFailureException.getMessage());
+        } catch (CannotAcquireLockException cannotAcquireLockException) {
+            throw new PlatformDataIntegrityException("error.msg.savings.concurrent.operations.unable.to.acquire.lock",
+                    "Unable to acquir lock for this transaction: " + cannotAcquireLockException.getMessage());
+        }
     }
 
     @POST
