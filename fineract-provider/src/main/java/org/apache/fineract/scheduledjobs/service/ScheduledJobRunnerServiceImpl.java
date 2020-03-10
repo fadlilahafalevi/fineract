@@ -768,11 +768,16 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 			try {
 				Map<String, Object> req = new LinkedHashMap<>();
 				req.put(DepositsApiConstants.closedOnDateParamName, formatter.print(closedOnDate));
-				req.put(DepositsApiConstants.onAccountClosureIdParamName, DepositAccountOnClosureType.TRANSFER_TO_SAVINGS.getValue());
-				req.put(DepositsApiConstants.toSavingsAccountIdParamName, depositAccount.getLinkedSavingsAccountId());
 				req.put(DepositsApiConstants.transferDescriptionParamName, "Post Interest From Deposits Account : "+ depositAccount.accountNo() + ", To Main Acccount : " + depositAccount.getLinkedSavingsAccountId());
 				req.put(DepositsApiConstants.localeParamName, "en");
 				req.put(DepositsApiConstants.dateFormatParamName, "yyyy-MM-dd");
+				
+				if (depositAccount.getLinkedSavingsAccountId() == null) {
+					req.put(DepositsApiConstants.onAccountClosureIdParamName, DepositAccountOnClosureType.WITHDRAW_DEPOSIT.getValue());
+				} else {
+					req.put(DepositsApiConstants.onAccountClosureIdParamName, DepositAccountOnClosureType.TRANSFER_TO_SAVINGS.getValue());
+					req.put(DepositsApiConstants.toSavingsAccountIdParamName, depositAccount.getLinkedSavingsAccountId());
+				}
 		
 				String apiRequestBodyAsJson = this.toApiJsonSerializer.serialize(req);
 				final JsonElement parsedCommand = this.fromApiJsonHelper.parse(apiRequestBodyAsJson);
@@ -781,10 +786,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 				
 				this.depositAccountWritePlatformService.closeFDAccount(depositAccount.id(), command);
 			} catch (Exception e) {
-				StringWriter errors = new StringWriter();
-				e.printStackTrace(new PrintWriter(errors));
 				e.printStackTrace();
-				errorMsg.append("==== Error for close depositsaccount : ").append(depositAccount.accountNo()).append(" , " + errors.toString());
+				errorMsg.append("==== Error for close depositsaccount : ").append(depositAccount.accountNo());
 			}
 		}
 		
