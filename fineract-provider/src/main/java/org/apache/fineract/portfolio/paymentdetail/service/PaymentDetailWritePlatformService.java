@@ -41,4 +41,8 @@ public interface PaymentDetailWritePlatformService {
 
 	PaymentDetail createAndPersistPaymentDetailByNameAndSavings(JsonCommand command, Map<String, Object> changes,
 			String name, SavingsAccount savingsAccount);
+
+	PaymentDetail createPaymentDetailById(JsonCommand command, Map<String, Object> changes, Long id);
+
+	PaymentDetail createAndPersistPaymentDetailById(JsonCommand command, Map<String, Object> changes, Long id);
 }

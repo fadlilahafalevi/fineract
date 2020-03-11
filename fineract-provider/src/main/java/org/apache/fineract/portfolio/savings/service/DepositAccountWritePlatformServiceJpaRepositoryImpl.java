@@ -232,9 +232,9 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                     
                     PaymentDetail paymentType = null;
                     
-                    final String paymentTypeWithdraw = account.getPaymentTypeDepositoWithdraw();
+                    final Long paymentTypeWithdraw = account.getPaymentTypeDepositoWithdraw();
                     if ((paymentTypeWithdraw != null) && account.isTransferInterestToOtherAccount()) {
-                    	paymentType = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailByName(command, changes, paymentTypeWithdraw);
+                    	paymentType = this.paymentDetailWritePlatformService.createAndPersistPaymentDetailById(command, changes, paymentTypeWithdraw);
                     }
                     final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(account.getActivationLocalDate(),
                             amountForDeposit.getAmount(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS,
