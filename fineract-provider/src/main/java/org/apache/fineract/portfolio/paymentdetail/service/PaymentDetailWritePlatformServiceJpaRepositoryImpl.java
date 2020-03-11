@@ -89,7 +89,7 @@ public class PaymentDetailWritePlatformServiceJpaRepositoryImpl implements Payme
 	@Override
 	@Transactional
 	public PaymentDetail persistPaymentDetail(final PaymentDetail paymentDetail) {
-		return this.paymentDetailRepository.save(paymentDetail);
+		return this.paymentDetailRepository.saveAndFlush(paymentDetail);
 	}
 
 	@Override
