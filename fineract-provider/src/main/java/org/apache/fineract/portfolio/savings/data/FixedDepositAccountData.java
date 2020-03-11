@@ -579,4 +579,11 @@ public class FixedDepositAccountData extends DepositAccountData {
 	public BigDecimal getDepositAmount() {
 		return depositAmount;
 	}
+	
+	/**
+	 * @return the linkedAccount
+	 */
+	public PortfolioAccountData getLinkedAccount() {
+		return linkedAccount;
+	}
 }
