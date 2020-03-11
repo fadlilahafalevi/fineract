@@ -216,6 +216,7 @@ public class FixedDepositAccountsApiResource {
         
         accountTemplate.setMaturityDate2(maturityDate2);
         accountTemplate.getTimeline().setActivatedOnDate2(activatedOnDate2);
+        accountTemplate.setPrincipalAmount(accountTemplate.getDepositAmount());
         
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
