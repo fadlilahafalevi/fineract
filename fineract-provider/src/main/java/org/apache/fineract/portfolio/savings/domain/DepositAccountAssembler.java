@@ -83,6 +83,8 @@ import org.apache.fineract.portfolio.group.exception.GroupNotActiveException;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetailAssembler;
+import org.apache.fineract.portfolio.paymenttype.domain.PaymentType;
+import org.apache.fineract.portfolio.paymenttype.domain.PaymentTypeRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.DepositAccountOnClosureType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
@@ -122,6 +124,7 @@ public class DepositAccountAssembler {
     private final FromJsonHelper fromApiJsonHelper;
     private final DepositProductAssembler depositProductAssembler;
     private final PaymentDetailAssembler paymentDetailAssembler;
+    private final PaymentTypeRepositoryWrapper paymentTypeRepositoryWrapper;
 
     @Autowired
     public DepositAccountAssembler(final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper,
@@ -132,7 +135,7 @@ public class DepositAccountAssembler {
             final DepositProductAssembler depositProductAssembler,
             final RecurringDepositProductRepository recurringDepositProductRepository,
             final AccountTransfersReadPlatformService accountTransfersReadPlatformService, final PlatformSecurityContext context,
-            final PaymentDetailAssembler paymentDetailAssembler) {
+            final PaymentDetailAssembler paymentDetailAssembler, final PaymentTypeRepositoryWrapper paymentTypeRepositoryWrapper) {
 
         this.savingsAccountTransactionSummaryWrapper = savingsAccountTransactionSummaryWrapper;
         this.clientRepository = clientRepository;
@@ -147,6 +150,7 @@ public class DepositAccountAssembler {
         this.savingsHelper = new SavingsHelper(accountTransfersReadPlatformService);
         this.context = context;
         this.paymentDetailAssembler = paymentDetailAssembler;
+        this.paymentTypeRepositoryWrapper = paymentTypeRepositoryWrapper;
     }
 
     /**
@@ -465,6 +469,8 @@ public class DepositAccountAssembler {
         boolean withHoldTax = product.withHoldTax();
         
         final Integer interestCompoundingType = product.getInterestCompoundingTypeEnum();
+        
+        PaymentType paymentTypeWithdraw = this.paymentTypeRepositoryWrapper.findOneWithNotFoundDetection(paymentType);
 
         SavingsAccount account = null;
         if (depositAccountType.isFixedDeposit()) {
@@ -479,7 +485,7 @@ public class DepositAccountAssembler {
                     accountTermAndPreClosure, accountChart, withHoldTax);
             accountTermAndPreClosure.updateAccountReference(fdAccount);
             fdAccount.setInterestCompoundingTypeEnum(interestCompoundingType); 
-            fdAccount.setPaymentTypeDepositoWithdraw(paymentType);
+            fdAccount.setPaymentTypeDepositoWithdraw(paymentTypeWithdraw.getId());
             fdAccount.validateDomainRules();
             account = fdAccount;
         } else if (depositAccountType.isRecurringDeposit()) {
