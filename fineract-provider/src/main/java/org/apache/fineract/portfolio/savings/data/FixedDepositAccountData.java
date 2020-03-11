@@ -528,4 +528,11 @@ public class FixedDepositAccountData extends DepositAccountData {
     public void setActivationCharge(BigDecimal activationCharge) {
         this.activationCharge = activationCharge;
     }
+
+	/**
+	 * @return the linkedAccount
+	 */
+	public PortfolioAccountData getLinkedAccount() {
+		return linkedAccount;
+	}
 }

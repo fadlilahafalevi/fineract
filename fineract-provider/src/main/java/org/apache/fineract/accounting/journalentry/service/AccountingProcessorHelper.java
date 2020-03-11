@@ -605,6 +605,9 @@ public class AccountingProcessorHelper {
             final Long savingsProductId, final Long paymentTypeId, final Long savingsId, final String transactionId,
             final Date transactionDate, final BigDecimal amount, final Boolean isReversal, final List<TaxPaymentDTO> taxDetails) {
 
+    	createCashBasedDebitJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited.getValue(), savingsProductId,
+                paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+    	
         for (TaxPaymentDTO taxPaymentDTO : taxDetails) {
             if (taxPaymentDTO.getAmount() != null) {
                 if (taxPaymentDTO.getCreditAccountId() == null) {
@@ -617,8 +620,6 @@ public class AccountingProcessorHelper {
                 }
             }
         }
-        createCashBasedDebitJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited.getValue(), savingsProductId,
-                paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
     }
 
     public void createCashBasedDebitJournalEntriesAndReversalsForSavings(final Office office, final String currencyCode,
