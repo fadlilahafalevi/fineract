@@ -93,13 +93,16 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
 			if (fixedDepositAccounts.getDepositType().getId().toString()
 					.equals(DepositAccountType.FIXED_DEPOSIT.getValue().toString())) {
 				Date maturityDate = this.depositAccountReadPlatformService.findMaturityDate(fixedDepositAccounts.getId());
-				Date activatedOnDate = fixedDepositAccounts.getTimeline().getActivatedOnDate().toDate();
 				SimpleDateFormat sdf;
 				sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 				sdf.setTimeZone(TimeZone.getDefault());
 				String maturityDateString = sdf.format(maturityDate);
-				String activatedOnDateString = sdf.format(activatedOnDate);
+				String activatedOnDateString = null;
 				fixedDepositAccounts.setMaturityDate(maturityDateString);
+				
+				if (fixedDepositAccounts.getTimeline().getActivatedOnDate() != null) {
+					activatedOnDateString = sdf.format(fixedDepositAccounts.getTimeline().getActivatedOnDate().toDate());
+				}
 				fixedDepositAccounts.getTimeline().setActivatedOnDate2(activatedOnDateString);
 			}
         }
