@@ -69,9 +69,12 @@ import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.data.FixedDepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
+import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountTransactionEnumData;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +98,7 @@ public class AccountingProcessorHelper {
     private final ClientTransactionRepositoryWrapper clientTransactionRepository;
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
     private final AccountTransfersReadPlatformService accountTransfersReadPlatformService;
+    private final DepositAccountReadPlatformService depositAccountReadPlatformService;
 
     @Autowired
     public AccountingProcessorHelper(final JournalEntryRepository glJournalEntryRepository,
@@ -104,7 +108,8 @@ public class AccountingProcessorHelper {
             final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepository,
             final AccountTransfersReadPlatformService accountTransfersReadPlatformService,
             final GLAccountRepositoryWrapper accountRepositoryWrapper,
-            final ClientTransactionRepositoryWrapper clientTransactionRepositoryWrapper) {
+            final ClientTransactionRepositoryWrapper clientTransactionRepositoryWrapper,
+            final DepositAccountReadPlatformService depositAccountReadPlatformService) {
         this.glJournalEntryRepository = glJournalEntryRepository;
         this.accountMappingRepository = accountMappingRepository;
         this.closureRepository = closureRepository;
@@ -115,6 +120,7 @@ public class AccountingProcessorHelper {
         this.accountTransfersReadPlatformService = accountTransfersReadPlatformService;
         this.accountRepositoryWrapper = accountRepositoryWrapper;
         this.clientTransactionRepository = clientTransactionRepositoryWrapper;
+        this.depositAccountReadPlatformService = depositAccountReadPlatformService;
     }
 
     public LoanDTO populateLoanDtoFromMap(final Map<String, Object> accountingBridgeData, final boolean cashBasedAccountingEnabled,
@@ -487,6 +493,26 @@ public class AccountingProcessorHelper {
         createJournalEntriesForSavings(office, currencyCode, accountTypeToDebitId, accountTypeToCreditId, savingsProductId, paymentTypeId,
                 loanId, transactionId, transactionDate, amount);
     }
+    
+    public void createCashBasedJournalEntriesAndReversalsForSavingsInterestPosting(final Office office, final String currencyCode,
+            final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
+            final Long paymentTypeId, final Long savingsId, final String transactionId, final Date transactionDate, final BigDecimal amount,
+            final Boolean isReversal) {
+    	
+        final FixedDepositAccountData account = (FixedDepositAccountData) this.depositAccountReadPlatformService.retrieveOneWithChartSlabs(
+                DepositAccountType.FIXED_DEPOSIT, savingsId);
+        final Long mainSavingsProductId = account.getLinkedAccount().getProductId();
+    	
+        int accountTypeToDebitId = accountTypeToBeDebited;
+        int accountTypeToCreditId = accountTypeToBeCredited;
+        // reverse debits and credits for reversals
+        if (isReversal) {
+            accountTypeToDebitId = accountTypeToBeCredited;
+            accountTypeToCreditId = accountTypeToBeDebited;
+        }
+        createJournalEntriesForSavingsInterestPosting(office, currencyCode, accountTypeToDebitId, accountTypeToCreditId, savingsProductId, mainSavingsProductId, paymentTypeId,
+        		savingsId, transactionId, transactionDate, amount);
+    }
 
     /**
      * Convenience method that creates a pair of related Debits and Credits for
@@ -576,6 +602,15 @@ public class AccountingProcessorHelper {
             final String transactionId, final Date transactionDate, final BigDecimal amount) {
         final GLAccount debitAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToDebitId, paymentTypeId);
         final GLAccount creditAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToCreditId, paymentTypeId);
+        createDebitJournalEntryForSavings(office, currencyCode, debitAccount, savingsId, transactionId, transactionDate, amount);
+        createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount);
+    }
+    
+    private void createJournalEntriesForSavingsInterestPosting(final Office office, final String currencyCode, final int accountTypeToDebitId,
+            final int accountTypeToCreditId, final Long savingsProductId, final Long mainSavingsProductId, final Long paymentTypeId, final Long savingsId,
+            final String transactionId, final Date transactionDate, final BigDecimal amount) {
+        final GLAccount debitAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToDebitId, paymentTypeId);
+        final GLAccount creditAccount = getLinkedGLAccountForSavingsProduct(mainSavingsProductId, accountTypeToCreditId, paymentTypeId);
         createDebitJournalEntryForSavings(office, currencyCode, debitAccount, savingsId, transactionId, transactionDate, amount);
         createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount);
     }

@@ -120,4 +120,13 @@ public class PortfolioAccountData {
     public Long accountId() {
         return this.id;
     }
+
+	/**
+	 * @return the productId
+	 */
+	public Long getProductId() {
+		return productId;
+	}
+    
+    
 }
