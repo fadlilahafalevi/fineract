@@ -97,7 +97,13 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
 				sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 				sdf.setTimeZone(TimeZone.getDefault());
 				String maturityDateString = sdf.format(maturityDate);
+				String activatedOnDateString = null;
 				fixedDepositAccounts.setMaturityDate(maturityDateString);
+				
+				if (fixedDepositAccounts.getTimeline().getActivatedOnDate() != null) {
+					activatedOnDateString = sdf.format(fixedDepositAccounts.getTimeline().getActivatedOnDate().toDate());
+				}
+				fixedDepositAccounts.getTimeline().setActivatedOnDate2(activatedOnDateString);
 			}
         }
         final List<ShareAccountSummaryData> shareAccounts = retrieveShareAccountDetails(clientId) ;

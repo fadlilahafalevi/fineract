@@ -45,14 +45,15 @@ public class SavingsAccountData {
     private final String groupName;
     private final Long clientId;
     private final String clientName;
-    private final Long savingsProductId;
-    private final String savingsProductName;
+    private Long savingsProductId;
+    private String savingsProductName;
+    private String shortProductName;
     private final Long fieldOfficerId;
     private final String fieldOfficerName;
-    private final SavingsAccountStatusEnumData status;
-    private final SavingsAccountSubStatusEnumData subStatus;
+    private SavingsAccountStatusEnumData status;
+    private SavingsAccountSubStatusEnumData subStatus;
     private final SavingsAccountApplicationTimelineData timeline;
-    private final CurrencyData currency;
+    private CurrencyData currency;
     private final BigDecimal nominalAnnualInterestRate;
     private final EnumOptionData interestCompoundingPeriodType;
     private final EnumOptionData interestPostingPeriodType;
@@ -61,17 +62,17 @@ public class SavingsAccountData {
     private final BigDecimal minRequiredOpeningBalance;
     private final Integer lockinPeriodFrequency;
     private final EnumOptionData lockinPeriodFrequencyType;
-    private final boolean withdrawalFeeForTransfers;
-    private final boolean allowOverdraft;
+    private final Boolean withdrawalFeeForTransfers;
+    private final Boolean allowOverdraft;
     private final BigDecimal overdraftLimit;
     private final BigDecimal minRequiredBalance;
-    private final boolean enforceMinRequiredBalance;
+    private final Boolean enforceMinRequiredBalance;
     private final BigDecimal minBalanceForInterestCalculation;
     private final BigDecimal onHoldFunds;
-    private final boolean withHoldTax;
+    private final Boolean withHoldTax;
     private final TaxGroupData taxGroup;
     private final LocalDate lastActiveTransactionDate;
-    private final boolean isDormancyTrackingActive;
+    private final Boolean isDormancyTrackingActive;
     private final Integer daysToInactive;
     private final Integer daysToDormancy;
     private final Integer daysToEscheat;
@@ -112,6 +113,8 @@ public class SavingsAccountData {
     private String dateFormat;
     private transient Integer rowIndex;
     private LocalDate submittedOnDate;
+    private BigDecimal accountBalance;
+    
 
     public static SavingsAccountData importInstanceIndividual(Long clientId, Long productId, Long fieldOfficerId,LocalDate submittedOnDate,
             BigDecimal nominalAnnualInterestRate, EnumOptionData interestCompoundingPeriodTypeEnum,
@@ -387,16 +390,16 @@ public class SavingsAccountData {
         final EnumOptionData lockinPeriodFrequencyType = null;
         // final BigDecimal withdrawalFeeAmount = null;
         // final EnumOptionData withdrawalFeeType = null;
-        final boolean withdrawalFeeForTransfers = false;
+        final Boolean withdrawalFeeForTransfers = null;
         // final BigDecimal annualFeeAmount = null;
         // final MonthDay annualFeeOnMonthDay = null;
         // final LocalDate annualFeeNextDueDate = null;
-        final boolean allowOverdraft = false;
+        final Boolean allowOverdraft = null;
         final BigDecimal overdraftLimit = null;
         final BigDecimal nominalAnnualInterestRateOverdraft = null;
         final BigDecimal minOverdraftForInterestCalculation = null;
         final BigDecimal minRequiredBalance = null;
-        final boolean enforceMinRequiredBalance = false;
+        final Boolean enforceMinRequiredBalance = null;
         final BigDecimal minBalanceForInterestCalculation = null;
         final BigDecimal onHoldFunds = null;
 
@@ -414,11 +417,11 @@ public class SavingsAccountData {
 
         final Collection<SavingsAccountChargeData> charges = null;
         final Collection<ChargeData> chargeOptions = null;
-        final boolean withHoldTax = false;
+        final Boolean withHoldTax = null;
         final TaxGroupData taxGroup = null;
         final SavingsAccountSubStatusEnumData subStatus = null;
         final LocalDate lastActiveTransactionDate = null;
-        final boolean isDormancyTrackingActive = false;
+        final Boolean isDormancyTrackingActive = null;
         final Integer daysToInactive = null;
         final Integer daysToDormancy = null;
         final Integer daysToEscheat = null;
@@ -654,7 +657,7 @@ public class SavingsAccountData {
             final EnumOptionData interestPostingPeriodType, final EnumOptionData interestCalculationType,
             final EnumOptionData interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
             final Integer lockinPeriodFrequency, final EnumOptionData lockinPeriodFrequencyType,
-            final boolean withdrawalFeeForTransfers, final SavingsAccountSummaryData summary,
+            final Boolean withdrawalFeeForTransfers, final SavingsAccountSummaryData summary,
             final Collection<SavingsAccountTransactionData> transactions, final Collection<SavingsProductData> productOptions,
             final Collection<StaffData> fieldOfficerOptions,
             final Collection<EnumOptionData> interestCompoundingPeriodTypeOptions,
@@ -662,11 +665,11 @@ public class SavingsAccountData {
             final Collection<EnumOptionData> interestCalculationTypeOptions,
             final Collection<EnumOptionData> interestCalculationDaysInYearTypeOptions, final Collection<EnumOptionData> lockinPeriodFrequencyTypeOptions,
             final Collection<EnumOptionData> withdrawalFeeTypeOptions, final Collection<SavingsAccountChargeData> charges, final Collection<ChargeData> chargeOptions,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit, final BigDecimal minRequiredBalance,
-            final boolean enforceMinRequiredBalance, final BigDecimal minBalanceForInterestCalculation,
+            final Boolean allowOverdraft, final BigDecimal overdraftLimit, final BigDecimal minRequiredBalance,
+            final Boolean enforceMinRequiredBalance, final BigDecimal minBalanceForInterestCalculation,
             final BigDecimal onHoldFunds, final BigDecimal nominalAnnualInterestRateOverdraft,
-            final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup, 
-            final LocalDate lastActiveTransactionDate, final boolean isDormancyTrackingActive, final Integer daysToInactive, 
+            final BigDecimal minOverdraftForInterestCalculation, final Boolean withHoldTax, final TaxGroupData taxGroup, 
+            final LocalDate lastActiveTransactionDate, final Boolean isDormancyTrackingActive, final Integer daysToInactive, 
             final Integer daysToDormancy, final Integer daysToEscheat, final BigDecimal savingsAmountOnHold) {
         this.id = id;
         this.accountNo = accountNo;
@@ -812,4 +815,103 @@ public class SavingsAccountData {
 	public SavingsAccountSummaryData getSummary() {
 		return summary;
 	}
+
+	/**
+	 * @return the depositType
+	 */
+	public EnumOptionData getDepositType() {
+		return depositType;
+	}
+
+	/**
+	 * @return the savingsProductId
+	 */
+	public Long getSavingsProductId() {
+		return savingsProductId;
+	}
+
+	/**
+	 * @return the status
+	 */
+	public SavingsAccountStatusEnumData getStatus() {
+		return status;
+	}
+
+	/**
+	 * @return the subStatus
+	 */
+	public SavingsAccountSubStatusEnumData getSubStatus() {
+		return subStatus;
+	}
+
+	/**
+	 * @return the shortProductName
+	 */
+	public String getShortProductName() {
+		return shortProductName;
+	}
+
+	/**
+	 * @param shortProductName the shortProductName to set
+	 */
+	public void setShortProductName(String shortProductName) {
+		this.shortProductName = shortProductName;
+	}
+
+	/**
+	 * @param savingsProductId the savingsProductId to set
+	 */
+	public void setSavingsProductId(Long savingsProductId) {
+		this.savingsProductId = savingsProductId;
+	}
+
+	/**
+	 * @param savingsProductName the savingsProductName to set
+	 */
+	public void setSavingsProductName(String savingsProductName) {
+		this.savingsProductName = savingsProductName;
+	}
+
+	/**
+	 * @param status the status to set
+	 */
+	public void setStatus(SavingsAccountStatusEnumData status) {
+		this.status = status;
+	}
+
+	/**
+	 * @param subStatus the subStatus to set
+	 */
+	public void setSubStatus(SavingsAccountSubStatusEnumData subStatus) {
+		this.subStatus = subStatus;
+	}
+
+	/**
+	 * @return the currency
+	 */
+	public CurrencyData getCurrency() {
+		return currency;
+	}
+
+	/**
+	 * @param currency the currency to set
+	 */
+	public void setCurrency(CurrencyData currency) {
+		this.currency = currency;
+	}
+
+	/**
+	 * @return the accountBalance
+	 */
+	public BigDecimal getAccountBalance() {
+		return accountBalance;
+	}
+
+	/**
+	 * @param accountBalance the accountBalance to set
+	 */
+	public void setAccountBalance(BigDecimal accountBalance) {
+		this.accountBalance = accountBalance;
+	}
+	
 }

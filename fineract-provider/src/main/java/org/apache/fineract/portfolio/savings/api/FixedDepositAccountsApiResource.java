@@ -22,10 +22,12 @@ import com.google.gson.JsonElement;
 import io.swagger.annotations.*;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TimeZone;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -206,6 +208,20 @@ public class FixedDepositAccountsApiResource {
         final FixedDepositAccountData accountTemplate = populateTemplateAndAssociations(accountId, account, staffInSelectedOfficeOnly,
                 chargeStatus, uriInfo, mandatoryResponseParameters);
         accountTemplate.setActivationCharge(getActivationCharge(accountId));
+        
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
+        String maturityDate2 = sdf.format(account.getMaturityDate().toDate());
+        String activatedOnDate2 = null;
+        
+        if (account.getTimeline().getActivatedOnDate() != null) {
+        	activatedOnDate2 = sdf.format(account.getTimeline().getActivatedOnDate().toDate());
+        }
+        
+        accountTemplate.setMaturityDate2(maturityDate2);
+        accountTemplate.getTimeline().setActivatedOnDate2(activatedOnDate2);
+        accountTemplate.setPrincipalAmount(accountTemplate.getDepositAmount());
+        
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
                 mandatoryResponseParameters);
         return this.toApiJsonSerializer.serialize(settings, accountTemplate,

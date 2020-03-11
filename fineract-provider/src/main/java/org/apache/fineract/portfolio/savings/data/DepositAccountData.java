@@ -48,7 +48,7 @@ public class DepositAccountData {
     protected final Long fieldOfficerId;
     protected final String fieldOfficerName;
     protected final SavingsAccountStatusEnumData status;
-    protected final SavingsAccountApplicationTimelineData timeline;
+    protected SavingsAccountApplicationTimelineData timeline;
     protected final CurrencyData currency;
     protected final BigDecimal nominalAnnualInterestRate;
     protected final EnumOptionData interestCompoundingPeriodType;
@@ -374,5 +374,19 @@ public class DepositAccountData {
 
 	public void setInterestCompoundingTypeOptions(Collection<EnumOptionData> interestCompoundingTypeOptions) {
 		this.interestCompoundingTypeOptions = interestCompoundingTypeOptions;
+	}
+
+	/**
+	 * @return the timeline
+	 */
+	public SavingsAccountApplicationTimelineData getTimeline() {
+		return timeline;
+	}
+
+	/**
+	 * @param timeline the timeline to set
+	 */
+	public void setTimeline(SavingsAccountApplicationTimelineData timeline) {
+		this.timeline = timeline;
 	}
 }
