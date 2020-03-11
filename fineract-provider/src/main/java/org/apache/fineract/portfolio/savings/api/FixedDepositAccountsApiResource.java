@@ -212,7 +212,11 @@ public class FixedDepositAccountsApiResource {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
         sdf.setTimeZone(TimeZone.getTimeZone("CET"));
         String maturityDate2 = sdf.format(account.getMaturityDate().toDate());
-        String activatedOnDate2 = sdf.format(account.getTimeline().getActivatedOnDate().toDate());
+        String activatedOnDate2 = null;
+        
+        if (account.getTimeline().getActivatedOnDate() != null) {
+        	activatedOnDate2 = sdf.format(account.getTimeline().getActivatedOnDate().toDate());
+        }
         
         accountTemplate.setMaturityDate2(maturityDate2);
         accountTemplate.getTimeline().setActivatedOnDate2(activatedOnDate2);
