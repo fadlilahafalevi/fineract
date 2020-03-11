@@ -24,10 +24,16 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountPa
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
 
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,13 +45,17 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.boot.JDBCDriverConfig;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
+import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
@@ -118,9 +128,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+
 @Service
 public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements DepositAccountWritePlatformService {
 
+	@Autowired private JDBCDriverConfig driverConfig;
+	
     private final PlatformSecurityContext context;
     private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
@@ -275,6 +293,8 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             this.savingAccountRepositoryWrapper.saveAndFlush(account);
         }     
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        
+        generateEbilyet(account);
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsId) //
@@ -285,6 +305,68 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 .with(changes) //
                 .build();
     }
+
+	public void generateEbilyet(final FixedDepositAccount account) {
+		
+		String outUrl = System.getProperty("user.home") + File.separator + "eBilyet";
+		File outDir = new File(outUrl);
+		outDir.mkdirs();
+		
+		FineractPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
+		final FineractPlatformTenantConnection tenantConnection = tenant.getConnection();
+		String tenantUrl = driverConfig.constructProtocol(tenantConnection.getSchemaServer(),
+				tenantConnection.getSchemaServerPort(), tenantConnection.getSchemaName());
+
+		String dbUrl = tenantUrl;
+		String dbDriver = driverConfig.getDriverClassName();
+		String dbUname = tenantConnection.getSchemaUsername();
+		String dbPwd = tenantConnection.getSchemaPassword();
+		
+		String reportUrl = null;
+		StringBuilder errorMsg = new StringBuilder();
+		String reportNameEbilyet = "eBilyet.jrxml";
+		
+		// Load the JDBC driver
+		Connection conn = null;
+		try {
+			Class.forName(dbDriver);
+			conn = DriverManager.getConnection(dbUrl, dbUname, dbPwd);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		
+		if (tenantConnection.getSchemaServer().contains("localhost") || tenantConnection.getSchemaServer().contains("127.0.0.1")) {
+			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "report" + File.separator;
+		} else {
+			reportUrl = System.getProperty("user.dir") + File.separator + "fineract-provider" + File.separator + "WEB-INF" + File.separator + "classes" + File.separator + "report" + File.separator;
+			reportUrl = reportUrl.replace("bin", "webapps");
+		}
+		
+		try {
+			
+			String pdfFileName = outUrl + File.separator + "eBilyet_" + account.getAccountNumber() + ".pdf";
+			String reportMainUrl = reportUrl + reportNameEbilyet;
+			
+			JasperReport jasperReport = JasperCompileManager.compileReport(reportMainUrl);
+			
+			// Create arguments
+			HashMap<String, Object> hm = new HashMap<String, Object>();
+			hm.put("accountNo", account.getAccountNumber());
+			hm.put("maturityDate", account.getAccountTermAndPreClosure().getMaturityLocalDate().toDate());
+			hm.put("activationDate", account.getActivationLocalDate().toDate());
+
+			// Generate jasper print
+			JasperPrint jprint = (JasperPrint) JasperFillManager.fillReport(jasperReport, hm, conn);
+
+			// Export pdf file
+			JasperExportManager.exportReportToPdfFile(jprint, pdfFileName);
+
+		} catch (Exception e) {
+			StringWriter errors = new StringWriter();
+			e.printStackTrace(new PrintWriter(errors));
+			errorMsg.append("Error for EBilyet : ").append(account.getAccountNumber()).append(" , " + errors.toString());
+		}
+	}
 
 	private Boolean getIsTaxApplicable(final FixedDepositAccount account) {
 		SavingsSummaryTaxData savingsSummaryTaxData = this.savingsSummaryTaxReadPlatformService.retrieveOne(account.getClient().getId());

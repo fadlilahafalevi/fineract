@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.11.0.final using JasperReports Library version 6.11.0-0c4056ccaa4d25a5a8c45672d2f764ea3498bebb  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="eBilyet" pageWidth="420" pageHeight="595" columnWidth="380" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="0" uuid="e4aeb712-be71-452c-befd-c3d4466cda37">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sample DB"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<parameter name="accountNo" class="java.lang.String"/>
+	<parameter name="maturityDate" class="java.util.Date"/>
+	<parameter name="activationDate" class="java.util.Date"/>
+	<queryString>
+		<![CDATA[select 
+			c.display_name as CLIENTNAME,
+			UPPER(sp.name) as PRODUCTNAME,
+			sa.account_no as ACCOUNTNO,
+			concat(sa.currency_code, '(', oc.name, ')') AS CURRENCY,
+			CONCAT(datp.deposit_period, ' ', rev.enum_value) AS TENOR,
+			CONCAT(FORMAT(sa.nominal_annual_interest_rate,2), ' % p.a.') AS SUKUBUNGA,
+			datp.deposit_amount AS JUMLAHPOKOK,
+			proper_case(CONCAT(f_terbilang(datp.deposit_amount) , 'rupiah')) AS TERBILANG
+			
+			from m_savings_account sa 
+			left join m_deposit_account_term_and_preclosure datp on sa.id = datp.savings_account_id
+			left join m_savings_product sp on sp.id = sa.product_id
+			left join m_client c on c.id = sa.client_id
+			left join m_organisation_currency oc on oc.code = sa.currency_code
+			left join r_enum_value rev on rev.enum_name = 'term_period_frequency_enum' and rev.enum_id = datp.deposit_period_frequency_enum
+			
+			WHERE sa.deposit_type_enum = 200 AND sa.account_no = $P{accountNo}]]>
+	</queryString>
+	<field name="CLIENTNAME" class="java.lang.String"/>
+	<field name="PRODUCTNAME" class="java.lang.String"/>
+	<field name="ACCOUNTNO" class="java.lang.String"/>
+	<field name="CURRENCY" class="java.lang.String"/>
+	<field name="SUKUBUNGA" class="java.lang.String"/>
+	<field name="TENOR" class="java.lang.String"/>
+	<field name="JUMLAHPOKOK" class="java.math.BigDecimal"/>
+	<field name="TERBILANG" class="java.lang.String"/>
+	<title>
+		<band height="555" splitType="Stretch">
+			<staticText>
+				<reportElement positionType="Float" x="0" y="10" width="110" height="40" forecolor="#4BA6A8" uuid="063259d8-09d0-4637-92f8-d088a81ac37c"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="26" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ROYAL]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="180" y="10" width="200" height="40" forecolor="#4BA6A8" uuid="eb40bc95-6f57-48d9-8ba3-e9ee1c6e422f"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Arial" size="18"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CLIENTNAME}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="0" y="73" width="100" height="12" forecolor="#828282" uuid="cf9d6593-fd6f-4f54-a523-64948209d319"/>
+				<textElement verticalAlignment="Top" markup="none">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nomor E-Bilyet]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="250" y="73" width="130" height="12" forecolor="#828282" uuid="701c991c-a337-424e-94c1-19dfda149155"/>
+				<textElement verticalAlignment="Top" markup="none">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Mata Uang]]></text>
+			</staticText>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="250" y="85" width="130" height="12" uuid="0bfba92a-fff0-4b87-bace-0064522ba026">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CURRENCY}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="0" y="85" width="100" height="12" uuid="c3838d84-5f29-4d64-b0e3-63091b9f07c2">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ACCOUNTNO}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight">
+				<reportElement mode="Opaque" x="0" y="120" width="380" height="30" forecolor="#FFFFFF" backcolor="#4BA6A8" uuid="ddd54dc3-a10a-4b31-a5a1-90ae5072d7fc">
+					<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+					<font size="14" isBold="true"/>
+					<paragraph leftIndent="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PRODUCTNAME}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="0" y="160" width="80" height="12" forecolor="#828282" uuid="fffe7134-c1e2-42bc-a8b5-adac17217d4e"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" markup="none">
+					<font fontName="Arial" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Tanggal Mulai]]></text>
+			</staticText>
+			<textField textAdjust="StretchHeight" pattern="dd MMMM yyyy" isBlankWhenNull="true">
+				<reportElement x="0" y="172" width="80" height="12" uuid="dc6e7f6c-1a5c-4fa0-9864-ea516c2d4ef8">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Arial" size="9" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{activationDate}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="90" y="160" width="1" height="23" forecolor="#4BA6A8" uuid="56a59708-13a7-4fdd-848a-85ebb3f3c610"/>
+			</line>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="100" y="160" width="70" height="12" forecolor="#828282" uuid="3861501e-dacb-4e7c-b6ff-74f13502025f"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" markup="none">
+					<font fontName="Arial" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Tenor]]></text>
+			</staticText>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="100" y="172" width="70" height="12" uuid="0d5fef2d-e00e-4df0-bbc5-d42c99aadd7e">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Arial" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{TENOR}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="180" y="160" width="1" height="23" forecolor="#4BA6A8" uuid="ef9619bd-1360-4d40-981b-1d866e86fdb6"/>
+			</line>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="190" y="160" width="80" height="12" forecolor="#828282" uuid="e2fd2ec7-9efc-4538-8b58-cae3626e15e3"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" markup="none">
+					<font fontName="Arial" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Tanggal Jatuh Tempo]]></text>
+			</staticText>
+			<textField textAdjust="StretchHeight" pattern="dd MMMM yyyy" isBlankWhenNull="true">
+				<reportElement x="190" y="172" width="80" height="12" uuid="ec26cf4f-ef0c-40b4-a1bc-7c693422087f">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Arial" size="9" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{maturityDate}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="280" y="160" width="1" height="23" forecolor="#4BA6A8" uuid="79cdaf47-c990-46f0-80ed-c649a0fb2b00"/>
+			</line>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="290" y="160" width="80" height="12" forecolor="#828282" uuid="63c06c93-7619-4cf5-92ed-b7af3f34a9c4"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" markup="none">
+					<font fontName="Arial" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Suku Bunga]]></text>
+			</staticText>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="290" y="172" width="80" height="12" uuid="ec3ba650-b843-4e4d-a0b9-1fb280ba6369">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Arial" size="9" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{SUKUBUNGA}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="1" y="220" width="379" height="30" forecolor="rgba(0, 0, 0, 0.0)" backcolor="#4BA6A8" uuid="23049585-c424-463b-b0b2-4a3fb05aa9cf"/>
+				<graphicElement>
+					<pen lineWidth="0.0"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="0" y="220" width="190" height="30" forecolor="#FFFFFF" uuid="410be36f-be1e-462d-9a43-085188f157e0"/>
+				<box>
+					<pen lineColor="rgba(255, 255, 255, 0.0)"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[JUMLAH POKOK]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="190" y="220" width="190" height="30" forecolor="#FFFFFF" uuid="d3651990-1a62-49a4-9e2c-e025ef8b609a"/>
+				<box>
+					<pen lineColor="rgba(255, 255, 255, 0.0)"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<text><![CDATA[TERBILANG]]></text>
+			</staticText>
+			<textField textAdjust="StretchHeight" pattern="Rp #,##0.00;Rp -#,##0.00" isBlankWhenNull="true">
+				<reportElement x="0" y="270" width="190" height="20" uuid="a25d0ebd-71be-44cf-8957-0eb9e026b6c1">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="Arial" size="12" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{JUMLAHPOKOK}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="190" y="270" width="190" height="80" uuid="26953595-e3ec-433b-b069-e013e5f3457f">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.rightIndent" value="px"/>
+					<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Justified" verticalAlignment="Top">
+					<font fontName="Arial" size="10" isUnderline="false"/>
+					<paragraph leftIndent="5" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{TERBILANG}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="-20" y="500" width="420" height="55" forecolor="rgba(0, 0, 0, 0.0)" backcolor="#4BA6A8" uuid="77c3e4ac-c242-4d04-b668-3a98e427aada">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.0"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="1" y="510" width="79" height="30" forecolor="#FFFFFF" uuid="2aeeabd9-f716-47cc-9675-b7e0f4bbeebf"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="22" isBold="true" isItalic="false" isUnderline="false"/>
+					<paragraph lineSpacing="Proportional"/>
+				</textElement>
+				<text><![CDATA[ROYAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="92" y="500" width="158" height="48" forecolor="#FFFFFF" uuid="0390158e-b1de-487f-ac54-4ab6c3bd938c"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[PT. Bank Royal Tbk terdaftar dan diawasi oleh  Otoritas Jasa Keuangan (OJK) dan dijamin oleh Lembaga Penjamin Simpanan (LPS)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="255" y="500" width="79" height="48" forecolor="#FFFFFF" uuid="78545729-9f6e-4265-8f14-082a48ae47df"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Customer Service 1500-365]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="336" y="516" width="58" height="19" forecolor="#FFFFFF" uuid="aa7cd5b6-9398-435c-8173-84bfbb89cc57"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="7" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[www.royal.com]]></text>
+			</staticText>
+		</band>
+	</title>
+</jasperReport>
