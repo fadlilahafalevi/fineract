@@ -97,7 +97,7 @@ public class AccountTransfersDataValidator {
         final String transactionDescription = this.fromApiJsonHelper.extractStringNamed(AccountTransfersApiConstants
                 .transferDescriptionParamName, element);
         baseDataValidator.reset().parameter(AccountTransfersApiConstants.transferDescriptionParamName).value
-                (transactionDescription).notBlank()
+                (transactionDescription).ignoreIfNull()
                 .notExceedingLengthOf(200);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
