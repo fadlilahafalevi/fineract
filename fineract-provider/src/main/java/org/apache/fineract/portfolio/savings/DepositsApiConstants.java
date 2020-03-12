@@ -202,6 +202,7 @@ public class DepositsApiConstants {
     
     public static final String paymentTypePrincipalDeposito = "IDEP";
     public static final String paymentTypeInterestDeposito = "BNG4";
+    public static final String isActiveParamName = "isActive";
 
     /**
      * Deposit Product Parameters
@@ -323,6 +324,7 @@ public class DepositsApiConstants {
         fixedDepositRequestData.add(transferInterestToSavingsParamName);
         fixedDepositRequestData.add(SavingsApiConstants.interestCompoundingTypeParamName);
         fixedDepositRequestData.add(SavingsApiConstants.paymentTypeParamName);
+        fixedDepositRequestData.add(isActiveParamName);
         return fixedDepositRequestData;
     }
 
