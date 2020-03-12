@@ -37,7 +37,7 @@ public class PortfolioAccountData {
     private final String groupName;
     private final Long clientId;
     private final String clientName;
-    private final Long productId;
+    private Long productId;
     private final String productName;
     private final Long fieldOfficerId;
     private final String fieldOfficerName;
@@ -127,6 +127,11 @@ public class PortfolioAccountData {
 	public Long getProductId() {
 		return productId;
 	}
-    
-    
+
+	/**
+	 * @param productId the productId to set
+	 */
+	public void setProductId(Long productId) {
+		this.productId = productId;
+	}
 }
