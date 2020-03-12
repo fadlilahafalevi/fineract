@@ -62,6 +62,8 @@ import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.office.domain.OfficeRepositoryWrapper;
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
+import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
+import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.apache.fineract.portfolio.client.domain.ClientTransaction;
 import org.apache.fineract.portfolio.client.domain.ClientTransactionRepositoryWrapper;
@@ -98,7 +100,7 @@ public class AccountingProcessorHelper {
     private final ClientTransactionRepositoryWrapper clientTransactionRepository;
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
     private final AccountTransfersReadPlatformService accountTransfersReadPlatformService;
-    private final DepositAccountReadPlatformService depositAccountReadPlatformService;
+    private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
 
     @Autowired
     public AccountingProcessorHelper(final JournalEntryRepository glJournalEntryRepository,
@@ -109,7 +111,7 @@ public class AccountingProcessorHelper {
             final AccountTransfersReadPlatformService accountTransfersReadPlatformService,
             final GLAccountRepositoryWrapper accountRepositoryWrapper,
             final ClientTransactionRepositoryWrapper clientTransactionRepositoryWrapper,
-            final DepositAccountReadPlatformService depositAccountReadPlatformService) {
+            final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService) {
         this.glJournalEntryRepository = glJournalEntryRepository;
         this.accountMappingRepository = accountMappingRepository;
         this.closureRepository = closureRepository;
@@ -120,7 +122,7 @@ public class AccountingProcessorHelper {
         this.accountTransfersReadPlatformService = accountTransfersReadPlatformService;
         this.accountRepositoryWrapper = accountRepositoryWrapper;
         this.clientTransactionRepository = clientTransactionRepositoryWrapper;
-        this.depositAccountReadPlatformService = depositAccountReadPlatformService;
+        this.accountAssociationsReadPlatformService = accountAssociationsReadPlatformService;
     }
 
     public LoanDTO populateLoanDtoFromMap(final Map<String, Object> accountingBridgeData, final boolean cashBasedAccountingEnabled,
@@ -495,16 +497,22 @@ public class AccountingProcessorHelper {
     }
     
     public void createCashBasedJournalEntriesAndReversalsForSavingsInterestPosting(final Office office, final String currencyCode,
-            final Integer accountTypeToBeDebited, final Integer accountTypeToBeCredited, final Long savingsProductId,
+            final Integer accountTypeToBeDebited, Integer accountTypeToBeCredited, final Long savingsProductId,
             final Long paymentTypeId, final Long savingsId, final String transactionId, final Date transactionDate, final BigDecimal amount,
             final Boolean isReversal) {
     	
-        final FixedDepositAccountData account = (FixedDepositAccountData) this.depositAccountReadPlatformService.retrieveOneWithChartSlabs(
-                DepositAccountType.FIXED_DEPOSIT, savingsId);
-        final Long mainSavingsProductId = account.getLinkedAccount().getProductId();
-    	
         int accountTypeToDebitId = accountTypeToBeDebited;
         int accountTypeToCreditId = accountTypeToBeCredited;
+    	
+        final PortfolioAccountData account = this.accountAssociationsReadPlatformService.retriveSavingsLinkedAssociation(savingsId);
+        Long mainSavingsProductId = null;
+        if (account != null) {
+        	mainSavingsProductId = account.getProductId();
+        } else {
+        	mainSavingsProductId = savingsProductId;
+        	accountTypeToCreditId = CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue();
+        }
+        
         // reverse debits and credits for reversals
         if (isReversal) {
             accountTypeToDebitId = accountTypeToBeCredited;
