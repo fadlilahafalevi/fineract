@@ -562,16 +562,24 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), principalAmount,
                     paymentDetailPrincipal, transactionBooleanValues);
             
-            this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
+            final SavingsAccountTransaction withdrawalInterest = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
                     accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), netInterestAmount,
                     paymentDetailInterest, transactionBooleanValues);
 
-            final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
-                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
+            final SavingsAccountTransaction depositPrincipal = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
+                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), principalAmount,
+                    null, isAccountTransfer, isRegularTransaction);
+            
+            final SavingsAccountTransaction depositInterest = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
+                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), netInterestAmount,
                     null, isAccountTransfer, isRegularTransaction);
 
             accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSavingsTransfer(accountTransferDTO, fromSavingsAccount,
-                    toSavingsAccount, withdrawalPrincipal, deposit);
+                    toSavingsAccount, withdrawalPrincipal, depositPrincipal);
+            this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
+            
+            accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSavingsTransfer(accountTransferDTO, fromSavingsAccount,
+                    toSavingsAccount, withdrawalInterest, depositInterest);
             this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
             
             transferTransactionId = accountTransferDetails.getId();
