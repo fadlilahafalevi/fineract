@@ -26,6 +26,8 @@ import org.apache.fineract.portfolio.account.PortfolioAccountType;
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
 import org.apache.fineract.portfolio.account.domain.AccountTransferDetails;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
+import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
 
 public interface AccountTransfersWritePlatformService {
 
@@ -44,4 +46,6 @@ public interface AccountTransfersWritePlatformService {
     void reverseTransfersWithFromAccountTransactions(Collection<Long> fromTransactionIds, PortfolioAccountType accountTypeId);
 
     AccountTransferDetails repayLoanWithTopup(AccountTransferDTO accountTransferDTO);
+
+	Long transferFundsClosureFD(AccountTransferDTO accountTransferDTO, FixedDepositAccount fromFixedDepositAccount, PaymentDetail paymentDetailPrincipal, PaymentDetail paymentDetailInterest);
 }
