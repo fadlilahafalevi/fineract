@@ -325,7 +325,7 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             this.businessEventNotifierService.notifyBusinessEventWasExecuted( BUSINESS_EVENTS.FIXED_DEPOSIT_ACCOUNT_CREATE,
                     constructEntityMap(BUSINESS_ENTITY.DEPOSIT_ACCOUNT, account));
             
-            final Boolean isActive = command.booleanObjectValueOfParameterNamed("isActive");
+            final Boolean isActive = command.booleanObjectValueOfParameterNamed(SavingsApiConstants.isActiveParamName);
             if ((isActive != null) && isActive) {
             	Map<String, Object> reqApprove = new LinkedHashMap<>();
             	reqApprove.put(SavingsApiConstants.dateFormatParamName, "yyyy-MM-dd");
