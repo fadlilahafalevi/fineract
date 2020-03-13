@@ -62,6 +62,8 @@ import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.office.domain.OfficeRepositoryWrapper;
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
+import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
+import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.apache.fineract.portfolio.client.domain.ClientTransaction;
 import org.apache.fineract.portfolio.client.domain.ClientTransactionRepositoryWrapper;
@@ -69,9 +71,12 @@ import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.data.FixedDepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
+import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountTransactionEnumData;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +100,7 @@ public class AccountingProcessorHelper {
     private final ClientTransactionRepositoryWrapper clientTransactionRepository;
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
     private final AccountTransfersReadPlatformService accountTransfersReadPlatformService;
+    private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
 
     @Autowired
     public AccountingProcessorHelper(final JournalEntryRepository glJournalEntryRepository,
@@ -104,7 +110,8 @@ public class AccountingProcessorHelper {
             final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepository,
             final AccountTransfersReadPlatformService accountTransfersReadPlatformService,
             final GLAccountRepositoryWrapper accountRepositoryWrapper,
-            final ClientTransactionRepositoryWrapper clientTransactionRepositoryWrapper) {
+            final ClientTransactionRepositoryWrapper clientTransactionRepositoryWrapper,
+            final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService) {
         this.glJournalEntryRepository = glJournalEntryRepository;
         this.accountMappingRepository = accountMappingRepository;
         this.closureRepository = closureRepository;
@@ -115,6 +122,7 @@ public class AccountingProcessorHelper {
         this.accountTransfersReadPlatformService = accountTransfersReadPlatformService;
         this.accountRepositoryWrapper = accountRepositoryWrapper;
         this.clientTransactionRepository = clientTransactionRepositoryWrapper;
+        this.accountAssociationsReadPlatformService = accountAssociationsReadPlatformService;
     }
 
     public LoanDTO populateLoanDtoFromMap(final Map<String, Object> accountingBridgeData, final boolean cashBasedAccountingEnabled,
@@ -487,6 +495,32 @@ public class AccountingProcessorHelper {
         createJournalEntriesForSavings(office, currencyCode, accountTypeToDebitId, accountTypeToCreditId, savingsProductId, paymentTypeId,
                 loanId, transactionId, transactionDate, amount);
     }
+    
+    public void createCashBasedJournalEntriesAndReversalsForSavingsInterestPosting(final Office office, final String currencyCode,
+            final Integer accountTypeToBeDebited, Integer accountTypeToBeCredited, final Long savingsProductId,
+            final Long paymentTypeId, final Long savingsId, final String transactionId, final Date transactionDate, final BigDecimal amount,
+            final Boolean isReversal) {
+    	
+        int accountTypeToDebitId = accountTypeToBeDebited;
+        int accountTypeToCreditId = accountTypeToBeCredited;
+    	
+        final PortfolioAccountData account = this.accountAssociationsReadPlatformService.retriveSavingsLinkedAssociation(savingsId);
+        Long mainSavingsProductId = null;
+        if (account != null) {
+        	mainSavingsProductId = account.getProductId();
+        } else {
+        	mainSavingsProductId = savingsProductId;
+        	accountTypeToCreditId = CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_REFERENCE.getValue();
+        }
+        
+        // reverse debits and credits for reversals
+        if (isReversal) {
+            accountTypeToDebitId = accountTypeToBeCredited;
+            accountTypeToCreditId = accountTypeToBeDebited;
+        }
+        createJournalEntriesForSavingsInterestPosting(office, currencyCode, accountTypeToDebitId, accountTypeToCreditId, savingsProductId, mainSavingsProductId, paymentTypeId,
+        		savingsId, transactionId, transactionDate, amount);
+    }
 
     /**
      * Convenience method that creates a pair of related Debits and Credits for
@@ -579,6 +613,15 @@ public class AccountingProcessorHelper {
         createDebitJournalEntryForSavings(office, currencyCode, debitAccount, savingsId, transactionId, transactionDate, amount);
         createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount);
     }
+    
+    private void createJournalEntriesForSavingsInterestPosting(final Office office, final String currencyCode, final int accountTypeToDebitId,
+            final int accountTypeToCreditId, final Long savingsProductId, final Long mainSavingsProductId, final Long paymentTypeId, final Long savingsId,
+            final String transactionId, final Date transactionDate, final BigDecimal amount) {
+        final GLAccount debitAccount = getLinkedGLAccountForSavingsProduct(savingsProductId, accountTypeToDebitId, paymentTypeId);
+        final GLAccount creditAccount = getLinkedGLAccountForSavingsProduct(mainSavingsProductId, accountTypeToCreditId, paymentTypeId);
+        createDebitJournalEntryForSavings(office, currencyCode, debitAccount, savingsId, transactionId, transactionDate, amount);
+        createCreditJournalEntryForSavings(office, currencyCode, creditAccount, savingsId, transactionId, transactionDate, amount);
+    }
 
     /**
      * Convenience method that creates a pair of related Debits and Credits for
@@ -605,6 +648,9 @@ public class AccountingProcessorHelper {
             final Long savingsProductId, final Long paymentTypeId, final Long savingsId, final String transactionId,
             final Date transactionDate, final BigDecimal amount, final Boolean isReversal, final List<TaxPaymentDTO> taxDetails) {
 
+    	createCashBasedDebitJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited.getValue(), savingsProductId,
+                paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+    	
         for (TaxPaymentDTO taxPaymentDTO : taxDetails) {
             if (taxPaymentDTO.getAmount() != null) {
                 if (taxPaymentDTO.getCreditAccountId() == null) {
@@ -617,8 +663,6 @@ public class AccountingProcessorHelper {
                 }
             }
         }
-        createCashBasedDebitJournalEntriesAndReversalsForSavings(office, currencyCode, accountTypeToBeDebited.getValue(), savingsProductId,
-                paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
     }
 
     public void createCashBasedDebitJournalEntriesAndReversalsForSavings(final Office office, final String currencyCode,

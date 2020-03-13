@@ -45,4 +45,6 @@ public interface ScheduledJobRunnerService {
 	void generateLoanCollectibility();
 
 	void generateEstatement() throws JobExecutionException;
+
+	void autoCloseDepositsAccount() throws JobExecutionException;
 }

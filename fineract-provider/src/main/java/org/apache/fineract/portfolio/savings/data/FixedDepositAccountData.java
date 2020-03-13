@@ -532,6 +532,7 @@ public class FixedDepositAccountData extends DepositAccountData {
     }
 
 	/**
+<<<<<<< HEAD
 	 * @return the maturityDate2
 	 */
 	public String getMaturityDate2() {
@@ -578,5 +579,12 @@ public class FixedDepositAccountData extends DepositAccountData {
 	 */
 	public BigDecimal getDepositAmount() {
 		return depositAmount;
+	}
+	
+	/**
+	 * @return the linkedAccount
+	 */
+	public PortfolioAccountData getLinkedAccount() {
+		return linkedAccount;
 	}
 }

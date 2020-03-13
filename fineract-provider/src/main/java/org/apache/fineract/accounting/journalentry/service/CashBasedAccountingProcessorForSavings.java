@@ -174,7 +174,7 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
                 // Post journal entry if earned interest amount is greater than
                 // zero
                 if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) == 1) {
-                    this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                    this.helper.createCashBasedJournalEntriesAndReversalsForSavingsInterestPosting(office, currencyCode,
                             CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),
                             savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
                 }
@@ -182,7 +182,7 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
 
             else if (savingsTransactionDTO.getTransactionType().isWithholdTax()) {
                 this.helper.createCashBasedJournalEntriesAndReversalsForSavingsTax(office, currencyCode,
-                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_TAX, savingsProductId,
+                        CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_ACCRUAL, CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_TAX, savingsProductId,
                         paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal,
                         savingsTransactionDTO.getTaxPayments());
             }

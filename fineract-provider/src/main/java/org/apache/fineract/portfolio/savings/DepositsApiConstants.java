@@ -201,6 +201,8 @@ public class DepositsApiConstants {
     public static final String chartTemplate = "chartTemplate";
     
     public static final String isActiveParamName = "isActive";
+    public static final String paymentTypePrincipalDeposito = "IDEP";
+    public static final String paymentTypeInterestDeposito = "BNG4";
 
     /**
      * Deposit Product Parameters

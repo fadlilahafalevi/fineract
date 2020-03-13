@@ -231,6 +231,23 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
                 new Object[] { formatter.print(today), DepositAccountType.FIXED_DEPOSIT.getValue(),
                         DepositAccountType.RECURRING_DEPOSIT.getValue(), SavingsAccountStatusType.ACTIVE.getValue() });
     }
+    
+    @Override
+    public Collection<DepositAccountData> retrieveForMaturedAccount() {
+
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("SELECT ");
+        sqlBuilder.append(this.depositAccountForMaturityRowMapper.schema());
+        sqlBuilder.append(" WHERE da.deposit_type_enum in (?, ?) and da.status_enum = ?");
+
+        LocalDate today = DateUtils.getLocalDateOfTenant();
+
+        return this.jdbcTemplate.query(
+                sqlBuilder.toString(),
+                this.depositAccountForMaturityRowMapper,
+                new Object[] { formatter.print(today), DepositAccountType.FIXED_DEPOSIT.getValue(),
+                        DepositAccountType.RECURRING_DEPOSIT.getValue(), SavingsAccountStatusType.MATURED.getValue() });
+    }
 
     @Override
     public DepositAccountData retrieveOne(final DepositAccountType depositAccountType, final Long accountId) {
@@ -1401,10 +1418,12 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final StringBuilder sqlBuilder = new StringBuilder(200);
             sqlBuilder.append("da.id as id, ");
             sqlBuilder.append("da.account_no as accountNumber, ");
-            sqlBuilder.append("da.deposit_type_enum as depositTypeId ");
+            sqlBuilder.append("da.deposit_type_enum as depositTypeId, ");
+            sqlBuilder.append("paa.linked_savings_account_id as linkedSavingsAccountId ");
             sqlBuilder.append("FROM m_savings_account da ");
             sqlBuilder.append("inner join m_deposit_account_term_and_preclosure dat on dat.savings_account_id = da.id ");
             sqlBuilder.append("and dat.maturity_date is not null and dat.maturity_date <= ? ");
+            sqlBuilder.append("left join m_portfolio_account_associations paa on paa.savings_account_id = da.id ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -1419,9 +1438,13 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Long id = rs.getLong("id");
             final String name = rs.getString("accountNumber");
             final Integer depositTypeId = JdbcSupport.getInteger(rs, "depositTypeId");
+            final Long linkedSavingsAccountId = JdbcSupport.getLongDefaultToNullIfZero(rs, "linkedSavingsAccountId");
             final EnumOptionData depositType = (depositTypeId == null) ? null : SavingsEnumerations.depositType(depositTypeId);
 
-            return DepositAccountData.lookup(id, name, depositType);
+            DepositAccountData depositAccountData = DepositAccountData.lookup(id, name, depositType);
+            depositAccountData.setLinkedSavingsAccountId(linkedSavingsAccountId);
+            
+            return depositAccountData;
         }
     }
 

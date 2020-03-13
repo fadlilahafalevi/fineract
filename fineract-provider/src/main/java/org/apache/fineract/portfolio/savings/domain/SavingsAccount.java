@@ -512,7 +512,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                 final SavingsAccountTransaction postingTransaction = findInterestPostingTransactionFor(interestPostingTransactionDate);
                 if (postingTransaction == null) {
                     SavingsAccountTransaction newPostingTransaction;
-                    if (interestEarnedToBePostedForPeriod.isGreaterThanOrEqualTo(Money.zero(currency))) {
+                    if (interestEarnedToBePostedForPeriod.isGreaterThanZero()) {
                         
                         newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(), interestPostingTransactionDate,
                                 interestEarnedToBePostedForPeriod, interestPostingPeriod.isUserPosting());
@@ -542,7 +542,7 @@ public class SavingsAccount extends AbstractPersistableCustom<Long> {
                             applyWithHoldTaxForOldTransaction = true;
                         }
                         SavingsAccountTransaction newPostingTransaction;
-                        if (interestEarnedToBePostedForPeriod.isGreaterThanOrEqualTo(Money.zero(currency))) {
+                        if (interestEarnedToBePostedForPeriod.isGreaterThanZero()) {
                             newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod,
                                     interestPostingPeriod.isUserPosting());

@@ -144,7 +144,7 @@ public class AccountAssociationsReadPlatformServiceImpl implements AccountAssoci
             // sqlBuilder.append("savingsAccount.id as savingsAccountId, savingsAccount.account_no as savingsAccountNo,");
             sqlBuilder.append("loanAccount.id as loanAccountId, loanAccount.account_no as loanAccountNo,");
             // sqlBuilder.append("linkLoanAccount.id as linkLoanAccountId, linkLoanAccount.account_no as linkLoanAccountNo, ");
-            sqlBuilder.append("linkSavingsAccount.id as linkSavingsAccountId, linkSavingsAccount.account_no as linkSavingsAccountNo ");
+            sqlBuilder.append("linkSavingsAccount.id as linkSavingsAccountId, linkSavingsAccount.account_no as linkSavingsAccountNo, linkSavingsAccount.product_id as linkSavingsProductId ");
             sqlBuilder.append("from m_portfolio_account_associations aa ");
             // sqlBuilder.append("left join m_savings_account savingsAccount on savingsAccount.id = aa.savings_account_id ");
             sqlBuilder.append("left join m_loan loanAccount on loanAccount.id = aa.loan_account_id ");
@@ -175,11 +175,13 @@ public class AccountAssociationsReadPlatformServiceImpl implements AccountAssoci
              */
             final Long linkSavingsAccountId = JdbcSupport.getLong(rs, "linkSavingsAccountId");
             final String linkSavingsAccountNo = rs.getString("linkSavingsAccountNo");
+            final Long linkSavingsProductId = JdbcSupport.getLong(rs, "linkSavingsProductId");
             // final Long linkLoanAccountId = JdbcSupport.getLong(rs,
             // "linkLoanAccountId");
             // final String linkLoanAccountNo =
             // rs.getString("linkLoanAccountNo");
-            final PortfolioAccountData linkedAccount = PortfolioAccountData.lookup(linkSavingsAccountId, linkSavingsAccountNo);
+            PortfolioAccountData linkedAccount = PortfolioAccountData.lookup(linkSavingsAccountId, linkSavingsAccountNo);
+            linkedAccount.setProductId(linkSavingsProductId);
             /*
              * if (linkSavingsAccountId != null) { linkedAccount =
              * PortfolioAccountData.lookup(linkSavingsAccountId,

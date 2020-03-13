@@ -58,4 +58,6 @@ public interface DepositAccountReadPlatformService {
     Collection<Map<String, Object>> retriveDataForRDScheduleCreation();
 
 	Date findMaturityDate(Long savingsId);
+
+	Collection<DepositAccountData> retrieveForMaturedAccount();
 }

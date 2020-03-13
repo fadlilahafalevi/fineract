@@ -60,6 +60,7 @@ import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
+import org.apache.fineract.portfolio.savings.domain.FixedDepositAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
@@ -508,6 +509,81 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                     toSavingsAccount, deposit, loanTransaction);
             this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
             transferTransactionId = accountTransferDetails.getId();
+        } else {
+            throw new GeneralPlatformDomainRuleException("error.msg.accounttransfer.loan.to.loan.not.supported",
+                    "Account transfer from loan to another loan is not supported");
+        }
+
+        return transferTransactionId;
+    }
+    
+    @Override
+    @Transactional
+    public Long transferFundsClosureFD(final AccountTransferDTO accountTransferDTO, FixedDepositAccount fromFixedDepositAccount,
+    		PaymentDetail paymentDetailPrincipal, PaymentDetail paymentDetailInterest) {
+        Long transferTransactionId = null;
+        final boolean isAccountTransfer = true;
+        final boolean isRegularTransaction = accountTransferDTO.isRegularTransaction();
+        AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
+        
+        if (isSavingsToSavingsAccountTransfer(accountTransferDTO.getFromAccountType(), accountTransferDTO.getToAccountType())) {
+
+            SavingsAccount fromSavingsAccount = null;
+            SavingsAccount toSavingsAccount = null;
+            
+            final BigDecimal principalAmount = fromFixedDepositAccount.getAccountTermAndPreClosure().depositAmount();
+            final BigDecimal netInterestAmount = accountTransferDTO.getTransactionAmount().subtract(principalAmount);
+            
+            if (accountTransferDetails == null) {
+                if (accountTransferDTO.getFromSavingsAccount() == null) {
+                    fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(accountTransferDTO.getFromAccountId());
+                } else {
+                    fromSavingsAccount = accountTransferDTO.getFromSavingsAccount();
+                    this.savingsAccountAssembler.setHelpers(fromSavingsAccount);
+                }
+                if (accountTransferDTO.getToSavingsAccount() == null) {
+                    toSavingsAccount = this.savingsAccountAssembler.assembleFrom(accountTransferDTO.getToAccountId());
+                } else {
+                    toSavingsAccount = accountTransferDTO.getToSavingsAccount();
+                    this.savingsAccountAssembler.setHelpers(toSavingsAccount);
+                }
+            } else {
+                fromSavingsAccount = accountTransferDetails.fromSavingsAccount();
+                this.savingsAccountAssembler.setHelpers(fromSavingsAccount);
+                toSavingsAccount = accountTransferDetails.toSavingsAccount();
+                this.savingsAccountAssembler.setHelpers(toSavingsAccount);
+            }
+
+            final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
+                    isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), AccountTransferType.fromInt(
+                            accountTransferDTO.getTransferType()).isInterestTransfer(), accountTransferDTO.isExceptionForBalanceCheck());
+
+            final SavingsAccountTransaction withdrawalPrincipal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
+                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), principalAmount,
+                    paymentDetailPrincipal, transactionBooleanValues);
+            
+            final SavingsAccountTransaction withdrawalInterest = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
+                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), netInterestAmount,
+                    paymentDetailInterest, transactionBooleanValues);
+
+            final SavingsAccountTransaction depositPrincipal = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
+                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), principalAmount,
+                    null, isAccountTransfer, isRegularTransaction);
+            
+            final SavingsAccountTransaction depositInterest = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
+                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), netInterestAmount,
+                    null, isAccountTransfer, isRegularTransaction);
+
+            accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSavingsTransfer(accountTransferDTO, fromSavingsAccount,
+                    toSavingsAccount, withdrawalPrincipal, depositPrincipal);
+            this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
+            
+            accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSavingsTransfer(accountTransferDTO, fromSavingsAccount,
+                    toSavingsAccount, withdrawalInterest, depositInterest);
+            this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
+            
+            transferTransactionId = accountTransferDetails.getId();
+
         } else {
             throw new GeneralPlatformDomainRuleException("error.msg.accounttransfer.loan.to.loan.not.supported",
                     "Account transfer from loan to another loan is not supported");
