@@ -39,6 +39,8 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
@@ -61,12 +63,15 @@ import org.apache.fineract.portfolio.group.exception.GroupNotActiveException;
 import org.apache.fineract.portfolio.group.exception.GroupNotFoundException;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountDataDTO;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountDataValidator;
 import org.apache.fineract.portfolio.savings.domain.*;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,11 +79,14 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.gson.JsonElement;
+
 @Service
 public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl implements SavingsApplicationProcessWritePlatformService {
 
     private final static Logger logger = LoggerFactory.getLogger(SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl.class);
-
+    private final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+    
     private final PlatformSecurityContext context;
     private final SavingsAccountRepositoryWrapper savingAccountRepository;
     private final SavingsAccountAssembler savingAccountAssembler;
@@ -97,6 +105,9 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
+    private final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer;
+    private final FromJsonHelper fromJsonHelper;
+    private final SavingsAccountWritePlatformService writePlatformService;
 	
     @Autowired
     public SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -111,7 +122,10 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
             final BusinessEventNotifierService businessEventNotifierService,
-            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService) {
+            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
+            final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer,
+            final FromJsonHelper fromJsonHelper,
+            final SavingsAccountWritePlatformService writePlatformService) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.savingAccountAssembler = savingAccountAssembler;
@@ -130,6 +144,9 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.businessEventNotifierService = businessEventNotifierService ;
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
+        this.toApiJsonSerializer = toApiJsonSerializer;
+        this.fromJsonHelper = fromJsonHelper;
+        this.writePlatformService = writePlatformService;
     }
 
     /*
@@ -237,6 +254,33 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
             this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_CREATE,
                     constructEntityMap(BUSINESS_ENTITY.SAVING, account));
+            
+            final Boolean isActive = command.booleanObjectValueOfParameterNamed(SavingsApiConstants.isActiveParamName);
+            if ((isActive != null) && isActive) {
+            	Map<String, Object> reqApprove = new LinkedHashMap<>();
+            	reqApprove.put(SavingsApiConstants.dateFormatParamName, "yyyy-MM-dd");
+            	reqApprove.put(SavingsApiConstants.localeParamName, "id");
+            	reqApprove.put(SavingsApiConstants.approvedOnDateParamName, formatter.print(account.getSubmittedOnDate()));
+
+				String apiRequestBodyAsJson = this.toApiJsonSerializer.serialize(reqApprove);
+				final JsonElement parsedCommand = this.fromJsonHelper.parse(apiRequestBodyAsJson);
+				JsonCommand commandApprove = JsonCommand.from(apiRequestBodyAsJson, parsedCommand, this.fromJsonHelper, null,
+						account.getId(), null, null, null, null, savingsId, null, null, account.productId(), null, null);
+				
+				this.approveApplication(savingsId, commandApprove);
+				
+				Map<String, Object> reqActivate = new LinkedHashMap<>();
+            	reqActivate.put(SavingsApiConstants.dateFormatParamName, "yyyy-MM-dd");
+            	reqActivate.put(SavingsApiConstants.localeParamName, "id");
+            	reqActivate.put(SavingsApiConstants.activatedOnDateParamName, formatter.print(account.getSubmittedOnDate()));
+
+				String apiRequestBodyAsJsonActivate = this.toApiJsonSerializer.serialize(reqActivate);
+				final JsonElement parsedCommandActivate = this.fromJsonHelper.parse(apiRequestBodyAsJsonActivate);
+				JsonCommand commandActivate = JsonCommand.from(apiRequestBodyAsJsonActivate, parsedCommandActivate, this.fromJsonHelper, null,
+						savingsId, null, null, null, null, savingsId, null, null, account.productId(), null, null);
+				
+				this.writePlatformService.activate(savingsId, commandActivate);
+            }
 
             return new CommandProcessingResultBuilder() //
             		.withCommandId(command.commandId()) //

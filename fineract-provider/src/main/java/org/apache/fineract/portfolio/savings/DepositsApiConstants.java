@@ -199,6 +199,8 @@ public class DepositsApiConstants {
 
     // template
     public static final String chartTemplate = "chartTemplate";
+    
+    public static final String isActiveParamName = "isActive";
 
     /**
      * Deposit Product Parameters
@@ -320,6 +322,7 @@ public class DepositsApiConstants {
         fixedDepositRequestData.add(transferInterestToSavingsParamName);
         fixedDepositRequestData.add(SavingsApiConstants.interestCompoundingTypeParamName);
         fixedDepositRequestData.add(SavingsApiConstants.paymentTypeParamName);
+        fixedDepositRequestData.add(isActiveParamName);
         return fixedDepositRequestData;
     }
 

@@ -43,6 +43,7 @@ import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRu
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.staff.domain.Staff;
@@ -92,12 +93,17 @@ import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountExcepti
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.gson.JsonElement;
+
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 
@@ -105,6 +111,7 @@ import org.apache.fineract.portfolio.common.BusinessEventNotificationConstants.B
 public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl implements DepositApplicationProcessWritePlatformService {
 
     private final static Logger logger = LoggerFactory.getLogger(DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl.class);
+    private final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
     private final PlatformSecurityContext context;
     private final SavingsAccountRepositoryWrapper savingAccountRepository;
@@ -127,6 +134,8 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    private final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer;
+    private final DepositAccountWritePlatformService depositAccountWritePlatformService;
 
     @Autowired
     public DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -143,7 +152,9 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             final CalendarInstanceRepository calendarInstanceRepository, final ConfigurationDomainService configurationDomainService,
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
             final BusinessEventNotifierService businessEventNotifierService,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer,
+            final DepositAccountWritePlatformService depositAccountWritePlatformService) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.depositAccountAssembler = depositAccountAssembler;
@@ -165,6 +176,8 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.businessEventNotifierService = businessEventNotifierService;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
+        this.toApiJsonSerializer = toApiJsonSerializer;
+        this.depositAccountWritePlatformService = depositAccountWritePlatformService;
     }
 
     /*
@@ -311,6 +324,33 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
             this.businessEventNotifierService.notifyBusinessEventWasExecuted( BUSINESS_EVENTS.FIXED_DEPOSIT_ACCOUNT_CREATE,
                     constructEntityMap(BUSINESS_ENTITY.DEPOSIT_ACCOUNT, account));
+            
+            final Boolean isActive = command.booleanObjectValueOfParameterNamed(SavingsApiConstants.isActiveParamName);
+            if ((isActive != null) && isActive) {
+            	Map<String, Object> reqApprove = new LinkedHashMap<>();
+            	reqApprove.put(SavingsApiConstants.dateFormatParamName, "yyyy-MM-dd");
+            	reqApprove.put(SavingsApiConstants.localeParamName, "id");
+            	reqApprove.put(SavingsApiConstants.approvedOnDateParamName, formatter.print(account.getSubmittedOnDate()));
+
+				String apiRequestBodyAsJson = this.toApiJsonSerializer.serialize(reqApprove);
+				final JsonElement parsedCommand = this.fromJsonHelper.parse(apiRequestBodyAsJson);
+				JsonCommand commandApprove = JsonCommand.from(apiRequestBodyAsJson, parsedCommand, this.fromJsonHelper, null,
+						account.getId(), null, null, null, null, savingsId, null, null, account.productId(), null, null);
+				
+				this.approveApplication(savingsId, commandApprove, DepositAccountType.FIXED_DEPOSIT);
+				
+				Map<String, Object> reqActivate = new LinkedHashMap<>();
+            	reqActivate.put(SavingsApiConstants.dateFormatParamName, "yyyy-MM-dd");
+            	reqActivate.put(SavingsApiConstants.localeParamName, "id");
+            	reqActivate.put(SavingsApiConstants.activatedOnDateParamName, formatter.print(account.getSubmittedOnDate()));
+
+				String apiRequestBodyAsJsonActivate = this.toApiJsonSerializer.serialize(reqActivate);
+				final JsonElement parsedCommandActivate = this.fromJsonHelper.parse(apiRequestBodyAsJsonActivate);
+				JsonCommand commandActivate = JsonCommand.from(apiRequestBodyAsJsonActivate, parsedCommandActivate, this.fromJsonHelper, null,
+						savingsId, null, null, null, null, savingsId, null, null, account.productId(), null, null);
+				
+				this.depositAccountWritePlatformService.activateFDAccount(savingsId, commandActivate);
+            }
 
             return new CommandProcessingResultBuilder() //
             		.withAccNo(account.getAccountNumber())
