@@ -184,7 +184,7 @@ public class SavingsAccountTransactionsApiResource2 {
         try {
             final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
 
-            if (is(commandParam, "withdrawal")) {
+            if (is(commandParam, "deposit") || is(commandParam, "withdrawal")) {
 	            Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
 	        	Long clientAccountId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
 	        	String accountNumber = this.savingsAccountReadPlatformService.retrieveAccountNumberByAccountId(savingsId);
