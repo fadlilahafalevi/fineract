@@ -43,6 +43,7 @@ import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamE
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.portfolio.account.AccountDetailConstants;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
@@ -50,6 +51,8 @@ import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNumberNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.dao.CannotAcquireLockException;
@@ -133,11 +136,19 @@ public class SavingsAccountTransactionsApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String transaction(@PathParam("savingsId") final Long savingsId, @QueryParam("command") final String commandParam,
-            final String apiRequestBodyAsJson) {
+            final String apiRequestBodyAsJson, @Context final HttpHeaders requestHeader) throws JSONException {
         try {
             final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
             
             CommandProcessingResult result = null;
+            
+            if (is(commandParam, "deposit") || is(commandParam, "withdrawal")) {
+            	final Long clientAccountIdHeader = new Long(requestHeader.getRequestHeaders().getFirst("clientID"));
+                final Long clientId = this.savingsAccountReadPlatformService.retrieveClientsIdBySavingsId(savingsId);
+                if (!(clientAccountIdHeader.equals(clientId))) {
+            		throw new SavingsAccountNumberNotFoundException(savingsId);
+            	}
+            }
             if (is(commandParam, "deposit")) {
                 final CommandWrapper commandRequest = builder.savingsAccountDeposit(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
