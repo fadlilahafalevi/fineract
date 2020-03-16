@@ -94,11 +94,13 @@ public class AccountTransfersDataValidator {
         baseDataValidator.reset().parameter(AccountTransfersApiConstants.transferAmountParamName).value
                 (transactionAmount).notNull().positiveAmount();
 
+        /*
         final String transactionDescription = this.fromApiJsonHelper.extractStringNamed(AccountTransfersApiConstants
                 .transferDescriptionParamName, element);
         baseDataValidator.reset().parameter(AccountTransfersApiConstants.transferDescriptionParamName).value
                 (transactionDescription).ignoreIfNull()
                 .notExceedingLengthOf(200);
+                */
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
