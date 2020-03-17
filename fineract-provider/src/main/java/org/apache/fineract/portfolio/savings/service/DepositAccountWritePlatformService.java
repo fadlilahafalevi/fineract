@@ -90,4 +90,6 @@ public interface DepositAccountWritePlatformService {
     void transferInterestToSavings() throws JobExecutionException;
 
     SavingsAccountTransaction mandatorySavingsAccountDeposit(final SavingsAccountTransactionDTO accountTransactionDTO);
+
+	CommandProcessingResult closeFDAccountByAccountNo(String savingsAccountNo, JsonCommand command);
 }
