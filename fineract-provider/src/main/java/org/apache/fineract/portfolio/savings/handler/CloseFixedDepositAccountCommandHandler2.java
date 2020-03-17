@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@CommandType(entity = "FIXEDDEPOSITACCOUNT", action = "CLOSE")
+@CommandType(entity = "FIXEDDEPOSITACCOUNT2", action = "CLOSE")
 public class CloseFixedDepositAccountCommandHandler2 implements NewCommandSourceHandler {
 
     private final DepositAccountWritePlatformService depositAccountWritePlatformService;
