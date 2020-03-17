@@ -946,6 +946,41 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 .build();
 
     }
+    
+    @Override
+    @Transactional
+    public CommandProcessingResult closeFDAccountByAccountNo(final String savingsAccountNo, final JsonCommand command) {
+        final AppUser user = this.context.authenticatedUser();
+        final boolean isPreMatureClose = false;
+        this.depositAccountTransactionDataValidator.validateClosing(command, DepositAccountType.FIXED_DEPOSIT, isPreMatureClose);
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+
+        final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsAccountNo,
+                DepositAccountType.FIXED_DEPOSIT);
+        checkClientOrGroupActive(account);
+
+        this.depositAccountDomainService.handleFDAccountClosure(account, paymentDetail, user, command, DateUtils.getLocalDateOfTenant(),
+                changes);
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.savingNote(account, noteText);
+            changes.put("note", noteText);
+            this.noteRepository.save(note);
+        }
+
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(account.getId()) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(account.getId()) //
+                .with(changes)//
+                .build();
+
+    }
 
     @Override
     public CommandProcessingResult closeRDAccount(final Long savingsId, final JsonCommand command) {

@@ -523,6 +523,12 @@ public class DepositAccountAssembler {
         account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
         return account;
     }
+    
+    public SavingsAccount assembleFrom(final String accountNo, DepositAccountType depositAccountType) {
+        final SavingsAccount account = this.savingsAccountRepository.findOneWithNotFoundDetection(accountNo, depositAccountType);
+        account.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
+        return account;
+    }
 
     public void assignSavingAccountHelpers(final SavingsAccount savingsAccount) {
         savingsAccount.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);

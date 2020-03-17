@@ -2139,6 +2139,14 @@ public class CommandWrapperBuilder {
         this.href = "/fixeddepositaccounts/" + accountId + "?command=close";
         return this;
     }
+    
+    public CommandWrapperBuilder closeFixedDepositAccount(final String accountNo) {
+        this.actionName = "CLOSE";
+        this.entityName = "FIXEDDEPOSITACCOUNT2";
+        this.accountNumber = accountNo;
+        this.href = "/fixeddepositaccounts/" + accountNo + "?command=close";
+        return this;
+    }
 
     public CommandWrapperBuilder prematureCloseFixedDepositAccount(final Long accountId) {
         this.actionName = "PREMATURECLOSE";
