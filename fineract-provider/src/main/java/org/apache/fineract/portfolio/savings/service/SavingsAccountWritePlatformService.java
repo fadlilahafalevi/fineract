@@ -138,4 +138,6 @@ public interface SavingsAccountWritePlatformService {
 	CommandProcessingResult withdrawalBatchTransaction2(Long savingsId, JsonCommand command);
 
 	CommandProcessingResult undoTransactionBatchTransaction(JsonCommand command);
+
+	CommandProcessingResult closeByAccountNo(String accountNumber, JsonCommand command);
 }

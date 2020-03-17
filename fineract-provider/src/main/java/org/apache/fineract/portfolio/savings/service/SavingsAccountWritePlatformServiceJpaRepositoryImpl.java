@@ -49,6 +49,8 @@ import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
@@ -64,12 +66,19 @@ import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.organisation.staff.domain.StaffRepositoryWrapper;
 import org.apache.fineract.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
+import org.apache.fineract.portfolio.account.AccountDetailConstants;
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
+import org.apache.fineract.portfolio.account.api.AccountTransfersApiConstants;
+import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
+import org.apache.fineract.portfolio.account.domain.AccountTransferAssembler;
+import org.apache.fineract.portfolio.account.domain.AccountTransferDetailRepository;
+import org.apache.fineract.portfolio.account.domain.AccountTransferDetails;
 import org.apache.fineract.portfolio.account.domain.AccountTransferStandingInstruction;
 import org.apache.fineract.portfolio.account.domain.StandingInstructionRepository;
 import org.apache.fineract.portfolio.account.domain.StandingInstructionStatus;
 import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.account.service.AccountTransfersReadPlatformService;
+import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
@@ -108,6 +117,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.domain.interest.PostingPeriod;
 import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountException;
+import org.apache.fineract.portfolio.savings.exception.MainSavingsAccountNotMatchException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException.PostInterestAsOnException_TYPE;
 import org.apache.fineract.portfolio.savings.exception.PostInterestClosingDateException;
@@ -128,9 +138,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import com.google.gson.JsonElement;
+
 @Service
 public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements SavingsAccountWritePlatformService {
 
+	private final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
     private final PlatformSecurityContext context;
     private final SavingsAccountDataValidator fromApiJsonDeserializer;
     private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
@@ -159,6 +172,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService;
     private final PaymentDetailRepository paymentDetailRepository;
+    private final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer;
+    private final FromJsonHelper fromJsonHelper;
+    private final SavingsAccountAssembler savingsAccountAssembler;
+    private final AccountTransferDetailRepository accountTransferDetailRepository;
+    private final AccountTransferAssembler accountTransferAssembler;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -183,7 +201,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final BusinessEventNotifierService businessEventNotifierService,
             final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
             final SavingsSummaryTaxReadPlatformService savingsSummaryTaxReadPlatformService,
-            final PaymentDetailRepository paymentDetailRepository) {
+            final PaymentDetailRepository paymentDetailRepository,
+            final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer,
+            final FromJsonHelper fromJsonHelper,
+            final SavingsAccountAssembler savingsAccountAssembler,
+            final AccountTransferDetailRepository accountTransferDetailRepository,
+            final AccountTransferAssembler accountTransferAssembler) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -212,6 +235,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.savingsSummaryTaxReadPlatformService = savingsSummaryTaxReadPlatformService;
         this.paymentDetailRepository = paymentDetailRepository;
+        this.toApiJsonSerializer = toApiJsonSerializer;
+        this.fromJsonHelper = fromJsonHelper;
+        this.savingsAccountAssembler = savingsAccountAssembler;
+        this.accountTransferDetailRepository = accountTransferDetailRepository;
+        this.accountTransferAssembler = accountTransferAssembler;
     }
 
     @Transactional
@@ -946,7 +974,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             }
 
             account.setTotalAccrualAmount(accruedAmountAfterPosted);
-            this.savingAccountRepositoryWrapper.saveAndFlush(account);
+            this.savingAccountRepositoryWrapper.save(account);
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
@@ -1288,15 +1316,57 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         this.savingsAccountTransactionDataValidator.validateClosing(command, account);
 
-        final boolean isLinkedWithAnyActiveLoan = this.accountAssociationsReadPlatformService.isLinkedWithAnyActiveAccount(savingsId);
+        final Map<String, Object> changes = closeSavingsAccount(command, user, account);
+
+        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_CLOSE,
+                constructEntityMap(BUSINESS_ENTITY.SAVING, account));
+        // disable all standing orders linked to the savings account
+        this.disableStandingInstructionsLinkedToClosedSavings(account);
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(savingsId) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(savingsId) //
+                .with(changes) //
+                .build();
+    }
+    
+    @Override
+    public CommandProcessingResult closeByAccountNo(final String accountNumber, final JsonCommand command) {
+        final AppUser user = this.context.authenticatedUser();
+
+        final SavingsAccount account = this.savingAccountAssembler.assembleFrom(accountNumber);
+        this.savingsAccountTransactionDataValidator.validateClosing(command, account);
+
+        final Map<String, Object> changes = closeSavingsAccount(command, user, account);
+
+        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_CLOSE,
+                constructEntityMap(BUSINESS_ENTITY.SAVING, account));
+        // disable all standing orders linked to the savings account
+        this.disableStandingInstructionsLinkedToClosedSavings(account);
+        return new CommandProcessingResultBuilder() //
+                .withEntityId(account.getId()) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(account.getId()) //
+                .with(changes) //
+                .build();
+    }
+    
+
+	public Map<String, Object> closeSavingsAccount(final JsonCommand command, final AppUser user,
+			final SavingsAccount account) {
+		final boolean isLinkedWithAnyActiveLoan = this.accountAssociationsReadPlatformService.isLinkedWithAnyActiveAccount(account.getId());
 
         if (isLinkedWithAnyActiveLoan) {
-            final String defaultUserMessage = "Closing savings account with id:" + savingsId
+            final String defaultUserMessage = "Closing savings account with id:" + account.getId()
                     + " is not allowed, since it is linked with one of the active accounts";
-            throw new SavingsAccountClosingNotAllowedException("linked", defaultUserMessage, savingsId);
+            throw new SavingsAccountClosingNotAllowedException("linked", defaultUserMessage, account.getId());
         }
 
-        entityDatatableChecksWritePlatformService.runTheCheckForProduct(savingsId, EntityTables.SAVING.getName(),
+        entityDatatableChecksWritePlatformService.runTheCheckForProduct(account.getId(), EntityTables.SAVING.getName(),
                 StatusEnum.CLOSE.getCode().longValue(), EntityTables.SAVING.getForeignKeyColumnNameOnDatatable(), account.productId());
 
         final boolean isWithdrawBalance = command.booleanPrimitiveValueOfParameterNamed(withdrawBalanceParamName);
@@ -1356,20 +1426,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             }
 
         }
-
-        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_CLOSE,
-                constructEntityMap(BUSINESS_ENTITY.SAVING, account));
-        // disable all standing orders linked to the savings account
-        this.disableStandingInstructionsLinkedToClosedSavings(account);
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(savingsId) //
-                .withOfficeId(account.officeId()) //
-                .withClientId(account.clientId()) //
-                .withGroupId(account.groupId()) //
-                .withSavingsId(savingsId) //
-                .with(changes) //
-                .build();
-    }
+		return changes;
+	}
 
     @Override
     public SavingsAccountTransaction initiateSavingsTransfer(final SavingsAccount savingsAccount, final LocalDate transferDate) {

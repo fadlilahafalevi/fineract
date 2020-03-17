@@ -1236,6 +1236,14 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?command=close";
         return this;
     }
+    
+    public CommandWrapperBuilder closeSavingsAccountApplication(final String accountNumber) {
+        this.actionName = "CLOSE";
+        this.entityName = "SAVINGSACCOUNT2";
+        this.accountNumber = accountNumber;
+        this.href = "/savingsaccounts2/" + accountNumber + "?command=close";
+        return this;
+    }
 
     public CommandWrapperBuilder createAccountTransfer() {
         this.actionName = "CREATE";
