@@ -41,6 +41,6 @@ public class CloseFixedDepositAccountCommandHandler2 implements NewCommandSource
     @Transactional
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
-        return this.depositAccountWritePlatformService.closeFDAccount(command.entityId(), command);
+        return this.depositAccountWritePlatformService.closeFDAccountByAccountNo(command.getAccountNumber(), command);
     }
 }
